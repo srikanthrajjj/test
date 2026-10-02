@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Nest" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/nest_ink</item>
+        <item name="android:statusBarColor">@color/nest_ink</item>
+        <item name="android:navigationBarColor">@color/nest_ink</item>
+        <item name="android:colorBackground">@color/nest_ink</item>
+        <item name="android:windowSplashScreenBackground">@color/nest_ink</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+    </style>
+</resources>
