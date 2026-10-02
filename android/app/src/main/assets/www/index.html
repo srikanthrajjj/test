@@ -708,7 +708,7 @@ function renderMonth() {
     ${total ? `<div class="bar2"><i style="background:${S.me.color};flex-grow:${me}"></i><i style="background:${S.p.color};flex-grow:${pp}"></i></div>
     <div class="who2"><span><i class="dot2" style="background:${S.me.color}"></i>${esc(first(S.me.name))} <b>${money(me, { round: true })}</b></span><span><i class="dot2" style="background:${S.p.color}"></i>${esc(first(S.p.name))} <b>${money(pp, { round: true })}</b></span></div>` : ""}</button>
   ${inv}
-  ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
+  ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
   <div class="tl" id="tl">${tl}</div>
   ${!mExp.length ? `<div class="empty"><b>${isNow ? "A fresh month" : "Nothing here"}</b>${isNow ? "Tap + to add your first expense." : "No expenses in " + monthLabel(m) + "."}</div>` : ""}`;
 }
