@@ -1,1 +1,4 @@
 android/build/
+worker/node_modules/
+worker/.state/
+worker/.wrangler/

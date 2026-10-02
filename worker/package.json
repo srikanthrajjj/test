@@ -1,0 +1,15 @@
+{
+  "name": "nest-sync",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --persist-to .state",
+    "db:init": "wrangler d1 execute nest --file=schema.sql",
+    "db:init:local": "wrangler d1 execute nest --local --persist-to .state --file=schema.sql",
+    "deploy": "wrangler deploy",
+    "test": "node test/run.mjs"
+  },
+  "dependencies": { "@anthropic-ai/sdk": "^0.70.0" },
+  "devDependencies": { "wrangler": "^4.0.0" }
+}

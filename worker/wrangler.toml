@@ -1,0 +1,12 @@
+name = "nest-sync"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nest"
+database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+
+[vars]
+MODEL = "claude-opus-5-5"
+# Secret (never commit):  npx wrangler secret put ANTHROPIC_API_KEY

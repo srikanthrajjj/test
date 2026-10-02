@@ -14,7 +14,16 @@ Requires Android 8.0+.
 - **Insights**: category donut, per‑person paid vs. fair share, day‑by‑day bars, top places, highlights.
 - **Add**: amount, name (auto‑category), who paid, how to split (equal / just one / custom %), with a live
   "Meera will owe you ₹620 more" preview. **Settle up** records a payment and zeroes the balance.
-- Light/dark, 4 currencies, CSV export, undo on every destructive action. All data stays on the device.
+- Light/dark, 4 currencies, CSV export, undo on every destructive action. Data stays on the device unless you connect sync.
+
+## Sync + agent (v1.1)
+- **Two phones, one Nest**: one partner taps *You -> Create our Nest* and shares the 6-letter code; the other joins from the
+  welcome screen or *I have a code*. Expenses, settlements and names sync live (poll + on resume), with "Meera added ..." toasts.
+- **Together vs individual**: Insights has a *Together / Arjun / Meera* switch (fair-share spending, paid upfront, net effect);
+  Home shows both shares side by side.
+- **Nest agent**: a daily AI brief on Home and a chat that answers from your real numbers and can *propose* expenses or
+  settlements you confirm with one tap. Without a server it falls back to on-device insights.
+- Backend: [`worker/`](worker/README.md) - Cloudflare Worker + D1, in your own account.
 
 ## Balance rule
 `Balance = what you paid − your fair share` (positive ⇒ partner owes you). Settlements are added on top.
