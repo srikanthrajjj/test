@@ -6,6 +6,8 @@
 <meta name="color-scheme" content="light dark">
 <title>Nest</title>
 <link rel="stylesheet" href="fonts.css">
+<script src="qr.js"></script>
+<script src="logos.js"></script>
 <style>
 
 :root{
@@ -66,7 +68,7 @@ input,textarea{font:inherit;color:inherit;user-select:text;-webkit-user-select:t
 
 /* tab bar */
 #tabbar{position:absolute;left:0;right:0;bottom:0;z-index:20;height:calc(var(--tab) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
-  display:grid;grid-template-columns:1fr 1fr 84px 1fr 1fr;align-items:center;background:var(--glass);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);border-top:1px solid var(--line)}
+  display:grid;grid-template-columns:1fr 96px 1fr;align-items:center;background:var(--glass);backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px);border-top:1px solid var(--line)}
 #tabbar .t{display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:center;font-size:11px;font-weight:600;color:var(--faint);transition:color .2s}
 #tabbar .t svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s var(--spring)}
 #tabbar .t.on{color:var(--accent)} #tabbar .t.on svg{transform:translateY(-1px) scale(1.08)}
@@ -124,13 +126,13 @@ input,textarea{font:inherit;color:inherit;user-select:text;-webkit-user-select:t
 .li{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:13px 16px;min-height:64px;position:relative;transition:background .15s}
 .li+.li::before{content:"";position:absolute;left:68px;right:0;top:0;height:1px;background:var(--line)}
 .li:active{background:var(--card2)}
-.ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-size:21px;flex:none}
+.ico{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:22px;flex:none}.ico.logo svg{display:block}
 .li .mid{flex:1;min-width:0}
 .li .t1{font-size:16px;font-weight:600;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li .t2{font-size:13px;color:var(--sub);margin-top:2px;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden}
 .li .t2>span:not(.sms):not(.av){min-width:0;overflow:hidden;text-overflow:ellipsis}.li .t2>.sms,.li .t2>.av{flex:none}
 .li .amt{text-align:right;font-weight:650;font-size:16px;letter-spacing:-.3px}
-.li .amt small{display:block;font-size:12px;font-weight:600;margin-top:2px}
+.li .amt small{display:block;font-size:12.5px;font-weight:700;margin-top:3px}.pd{width:8px;height:8px;border-radius:50%;flex:none}
 .pos{color:var(--ok)}.neg{color:var(--owe)}
 .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--card2);color:var(--sub)}
 .sms{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(91,91,214,.12);color:var(--me)}
@@ -302,6 +304,40 @@ input[type=range]{width:100%;height:36px;accent-color:var(--accent);margin-top:8
 .composer button[disabled]{opacity:.4}
 .code{font-size:44px;font-weight:800;letter-spacing:.18em;text-align:center;margin:8px 0;font-feature-settings:"tnum";user-select:text;-webkit-user-select:text}
 .syncdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}.syncdot.off{background:var(--faint)}.syncdot.busy{background:#F5A524;animation:twinkle 1s infinite}
+
+/* ---------- month screen + timeline ---------- */
+.mbar{display:flex;align-items:center;justify-content:space-between;padding:12px 0 10px}
+.mnav2{display:flex;align-items:center;gap:2px}.mnav2 button{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--accent)}.mnav2 button[disabled]{opacity:.22}
+.mnav2 svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.mt{text-align:center;min-width:150px}.mt b{display:block;font-size:20px;letter-spacing:-.5px}.mt small{font-size:12px;color:var(--sub);font-weight:600}
+.you{height:44px;padding:0 8px;border-radius:99px;background:var(--card);box-shadow:var(--shadow);display:flex;align-items:center}
+.strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;width:100%;text-align:left;margin-top:14px;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:14px 16px 10px;position:relative}
+.strip small{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--sub)}.strip b{display:block;font-size:20px;letter-spacing:-.6px;margin-top:4px}
+.strip .more{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--accent);text-align:right;margin-top:2px}.dot2{width:8px;height:8px;border-radius:50%;display:inline-block}
+.banner.warn{width:100%;border:1.5px solid rgba(245,165,36,.5);background:rgba(245,165,36,.1)}
+.banner.inv{border:1.5px solid rgba(37,211,102,.35)}.btn.wa{background:#25D366;color:#06260f;min-height:42px;padding:0 18px;font-size:15px}
+.tl{position:relative;margin-top:14px}.tl::before{content:"";position:absolute;left:21px;top:10px;bottom:10px;width:2px;border-radius:2px;background:var(--line)}
+.tn{position:relative;padding-left:58px;padding-bottom:14px}
+.tn .dot{position:absolute;left:0;top:0;width:44px;height:44px;border-radius:15px;background:var(--card);box-shadow:var(--shadow);display:grid;place-items:center;text-align:center;line-height:1;z-index:1}
+.tn .dot b{display:block;font-size:17px;letter-spacing:-.4px}.tn .dot small{font-size:9.5px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.04em}
+.tn.today .dot{background:linear-gradient(135deg,var(--me),var(--p));color:#fff;box-shadow:0 6px 16px rgba(91,91,214,.4)}.tn.today .dot small{color:rgba(255,255,255,.85)}
+.tn.ms .dot{width:44px;height:36px;top:2px;border-radius:12px;font-size:19px;background:var(--card2)}
+.mcard{padding:9px 14px;border-radius:14px;background:var(--card2);font-size:13.5px;line-height:1.35;color:var(--sub);margin-top:2px}.mcard b{color:var(--ink)}
+.tn-h{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 8px;font-size:14px;font-weight:700}.tn-m{display:flex;align-items:center;gap:8px;color:var(--sub);font-weight:600;font-size:13px}
+.tn .pill{font-style:normal;padding:3px 8px;font-size:11.5px}
+.wk{display:flex;justify-content:space-between;padding:6px 4px 12px 58px;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+.flag{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:7px;background:rgba(245,165,36,.18);color:#B66E00}:root[data-theme=dark] .flag{color:#F5A524}
+.weeks{display:flex;gap:8px;overflow-x:auto;padding:14px 2px 6px;scrollbar-width:none}.weeks::-webkit-scrollbar{display:none}
+.wchip{flex:none;min-width:74px;padding:9px 14px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);text-align:center;transition:all .25s var(--ease)}
+.wchip b{display:block;font-size:14px;letter-spacing:-.2px}.wchip small{display:block;font-size:12px;font-weight:600;color:var(--sub);margin-top:2px}
+.wchip.on{background:var(--ink);color:var(--bg)}.wchip.on small{color:var(--bg);opacity:.7}.wchip.cur:not(.on) b{color:var(--accent)}
+.chip.sm{min-height:32px;padding:0 12px;font-size:13px;box-shadow:none;background:var(--card2)}.chip.sm.on{background:var(--ink)}
+.big-t{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:7px;background:rgba(240,80,139,.14);color:var(--p)}
+.agent.compact h3{font-size:17px;margin:8px 0 4px}.agent.compact .nd{display:none}.agent.compact .acts{margin-top:10px}
+.qrbox{display:grid;place-items:center;background:#fff;border-radius:22px;padding:16px;width:min(100%,250px);margin:0 auto;box-shadow:var(--shadow)}.qrbox svg{width:100%;height:auto;display:block}
+.linkrow{display:flex;align-items:center;gap:8px;margin:12px auto 0;max-width:100%;padding:10px 12px;border-radius:12px;background:var(--card2);font-size:12.5px;color:var(--sub);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;user-select:text}
+.reasons{display:flex;flex-wrap:wrap;gap:8px}.reasons .chip{box-shadow:none;background:var(--card)}
+textarea.inp{padding:14px 16px;min-height:130px;resize:none;line-height:1.4;font-size:15px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -310,11 +346,9 @@ input[type=range]{width:100%;height:36px;accent-color:var(--accent);margin-top:8
 <div id="app">
   <div id="main"></div>
   <nav id="tabbar" aria-label="Main">
-    <button class="t" data-act="tab" data-arg="home" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M3.5 11 12 4l8.5 7M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/></svg>Home</button>
-    <button class="t" data-act="tab" data-arg="activity" aria-label="Activity"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>Activity</button>
+    <button class="t" data-act="tab" data-arg="month" aria-label="This month"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Month</button>
     <div><button id="fab" data-act="add" aria-label="Add expense"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
-    <button class="t" data-act="tab" data-arg="insights" aria-label="Insights"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Insights</button>
-    <button class="t" data-act="tab" data-arg="you" aria-label="You and settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1-4 4-6 7.500-6s6.500 2 7.500 6"/></svg>You</button>
+    <button class="t" data-act="chat" aria-label="Ask Nest, your money agent"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Ask Nest</button>
   </nav>
 </div>
 <div id="scrim" data-act="close"></div>
@@ -367,7 +401,7 @@ const SWATCH = ["#5B5BD6", "#F0508B", "#12A594", "#F5A524", "#0E8AE6", "#E5484D"
 const catOf = t => (CATS.find(c => c.re.test(t || "")) || CAT.other).id;
 
 /* ---------- state ---------- */
-const blank = () => ({ v: 1, onboarded: false, me: { name: "You", color: SWATCH[0] }, p: { name: "Partner", color: SWATCH[1] }, cur: guessCur(), theme: "auto", exp: [], set: [], seen: [], tomb: [], sync: null, digest: null, mu: 0 });
+const blank = () => ({ v: 1, onboarded: false, me: { name: "You", color: SWATCH[0] }, p: { name: "Partner", color: SWATCH[1] }, cur: guessCur(), theme: "auto", exp: [], set: [], seen: [], tomb: [], sync: null, digest: null, mu: 0, nudgedAt: 0 });
 function guessCur() { const l = (navigator.language || "en-IN").toLowerCase(); return l.endsWith("-us") ? "USD" : l.endsWith("-gb") ? "GBP" : /-(de|fr|es|it|ie|nl)$/.test(l) ? "EUR" : "INR"; }
 let S = blank();
 function load() {
@@ -381,7 +415,8 @@ function persist() {
   try { N && N.saveState && N.saveState(j); } catch (e) { }
   try { localStorage.setItem("nest.v1", j); } catch (e) { }
 }
-const U = { scope: "all", sync: null, tab: "home", month: monthStart(new Date()), filter: "all", insMonth: monthStart(new Date()) };
+const U = { scope: "all", sync: null, tab: "month", month: monthStart(new Date()), cat: "all", week: null, insMonth: monthStart(new Date()) };
+const SMS_INBOX = true; // build with PLAY=1 to switch this off (Play policy: no READ_SMS)
 function monthStart(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
 const person = k => (k === "me" ? S.me : S.p);
 const other = k => (k === "me" ? "p" : "me");
@@ -402,12 +437,12 @@ function removeRec(kind, id) { if (kind === "exp") S.exp = S.exp.filter(e => e.i
 function restoreRec(kind, rec) { untomb(rec.id); touch(rec); (kind === "exp" ? S.exp : S.set).push(rec); }
 function toWire(kind, r) {
   const M = myId(), O = otherId();
-  if (kind === "exp") return { amt: r.amt, title: r.title, cat: r.cat, paid: r.paid === "me" ? M : O, sa: M === "a" ? r.sm : 100 - r.sm, ts: r.ts, src: r.src || "manual" };
+  if (kind === "exp") return { amt: r.amt, title: r.title, cat: r.cat, paid: r.paid === "me" ? M : O, sa: M === "a" ? r.sm : 100 - r.sm, ts: r.ts, src: r.src || "manual", fl: r.fl ? { by: r.fl.by === "me" ? M : O, why: r.fl.why, at: r.fl.at } : undefined };
   return { from: r.from === "me" ? M : O, amt: r.amt, ts: r.ts };
 }
 function fromWire(kind, d, id, u) {
   const M = myId();
-  if (kind === "exp") return { id, amt: d.amt, title: d.title, cat: CAT[d.cat] ? d.cat : "other", paid: d.paid === M ? "me" : "p", sm: M === "a" ? d.sa : 100 - d.sa, ts: d.ts, src: d.src || "manual", u };
+  if (kind === "exp") return { id, amt: d.amt, title: d.title, cat: CAT[d.cat] ? d.cat : "other", paid: d.paid === M ? "me" : "p", sm: M === "a" ? d.sa : 100 - d.sa, ts: d.ts, src: d.src || "manual", u, fl: d.fl ? { by: d.fl.by === M ? "me" : "p", why: d.fl.why, at: d.fl.at } : undefined };
   return { id, from: d.from === M ? "me" : "p", amt: d.amt, ts: d.ts, u };
 }
 function pending() {
@@ -415,7 +450,7 @@ function pending() {
   S.exp.forEach(e => { if ((e.u || 0) > since) ch.push({ id: e.id, kind: "exp", u: e.u, data: toWire("exp", e) }); });
   S.set.forEach(x => { if ((x.u || 0) > since) ch.push({ id: x.id, kind: "set", u: x.u, data: toWire("set", x) }); });
   (S.tomb || []).forEach(t => { if (t.u > since) ch.push({ id: t.id, kind: t.kind, u: t.u, del: true }); });
-  if ((S.mu || 0) > since) ch.push({ id: "profile:" + myId(), kind: "profile", u: S.mu, data: { name: S.me.name, color: S.me.color } });
+  if ((S.mu || 0) > since) ch.push({ id: "profile:" + myId(), kind: "profile", u: S.mu, data: { name: S.me.name, color: S.me.color, cur: S.cur } });
   return ch;
 }
 async function api(path, body, o = {}) {
@@ -442,23 +477,25 @@ function syncLabel() {
 }
 function adoptLocal() { S.exp.forEach(e => { if (!e.u) e.u = Date.now(); }); S.set.forEach(x => { if (!x.u) x.u = Date.now(); }); S.mu = Date.now(); }
 function applyRemote(res, initial) {
-  let changed = false; const added = []; let sets = 0;
+  let changed = false; const added = [], flagged = [], edited = []; let sets = 0;
   for (const c of res.changes) {
     if (c.kind === "profile") {
       const id = c.id.split(":")[1];
       if (id === myId()) { if ((c.u || 0) > (S.mu || 0) && c.data) { S.me.name = c.data.name; S.me.color = c.data.color; S.mu = c.u; changed = true; } }
-      else if (c.data) { S.p.name = c.data.name; S.p.color = c.data.color; changed = true; }
+      else if (c.data) { S.p.name = c.data.name; S.p.color = c.data.color; if (c.data.cur && CUR[c.data.cur] && (initial || (c.u || 0) > (S.mu || 0))) S.cur = c.data.cur; changed = true; }
       continue;
     }
     const list = c.kind === "exp" ? S.exp : S.set, i = list.findIndex(x => x.id === c.id);
     if (c.del) { if (i >= 0 && (list[i].u || 0) < c.u) { list.splice(i, 1); changed = true; } continue; }
-    if (i >= 0) { if ((list[i].u || 0) >= c.u) continue; list[i] = fromWire(c.kind, c.data, c.id, c.u); changed = true; continue; }
+    if (i >= 0) { if ((list[i].u || 0) >= c.u) continue; const nw = fromWire(c.kind, c.data, c.id, c.u); if (c.kind === "exp" && Math.abs(nw.amt - list[i].amt) > 0.004 && !initial) edited.push([list[i], nw]); if (nw.fl && nw.fl.by === "p" && !(list[i].fl && list[i].fl.at === nw.fl.at)) flagged.push(nw); list[i] = nw; changed = true; continue; }
     const tb = (S.tomb || []).find(t => t.id === c.id); if (tb && tb.u >= c.u) continue;
     const rec = fromWire(c.kind, c.data, c.id, c.u); list.push(rec); changed = true;
     if (!initial) { if (c.kind === "exp") added.push(rec); else sets++; }
   }
   if (S.sync.member === "b" && S.me.color === S.p.color) { S.me.color = SWATCH.find(x => x !== S.p.color); S.mu = Date.now(); }
-  if (added.length || sets) {
+  if (flagged.length && !initial) { hap(3); toast(`${first(S.p.name)} questioned “${flagged[0].title}”`); }
+  else if (edited.length && !added.length) { hap(1); toast(`${first(S.p.name)} changed “${edited[0][1].title}” to ${money(edited[0][1].amt)}`); }
+  else if (added.length || sets) {
     hap(2);
     const p = first(S.p.name);
     toast(added.length === 1 && !sets ? `${p} added “${added[0].title}” · ${money(added[0].amt, { round: true })}` : sets && !added.length ? `${p} recorded a settlement` : `${added.length + sets} new updates from ${p}`);
@@ -480,7 +517,7 @@ async function syncNow() {
     if (res.changes.length >= 1000) again = true;
     setSyncState("ok"); persist();
     if (changed) { if ($("#sheet").classList.contains("on") || $("#chat").classList.contains("on") || $("#ob").classList.contains("on")) pendingRefresh = true; else if (U.tab !== "you" || true) refresh(); }
-    if (U.tab === "home" && !pendingRefresh) refreshDigest();
+    if (U.tab === "month" && !pendingRefresh) refreshDigest();
   } catch (e) { setSyncState(e.status === 401 ? "auth" : "offline"); }
   finally { syncing = false; if (again) { again = false; setTimeout(syncNow, 300); } }
 }
@@ -558,7 +595,20 @@ function countUp(el, to, ms = 900, fmt = v => money(v, { round: true })) {
 
 /* ---------- small UI parts ---------- */
 const av = (k, cls = "") => `<span class="av ${cls}" style="background:${person(k).color}" aria-hidden="true">${esc((person(k).name.trim()[0] || "?").toUpperCase())}</span>`;
-const ico = c => `<span class="ico" style="background:${CAT[c].c}22">${CAT[c].e}</span>`;
+const BRANDS = [["swiggy", /swiggy|instamart/i], ["zomato", /zomato/i], ["netflix", /netflix/i], ["spotify", /spotify/i], ["youtube", /youtube/i], ["ubereats", /uber ?eats/i], ["uber", /uber/i],
+  ["paytm", /paytm/i], ["phonepe", /phonepe/i], ["googlepay", /g ?pay|google ?pay/i], ["bookmyshow", /bookmyshow/i], ["airbnb", /airbnb/i], ["starbucks", /starbucks/i], ["mcdonalds", /mcdonald|\bmcd\b/i], ["kfc", /\bkfc\b/i], ["burgerking", /burger king/i],
+  ["applemusic", /apple music/i], ["icloud", /icloud/i], ["apple", /\bapple\b/i], ["jio", /\bjio\b/i], ["airtel", /airtel/i], ["vodafone", /vodafone|\bvi\b/i], ["ikea", /ikea/i], ["zara", /\bzara\b/i], ["bigbasket", /big ?basket/i], ["dunzo", /dunzo/i],
+  ["indigo", /indigo/i], ["airindia", /air ?india/i], ["googleplay", /google ?play/i], ["playstation", /playstation|\bpsn\b/i], ["steam", /\bsteam/i], ["paypal", /paypal/i], ["doordash", /doordash/i], ["lyft", /\blyft\b/i], ["tesco", /tesco/i], ["lidl", /lidl/i],
+  ["ebay", /\bebay\b/i], ["etsy", /\betsy\b/i], ["shopify", /shopify/i], ["hbomax", /hbo/i], ["audible", /audible/i], ["bookingdotcom", /booking\.com/i], ["expedia", /expedia/i], ["emirates", /emirates/i], ["ryanair", /ryanair/i], ["easyjet", /easyjet/i],
+  ["lufthansa", /lufthansa/i], ["qatarairways", /qatar air/i], ["grab", /\bgrab\b/i], ["gojek", /gojek/i], ["deliveroo", /deliveroo/i], ["justeat", /just ?eat/i], ["revolut", /revolut/i], ["monzo", /monzo/i], ["wise", /\bwise\b/i], ["tata", /tata/i], ["anthropic", /anthropic|claude/i], ["google", /\bgoogle\b/i]];
+const brandOf = t => { const x = String(t || ""); for (const [k, re] of BRANDS) if (re && re.test(x) && window.LOGOS && LOGOS[k]) return k; return null; };
+const darkish = hex => { const n = parseInt(hex, 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) < 70; };
+function ico(c, title) {
+  const k = brandOf(title);
+  if (!k) return `<span class="ico" style="background:${CAT[c].c}22">${CAT[c].e}</span>`;
+  const [hex, d] = LOGOS[k], fill = darkish(hex) ? "var(--ink)" : "#" + hex;
+  return `<span class="ico logo" style="background:${darkish(hex) ? "var(--card2)" : "#" + hex + "1F"}" role="img" aria-label="${esc(k)} logo"><svg viewBox="0 0 24 24" width="24" height="24" fill="${fill}"><path d="${d}"/></svg></span>`;
+}
 function sparkline(vals, w = 320, h = 54) {
   if (vals.length < 2) return "";
   const mn = Math.min(...vals, 0), mx = Math.max(...vals, 0.01), rng = mx - mn || 1;
@@ -597,89 +647,93 @@ function toast(msg, undo) {
    ========================================================= */
 function greet() { const h = new Date().getHours(); return h < 5 ? "Late night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"; }
 
-function renderHome() {
-  const n = net(), d = describe(n), all = events();
-  const today = startOfDay(Date.now()), before = netAt(today - 1, all), delta = r2(n - before);
-  const series = []; for (let i = 13; i >= 0; i--) series.push(netAt(endOfDay(Date.now() - i * DAY), all));
-  const mo = S.exp.filter(e => e.ts > Date.now() - 30 * DAY);
-  const total = mo.reduce((a, e) => a + e.amt, 0), paidMe = mo.filter(e => e.paid === "me").reduce((a, e) => a + e.amt, 0), paidP = total - paidMe;
-  const byCat = {}; mo.forEach(e => byCat[e.cat] = (byCat[e.cat] || 0) + e.amt);
+
+/* =========================================================
+   MONTH — the one screen that matters: balance → month story → timeline
+   ========================================================= */
+const wkStart = ts => { const d = new Date(startOfDay(ts)); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
+function renderMonth() {
+  const m = U.month, isNow = m.getTime() === monthStart(new Date()).getTime(), n = net(), d = describe(n), all = events();
+  const mExp = S.exp.filter(e => inMonth(e.ts, m)), mSet = S.set.filter(x => inMonth(x.ts, m));
+  const total = mExp.reduce((a, e) => a + e.amt, 0), mine = r2(mExp.reduce((a, e) => a + shareMe(e), 0)), theirs = r2(total - mine);
+  const byCat = {}; mExp.forEach(e => byCat[e.cat] = (byCat[e.cat] || 0) + e.amt);
   const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-  const todays = S.exp.filter(e => dkey(e.ts) === dkey(Date.now())), todayTotal = todays.reduce((a, e) => a + e.amt, 0);
-  const recent = [...S.exp].sort((a, b) => b.ts - a.ts).slice(0, 5);
-  const avg = total / 30, mineShare = r2(mo.reduce((a, e) => a + shareMe(e), 0)), paidMe30 = mo.filter(e => e.paid === "me").reduce((a, e) => a + e.amt, 0);
-  const deltaChip = Math.abs(delta) < 0.5 ? `<span class="chip-d">No change today</span>` : `<span class="chip-d">${delta > 0 ? "▲" : "▼"} ${money(Math.abs(delta), { round: true })} today</span>`;
+  const theirFlags = S.exp.filter(e => e.fl && e.fl.by === "p"), myFlags = S.exp.filter(e => e.fl && e.fl.by === "me");
+  const flaggedInMonth = mExp.filter(e => e.fl).length;
+  const mEnd = isNow ? Date.now() : new Date(m.getFullYear(), m.getMonth() + 1, 0, 23, 59, 59).getTime(), mStart = m.getTime();
+  const opening = netAt(mStart - 1, all), closing = netAt(mEnd, all), series = [opening];
+  for (let t = startOfDay(mStart); t <= mEnd; t += DAY) series.push(netAt(endOfDay(t), all));
+  const hv = isNow ? n : closing, hd = describe(hv);
+  const delta = isNow ? r2(n - netAt(startOfDay(Date.now()) - 1, all)) : r2(closing - opening);
+  const deltaChip = Math.abs(delta) < 0.5 ? `<span class="chip-d">${isNow ? "No change today" : "No change"}</span>` : `<span class="chip-d">${delta > 0 ? "▲" : "▼"} ${money(Math.abs(delta), { round: true })} ${isNow ? "today" : "this month"}</span>`;
+  const bal = balanceDaily(), bk = Object.keys(bal).sort(), balOn = k => { let v = 0; for (const x of bk) { if (x <= k) v = bal[x]; else break; } return v; };
+  // weeks of this month (Mon-start), clipped to the month, each with the combined total
+  const weeks = []; { const first1 = wkStart(mStart), lastD = new Date(m.getFullYear(), m.getMonth() + 1, 0); for (let w = first1; w <= lastD.getTime(); w += 7 * DAY) { const a0 = Math.max(w, mStart), b0 = Math.min(w + 6 * DAY, lastD.getTime()); weeks.push({ w, label: a0 === b0 ? new Date(a0).getDate() : new Date(a0).getDate() + "–" + new Date(b0).getDate(), tot: mExp.filter(e => wkStart(e.ts) === w).reduce((a, e) => a + e.amt, 0), cur: isNow && wkStart(Date.now()) === w, n: mExp.filter(e => wkStart(e.ts) === w).length }); } }
+  const wkOk = ts => U.week == null || wkStart(ts) === U.week;
+  const flt = e => wkOk(e.ts) && (U.cat === "all" || (U.cat === "flag" ? !!e.fl : e.cat === U.cat));
+  const list = mExp.filter(flt), big = mExp.length > 2 ? [...mExp].sort((a, b) => b.amt - a.amt)[0].id : null;
+  const days = {}; list.forEach(e => (days[dkey(e.ts)] = days[dkey(e.ts)] || { e: [], s: [] }).e.push(e));
+  if (U.cat === "all") mSet.filter(x => wkOk(x.ts)).forEach(x => (days[dkey(x.ts)] = days[dkey(x.ts)] || { e: [], s: [] }).s.push(x));
+  const keys = Object.keys(days).sort().reverse();
+  const sign = v => (Math.abs(v) < 0.5 ? 0 : v > 0 ? 1 : -1); let prevSign = sign(opening); const flips = {};
+  Object.keys(days).sort().forEach(k => { const sg = sign(balOn(k)); if (sg !== prevSign && U.cat === "all" && wkOk(new Date(k + "T12:00:00").getTime())) flips[k] = sg; prevSign = sg; });
+  let tl = "", lastWk = null;
+  keys.forEach((k, idx) => {
+    const g = days[k], ts = new Date(k + "T12:00:00").getTime(), w = wkStart(ts);
+    if (w !== lastWk) { const wt = list.filter(e => wkStart(e.ts) === w).reduce((a, e) => a + e.amt, 0); tl += `<div class="wk"><span>Week of ${new Date(w).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span><span>${money(wt, { round: true })}</span></div>`; lastWk = w; }
+    const dt = g.e.reduce((a, e) => a + e.amt, 0), bv = balOn(k), b = describe(bv), isToday = k === dkey(Date.now());
+    const wd = new Date(ts).toLocaleDateString("en-GB", { weekday: "short" });
+    if (flips[k] !== undefined) tl += `<div class="tn ms"><span class="dot">⚖️</span><div class="mcard">${flips[k] === 0 ? "Back to even — all square" : flips[k] > 0 ? `Balance flipped · <b>${esc(first(S.p.name))} owes you</b>` : `Balance flipped · <b>you owe ${esc(first(S.p.name))}</b>`}</div></div>`;
+    g.s.forEach(x => { tl += `<div class="tn ms"><span class="dot">🤝</span><div class="mcard"><b>Settled up</b> · ${esc(first(person(x.from).name))} paid ${esc(first(person(other(x.from)).name))} ${money(x.amt, { round: true })}</div></div>`; });
+    if (g.e.length) tl += `<div class="tn ${isToday ? "today" : ""}"><span class="dot"><span><b>${new Date(ts).getDate()}</b><small>${wd}</small></span></span>
+      <div class="tn-h"><span>${dayLabel(k)}</span><span class="tn-m">${money(dt, { round: true })}<i class="pill ${b.cls}">${b.k === "even" ? "Even" : (b.k === "owed" ? "+" : "−") + compact(Math.abs(bv))}</i></span></div>
+      <div class="list">${g.e.sort((a, b) => b.ts - a.ts).map(e => rowHtml(e, e.id === big)).join("")}</div></div>`;
+  });
+  if (U.cat === "all" && (U.week == null || U.week === wkStart(mStart))) tl += `<div class="tn ms origin"><span class="dot">📌</span><div class="mcard">${esc(monthLabel(m).split(" ")[0])} began · ${sign(opening) === 0 ? "you were all square" : `carried over <b>${sign(opening) > 0 ? esc(first(S.p.name)) + " owes you" : "you owe " + esc(first(S.p.name))} ${money(Math.abs(opening), { round: true })}</b>`}</div></div>`;
+  const nudge = !syncOn() && S.exp.length ? `<div class="banner inv"><span style="font-size:26px">💌</span><div style="flex:1"><b>See this month together</b>Invite ${esc(first(S.p.name))} on WhatsApp — it takes one tap.</div><button class="btn wa" data-act="quick-invite">Invite</button></div>` : syncOn() && !S.sync.partner ? `<div class="banner inv"><span style="font-size:26px">⏳</span><div style="flex:1"><b>Waiting for ${esc(first(S.p.name))}</b>Share the invite again if it got lost.</div><button class="btn wa" data-act="show-invite">Share</button></div>` : "";
+  const flagBanner = theirFlags.length ? `<button class="banner warn" data-act="review-flags"><span style="font-size:24px">⚠️</span><div style="flex:1;text-align:left"><b>${esc(first(S.p.name))} questioned ${theirFlags.length} expense${theirFlags.length > 1 ? "s" : ""}</b>Take a quick look and sort it out together.</div><span class="muted">›</span></button>` : "";
   return `
-  <div class="large"><div class="eyebrow">${greet()}, ${esc(first(S.me.name))}</div><h1>Our money</h1></div>
-  <section class="hero ${d.k === "even" ? "" : d.k}" aria-label="Balance">
-    <div class="who"><span class="pair">${av("me", "sm")}${av("p", "sm")}</span><span>${esc(d.who)}</span><span class="spacer"></span><button class="info" data-act="howBalance" aria-label="How balance works">?</button></div>
-    <div class="big" id="bigbal" data-v="${Math.abs(n)}">${d.k === "even" ? "✓ Settled" : money(Math.abs(n), { round: true })}</div>
+  <div class="mbar"><div class="mnav2"><button data-act="mprev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="mt"><b>${monthLabel(m)}</b>${isNow ? `<small>Day ${new Date().getDate()} of ${new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate()}</small>` : `<small>${isNow ? "" : "Past month"}</small>`}</div>
+    <button data-act="mnext" ${isNow ? "disabled" : ""} aria-label="Next month"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+    <button class="you" data-act="tab" data-arg="you" aria-label="You and settings"><span class="pair">${av("me", "sm")}${av("p", "sm")}</span></button></div>
+  <section class="hero ${hd.k === "even" ? "" : hd.k}" aria-label="Balance">
+    <div class="who"><span>${isNow ? esc(hd.who) : "End of " + esc(monthLabel(m).split(" ")[0]) + " · " + esc(hd.who)}</span><span class="spacer"></span><button class="info" data-act="howBalance" aria-label="How balance works">?</button></div>
+    <div class="big" id="bigbal" data-v="${Math.abs(hv)}">${hd.k === "even" ? "✓ Settled" : money(Math.abs(hv), { round: true })}</div>
     <div class="sub">${deltaChip}<span><i class="syncdot ${syncOn() ? (U.sync === "syncing" ? "busy" : U.sync === "offline" ? "off" : "") : "off"}"></i><span class="syncLbl">${syncLabel()}</span></span></div>
     ${sparkline(series)}
-    <div class="actions">
-      ${d.k === "even" ? `<button class="btn glass" data-act="add">＋ Add an expense</button>` : `<button class="btn white" data-act="settle">Settle up</button><button class="btn glass" data-act="add">＋ Add</button>`}
-    </div>
+    <div class="actions">${!isNow ? `<button class="btn white" data-act="today">Back to this month${d.k === "even" ? "" : " · " + money(Math.abs(n), { round: true })}</button>` : d.k === "even" ? `<button class="btn glass" data-act="add">＋ Add an expense</button>` : `<button class="btn white" data-act="settle">Settle up</button><button class="btn glass" data-act="add">＋ Add</button>`}</div>
   </section>
-  ${agentCardHtml()}${syncOn() || !S.exp.length ? "" : `<div class="banner"><span style="font-size:24px">🔗</span><div style="flex:1"><b>Better together</b>Connect ${esc(first(S.p.name))}'s phone to share expenses live.</div><button class="btn prime" data-act="pair">Connect</button></div>`}
-  <div class="tiles">
-    <div class="tile"><div class="k">Together · 30 days</div><div class="v" data-count="${total}">${money(total, { round: true })}</div><div class="d">${money(avg, { round: true })} per day</div></div>
-    <div class="tile"><div class="k">Today</div><div class="v">${money(todayTotal, { round: true })}</div><div class="d">${todays.length ? todays.length + " expense" + (todays.length > 1 ? "s" : "") : "Nothing yet"}</div></div>
-    <div class="tile"><div class="k"><span class="dot" style="background:${S.me.color};display:inline-block;margin-right:6px"></span>${esc(first(S.me.name))}'s share</div><div class="v">${money(mineShare, { round: true })}</div><div class="d">paid ${money(paidMe30, { round: true })} upfront</div></div>
-    <div class="tile"><div class="k"><span class="dot" style="background:${S.p.color};display:inline-block;margin-right:6px"></span>${esc(first(S.p.name))}'s share</div><div class="v">${money(total - mineShare, { round: true })}</div><div class="d">paid ${money(total - paidMe30, { round: true })} upfront</div></div>
-  </div>
-  <div class="sec"><h2>Where it went</h2><button data-act="tab" data-arg="insights">Details</button></div>
-  <div class="card">
-    ${total ? `
-    <div class="stack" aria-hidden="true">${cats.map(([c, v]) => `<i style="background:${CAT[c].c};flex-grow:${v}"></i>`).join("")}</div>
-    <div class="legend">${cats.slice(0, 6).map(([c, v]) => `<div><span class="dot" style="background:${CAT[c].c}"></span><span class="n">${CAT[c].n}</span><b>${compact(v)}</b></div>`).join("")}</div>
-    <div class="lab" style="margin:20px 4px 8px">Who paid</div>
-    <div class="stack" aria-hidden="true"><i style="background:${S.me.color};flex-grow:${paidMe}"></i><i style="background:${S.p.color};flex-grow:${paidP}"></i></div>
-    <div class="row" style="margin-top:12px;font-size:14px"><span class="dot" style="background:${S.me.color}"></span><span class="muted">${esc(first(S.me.name))}</span><b>${money(paidMe, { round: true })}</b><span class="spacer"></span><b>${money(paidP, { round: true })}</b><span class="muted">${esc(first(S.p.name))}</span><span class="dot" style="background:${S.p.color}"></span></div>`
-      : `<div class="empty" style="padding:22px"><div class="big">🌱</div><b>A fresh month</b>Add your first expense and your breakdown appears here.</div>`}
-  </div>
-  <div class="sec"><h2>Latest</h2><button data-act="tab" data-arg="activity">See all</button></div>
-  ${recent.length ? `<div class="list">${recent.map(rowHtml).join("")}</div>` : `<div class="card empty"><div class="big">🧾</div><b>Nothing here yet</b>Tap the + button to log your first shared expense.</div>`}
-  `;
+  ${flagBanner}${nudge}
+  <button class="strip" data-act="breakdown" aria-label="Open the month breakdown">
+    <div><small>Together</small><b data-count="${total}">${money(total, { round: true })}</b></div>
+    <div><small><i class="dot2" style="background:${S.me.color}"></i>${esc(first(S.me.name))}</small><b>${money(mine, { round: true })}</b></div>
+    <div><small><i class="dot2" style="background:${S.p.color}"></i>${esc(first(S.p.name))}</small><b>${money(theirs, { round: true })}</b></div>
+    <span class="more">Breakdown ›</span></button>
+  ${isNow ? agentCardHtml(true) : ""}
+  ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all"><b>Month</b><small>${compact(total)}</small></button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}"><b>${w.cur ? "This week" : w.label}</b><small>${w.n ? compact(w.tot) : "—"}</small></button>`).join("")}</div>` : ""}
+  ${cats.length || flaggedInMonth ? `<div class="chips" role="tablist" style="margin-top:4px"><button class="chip sm ${U.cat === "all" ? "on" : ""}" data-act="cat" data-arg="all">All types</button>${flaggedInMonth ? `<button class="chip sm ${U.cat === "flag" ? "on" : ""}" data-act="cat" data-arg="flag">⚠️ Questioned · ${flaggedInMonth}</button>` : ""}${cats.map(([c, v]) => `<button class="chip sm ${U.cat === c ? "on" : ""}" data-act="cat" data-arg="${c}">${CAT[c].e} ${CAT[c].n.split(" ")[0]} · ${compact(v)}</button>`).join("")}</div>` : ""}
+  <div class="tl" id="tl">${tl}</div>
+  ${!mExp.length && !mSet.length ? `<div class="empty"><div class="big">🗓️</div><b>${isNow ? "A fresh month" : "Nothing here"}</b>${isNow ? "Add your first expense — your timeline starts here." : "No expenses were logged in " + monthLabel(m) + "."}</div>` : ""}`;
+}
+function openBreakdown() {
+  U.insMonth = U.month;
+  openSheet("Breakdown", `<div id="bd">${renderInsights()}</div>`, b => animateIn(b));
 }
 
-function rowHtml(e) {
+
+function rowHtml(e, big) {
   const eff = effectMe(e), p = first(S.p.name);
-  const side = Math.abs(eff) < 0.005 ? `<small class="muted">no effect</small>` : eff > 0 ? `<small class="pos">${esc(p)} owes ${money(eff, { round: true })}</small>` : `<small class="neg">you owe ${money(-eff, { round: true })}</small>`;
-  const split = e.sm === 50 ? "Equal split" : e.sm === 100 ? "Just " + esc(first(S.me.name)) : e.sm === 0 ? "Just " + esc(p) : `${e.sm}/${100 - e.sm}`;
-  return `<button class="li" data-act="open" data-arg="${e.id}">${ico(e.cat)}<div class="mid"><div class="t1">${esc(e.title)}</div>
-    <div class="t2">${av(e.paid, "sm")}<span>${esc(first(person(e.paid).name))} · ${split}</span>${e.src === "sms" ? `<span class="sms">SMS</span>` : e.src === "agent" ? `<span class="sms">NEST</span>` : ""}</div></div>
+  const side = Math.abs(eff) < 0.005 ? "" : eff > 0 ? `<small class="pos" aria-label="you get ${money(eff)}">+${money(eff, { round: true })}</small>` : `<small class="neg" aria-label="you owe ${money(-eff)}">−${money(-eff, { round: true })}</small>`;
+  const who = e.sm === 50 ? "Equal split" : e.sm === 100 ? "Just " + esc(first(S.me.name)) : e.sm === 0 ? "Just " + esc(p) : `${e.sm}/${100 - e.sm} split`;
+  const tag = e.fl ? `<span class="flag">⚠️ ${e.fl.by === "p" ? esc(p) + " asked" : "you asked"}</span>` : big ? `<span class="big-t">🔥 Biggest</span>` : "";
+  return `<button class="li" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div>
+    <div class="t2"><i class="pd" style="background:${person(e.paid).color}" aria-hidden="true"></i><span>${esc(first(person(e.paid).name))} paid · ${who}</span>${tag}</div></div>
     <div class="amt">${money(e.amt)}${side}</div></button>`;
 }
 
-function renderActivity() {
-  const m = U.month, now = monthStart(new Date()), isNow = m.getTime() === now.getTime();
-  let list = S.exp.filter(e => inMonth(e.ts, m));
-  const sets = S.set.filter(s => inMonth(s.ts, m));
-  if (U.filter === "shared") list = list.filter(e => e.sm > 0 && e.sm < 100);
-  else if (U.filter === "me" || U.filter === "p") list = list.filter(e => e.paid === U.filter);
-  const bal = balanceDaily(), days = {};
-  list.forEach(e => (days[dkey(e.ts)] = days[dkey(e.ts)] || { e: [], s: [] }).e.push(e));
-  if (U.filter === "all") sets.forEach(s => (days[dkey(s.ts)] = days[dkey(s.ts)] || { e: [], s: [] }).s.push(s));
-  const keys = Object.keys(days).sort().reverse();
-  const bk = Object.keys(bal).sort();
-  const balOn = k => { let v = 0; for (const x of bk) { if (x <= k) v = bal[x]; else break; } return v; };
-  const tot = list.reduce((a, e) => a + e.amt, 0);
-  return `
-  <div class="large"><div class="eyebrow">${list.length} expense${list.length === 1 ? "" : "s"} · ${money(tot, { round: true })}</div><h1>Activity</h1></div>
-  <div class="mnav"><button data-act="mprev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="m">${monthLabel(m)}</div><button data-act="mnext" ${isNow ? "disabled" : ""} aria-label="Next month"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
-  <div class="chips" role="tablist">
-    ${[["all", "All"], ["shared", "Shared"], ["me", esc(first(S.me.name)) + " paid"], ["p", esc(first(S.p.name)) + " paid"]].map(([k, l]) => `<button class="chip ${U.filter === k ? "on" : ""}" data-act="filter" data-arg="${k}">${l}</button>`).join("")}
-  </div>
-  <div class="hint" style="text-align:left;padding:0 4px">The pill on each day shows your running balance at day's end.</div>
-  ${keys.length ? keys.map(k => {
-    const g = days[k], dt = g.e.reduce((a, e) => a + e.amt, 0), b = describe(balOn(k));
-    return `<div class="dayh"><div class="l">${dayLabel(k)}<small>${dt ? money(dt, { round: true }) + " spent" : ""}</small></div><span class="pill ${b.cls}">${b.k === "even" ? "Settled ✓" : (b.k === "owed" ? "+" : "−") + money(Math.abs(balOn(k)), { round: true })}</span></div>
-    <div class="list">${g.e.sort((a, b) => b.ts - a.ts).map(rowHtml).join("")}${g.s.map(s => `<div class="li">${`<span class="ico" style="background:#1FA97122">🤝</span>`}<div class="mid"><div class="t1">Settled up</div><div class="t2">${esc(first(person(s.from).name))} paid ${esc(first(person(other(s.from)).name))}</div></div><div class="amt pos">${money(s.amt)}</div></div>`).join("")}</div>`;
-  }).join("") : `<div class="empty"><div class="big">🗓️</div><b>No expenses here</b>${U.filter === "all" ? "Nothing logged in " + monthLabel(m) + "." : "Try a different filter."}</div>`}`;
-}
-
 function renderInsights() {
-  const m = U.insMonth, isNow = m.getTime() === monthStart(new Date()).getTime();
+  const m = U.month, isNow = m.getTime() === monthStart(new Date()).getTime();
   const sc = U.scope, scoped = e => sc === "all" ? e.amt : sc === "me" ? shareMe(e) : r2(e.amt - shareMe(e));
   const view = list => list.map(e => Object.assign({}, e, { full: e.amt, amt: scoped(e) })).filter(e => e.amt > 0);
   const mo = view(S.exp.filter(e => inMonth(e.ts, m))), total = mo.reduce((a, e) => a + e.amt, 0);
@@ -702,9 +756,8 @@ function renderInsights() {
   if (total > 0) { const sh = mo.filter(e => e.sm > 0 && e.sm < 100).reduce((a, e) => a + e.amt, 0); ins.push({ e: "🤝", t: `<b>${Math.round(sh / total * 100)}%</b> of spending was shared between you two.` }); }
   const peak = perDay.indexOf(Math.max(...perDay)); if (total > 0) ins.push({ e: "🔥", t: `Biggest day: <b>${new Date(m.getFullYear(), m.getMonth(), peak + 1).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}</b> — ${money(perDay[peak], { round: true })}.` });
   return `
-  <div class="large"><div class="eyebrow">Breakdown · ${who}</div><h1>Insights</h1></div>
+  <div class="lab" style="margin:0 4px 8px">${monthLabel(m)} · ${who}</div>
   <div class="seg" style="margin-bottom:4px"><button class="${sc === "all" ? "on" : ""}" data-act="scope" data-arg="all">Together</button><button class="${sc === "me" ? "on" : ""}" data-act="scope" data-arg="me">${esc(first(S.me.name))}</button><button class="${sc === "p" ? "on" : ""}" data-act="scope" data-arg="p">${esc(first(S.p.name))}</button></div>
-  <div class="mnav"><button data-act="iprev" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="m">${monthLabel(m)}</div><button data-act="inext" ${isNow ? "disabled" : ""} aria-label="Next month"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
   ${total ? `
   <div class="card" style="margin-top:6px">
     <div class="donutw"><svg viewBox="0 0 180 180" aria-label="Spending by category"><circle cx="90" cy="90" r="${R}" stroke="var(--card2)"/>
@@ -729,7 +782,7 @@ function renderInsights() {
   <div class="card"><div class="daily" role="img" aria-label="Daily spending">${perDay.map((v, i) => `<i class="${v ? "has" : ""} ${i === todayIdx ? "today" : ""}" data-h="${v / mx * 100}"></i>`).join("")}</div>
     <div class="axis"><span>1</span><span>${Math.round(dim / 2)}</span><span>${dim}</span></div></div>
   <div class="sec"><h2>Top places</h2></div>
-  <div class="list">${topM.map(([k, v]) => `<div class="li">${ico(v.c)}<div class="mid"><div class="t1">${esc(k)}</div><div class="t2">${v.n} time${v.n > 1 ? "s" : ""}</div></div><div class="amt">${money(v.t, { round: true })}</div></div>`).join("")}</div>
+  <div class="list">${topM.map(([k, v]) => `<div class="li">${ico(v.c, k)}<div class="mid"><div class="t1">${esc(k)}</div><div class="t2">${v.n} time${v.n > 1 ? "s" : ""}</div></div><div class="amt">${money(v.t, { round: true })}</div></div>`).join("")}</div>
   <div class="sec"><h2>Highlights</h2></div>
   <div class="card flush">${ins.map(i => `<div class="insight"><span class="e">${i.e}</span><p>${i.t}</p></div>`).join("")}</div>`
       : `<div class="card empty" style="margin-top:12px"><div class="big">📊</div><b>No spending in ${monthLabel(m)}</b>Add expenses and a full breakdown will appear here.</div>`}`;
@@ -739,7 +792,7 @@ function renderYou() {
   const tg = (k, l) => `<button class="${S.theme === k ? "on" : ""}" data-act="theme" data-arg="${k}">${l}</button>`;
   const sw = k => `<div class="swatches" data-who="${k}">${SWATCH.map(c => `<button class="sw ${person(k).color === c ? "on" : ""}" style="background:${c}" data-act="color" data-arg="${k}|${c}" aria-label="Colour ${c}"></button>`).join("")}</div>`;
   return `
-  <div class="large"><div class="eyebrow">Settings</div><h1>You two</h1></div>
+  <div class="large"><button class="link" data-act="tab" data-arg="month" style="padding:6px 0">‹ This month</button><h1>You two</h1></div>
   <div class="card">
     <div class="row">${av("me", "lg")}<input class="inp" id="nm-me" value="${esc(S.me.name)}" maxlength="18" aria-label="Your name" style="min-height:46px"></div>${sw("me")}
     <div class="row" style="margin-top:18px">${av("p", "lg")}<input class="inp" id="nm-p" value="${esc(S.p.name)}" maxlength="18" aria-label="Partner's name" style="min-height:46px"></div>${sw("p")}
@@ -747,8 +800,9 @@ function renderYou() {
   <div class="sec"><h2>Sync & agent</h2></div>
   ${syncOn() ? `<div class="card">
     <div class="row"><span class="ib" style="background:#1FA97122;width:40px;height:40px;font-size:20px">☁️</span><div style="flex:1;min-width:0"><b style="font-size:16px">${S.sync.partner ? "Synced with " + esc(first(S.p.name)) : "Waiting for your partner"}</b><div class="muted" style="font-size:13px;margin-top:2px"><i class="syncdot ${U.sync === "ok" || !U.sync ? "" : U.sync === "syncing" ? "busy" : "off"}"></i><span class="syncLbl">${syncLabel()}</span></div></div></div>
-    ${S.sync.partner ? "" : `<div class="code" style="font-size:34px">${esc(S.sync.code || "")}</div><button class="btn prime block" data-act="share-code">Share invite</button>`}
+    ${S.sync.partner ? "" : `<button class="btn wa block" data-act="wa-send" style="margin-top:12px">Send invite on WhatsApp</button>`}
     <div class="muted" style="font-size:13px;margin:14px 2px 0;line-height:1.45">${S.sync.agent === false ? "🤖 The AI agent isn't enabled on your server yet." : "🤖 Nest agent is on — it reads your synced expenses to answer questions."}</div>
+    ${S.sync.partner ? "" : `<button class="btn soft block" data-act="show-invite" style="margin-top:10px">Show QR code</button>`}
     <div class="row" style="margin-top:14px"><button class="btn soft" style="flex:1" data-act="sync-now">Sync now</button><button class="btn danger" style="flex:1" data-act="disconnect">Disconnect</button></div></div>`
   : `<div class="card"><div class="row"><span class="ib" style="background:#5B5BD622;width:40px;height:40px;font-size:20px">🔗</span><div style="flex:1"><b style="font-size:16px">Sync with ${esc(first(S.p.name))}</b><div class="muted" style="font-size:13px;margin-top:2px">Shared expenses on both phones, live. Unlocks the AI agent.</div></div></div>
     <div class="row" style="margin-top:14px"><button class="btn prime" style="flex:1" data-act="pair">Create our Nest</button><button class="btn soft" style="flex:1" data-act="pair-join">I have a code</button></div></div>`}
@@ -759,7 +813,8 @@ function renderYou() {
     <div class="seg">${tg("auto", "Auto")}${tg("light", "Light")}${tg("dark", "Dark")}</div></div>
   <div class="sec"><h2>Import & data</h2></div>
   <div class="list set">
-    <button class="li" data-act="rescan"><span class="ib" style="background:#5B5BD622">💬</span><div class="mid"><div class="t1">Scan SMS inbox</div><div class="t2">Find payments you haven't added yet</div></div><span class="muted">›</span></button>
+    ${SMS_INBOX ? `<button class="li" data-act="rescan"><span class="ib" style="background:#5B5BD622">💬</span><div class="mid"><div class="t1">Scan SMS inbox</div><div class="t2">Find payments you haven't added yet</div></div><span class="muted">›</span></button>` : ""}
+    <button class="li" data-act="paste"><span class="ib" style="background:#5B5BD622">📋</span><div class="mid"><div class="t1">Paste or share bank texts</div><div class="t2">Turn payment messages into expenses</div></div><span class="muted">›</span></button>
     <button class="li" data-act="sample"><span class="ib" style="background:#F5A52422">✨</span><div class="mid"><div class="t1">Load sample month</div><div class="t2">See Nest with realistic data</div></div><span class="muted">›</span></button>
     <button class="li" data-act="export"><span class="ib" style="background:#12A59422">⬆️</span><div class="mid"><div class="t1">Export as CSV</div><div class="t2">Share ${S.exp.length} expenses</div></div><span class="muted">›</span></button>
     <button class="li" data-act="reset"><span class="ib" style="background:#E5484D22">🗑️</span><div class="mid"><div class="t1" style="color:var(--owe)">Erase everything</div><div class="t2">Removes all expenses on this phone</div></div><span class="muted">›</span></button>
@@ -771,46 +826,99 @@ function renderYou() {
 /* =========================================================
    PAIRING (create / join)
    ========================================================= */
-function openPair(mode, fromOb) {
-  const create = mode === "create", needUrl = !DEFAULT_SERVER;
-  openSheet(create ? "Create your Nest" : "Join your partner", `
-  <div class="card"><p style="line-height:1.5;color:var(--sub)">${create ? "Your expenses will sync through your own private server. Share the code and your partner is in." : "Enter the 6-letter code your partner shared."}</p></div>
-  ${create ? "" : `<div class="field"><label for="pr-code">Invite code</label><input class="inp" id="pr-code" maxlength="7" autocapitalize="characters" autocomplete="off" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:.2em;font-size:22px;font-weight:700;text-align:center"></div>
-  <div class="field"><label for="pr-name">Your name</label><input class="inp" id="pr-name" maxlength="18" value="${esc(S.me.name === "You" ? "" : S.me.name)}" placeholder="Name" autocomplete="off"></div>`}
-  ${needUrl ? `<div class="field"><label for="pr-url">Server address</label><input class="inp" id="pr-url" inputmode="url" autocapitalize="none" autocomplete="off" placeholder="nest-sync.you.workers.dev" value="${esc((S.sync && S.sync.url) || localStorage.getItem("nest.url") || "")}"></div>` : ""}
+let ready = false, queuedInvite = null, queuedShare = "";
+const savedUrl = () => { try { return localStorage.getItem("nest.url") || ""; } catch (e) { return ""; } };
+async function connectCreate(url) {
+  const r = await api("/v1/pair/create", { name: S.me.name, color: S.me.color, cur: S.cur }, { base: url, token: "" });
+  try { localStorage.setItem("nest.url", url); } catch (e) { }
+  S.sync = { url, couple: r.couple, token: r.token, member: r.member, cursor: 0, pushed: 0, code: r.code, partner: false, lastOk: 0 };
+  adoptLocal(); persist(); await syncNow();
+}
+function openPair(mode, fromOb, pre) {
+  const create = mode === "create", needUrl = !DEFAULT_SERVER && !pre;
+  openSheet(create ? "Create your Nest" : pre ? `Join ${esc(pre.inviter)}'s Nest` : "Join your partner", `
+  <div class="card"><p style="line-height:1.5;color:var(--sub)">${create ? "Your expenses will sync through your own private server. Then invite your partner in one tap." : pre ? `${esc(pre.inviter)} invited you. Add your name and you're in — you'll both see the same month.` : "Enter the 6-letter code your partner shared."}</p></div>
+  ${create || pre ? "" : `<div class="field"><label for="pr-code">Invite code</label><input class="inp" id="pr-code" maxlength="7" autocapitalize="characters" autocomplete="off" placeholder="ABC123" style="text-transform:uppercase;letter-spacing:.2em;font-size:22px;font-weight:700;text-align:center"></div>`}
+  ${create ? "" : `<div class="field"><label for="pr-name">Your name</label><input class="inp" id="pr-name" maxlength="18" value="${esc(S.me.name === "You" ? "" : S.me.name)}" placeholder="Name" autocomplete="off"></div>`}
+  ${needUrl ? `<div class="field"><label for="pr-url">Server address</label><input class="inp" id="pr-url" inputmode="url" autocapitalize="none" autocomplete="off" placeholder="nest-sync.you.workers.dev" value="${esc((S.sync && S.sync.url) || savedUrl())}"></div>` : ""}
   <div class="hint" id="pr-err" style="color:var(--owe);min-height:20px"></div>
   <button class="btn prime block" id="pr-go" style="margin-top:6px">${create ? "Create Nest" : "Join Nest"}</button>
   <div class="hint">Only the expenses you add are synced. Your SMS never leave your phone.</div>`, b => {
-    const err = m => { $("#pr-err", b).textContent = m || ""; }, go = $("#pr-go", b);
+    const err = m => { $("#pr-err", b).textContent = m || ""; }, go = $("#pr-go", b), label = go.textContent;
     go.onclick = async () => {
       err(""); go.disabled = true; go.textContent = "Connecting…";
       try {
-        const url = normUrl(needUrl ? $("#pr-url", b).value : DEFAULT_SERVER); if (!url) throw new Error("Enter your server address.");
+        const url = pre ? pre.server : normUrl(needUrl ? $("#pr-url", b).value : DEFAULT_SERVER); if (!url) throw new Error("Enter your server address.");
+        if (create) { await connectCreate(url); closeSheet(); hap(2); openInvite(true); return; }
+        const code = (pre ? pre.code : $("#pr-code", b).value).trim().toUpperCase(), name = $("#pr-name", b).value.trim();
+        if (code.length < 6) throw new Error("The code has 6 characters."); if (!name) throw new Error("Add your name so your partner sees it.");
+        const pk = await api("/v1/pair/peek?code=" + encodeURIComponent(code), null, { base: url, token: "" });
+        if (pk.cur && CUR[pk.cur]) S.cur = pk.cur;
+        S.me.name = name; if (S.me.color === SWATCH[0] && pk.color === SWATCH[0]) S.me.color = SWATCH[1];
+        const r = await api("/v1/pair/join", { code, name, color: S.me.color, cur: S.cur }, { base: url, token: "" });
         try { localStorage.setItem("nest.url", url); } catch (e) { }
-        let r;
-        if (create) r = await api("/v1/pair/create", { name: S.me.name, color: S.me.color }, { base: url, token: "" });
-        else {
-          const code = $("#pr-code", b).value.trim(), name = $("#pr-name", b).value.trim();
-          if (code.length < 6) throw new Error("The code has 6 characters."); if (!name) throw new Error("Add your name so your partner sees it.");
-          if (name) { S.me.name = name; if (!fromOb) { } }
-          r = await api("/v1/pair/join", { code, name: S.me.name, color: S.me.color === S.p.color ? SWATCH[1] : S.me.color }, { base: url, token: "" });
-        }
-        S.sync = { url, couple: r.couple, token: r.token, member: r.member, cursor: 0, pushed: 0, code: r.code || null, partner: !create, lastOk: 0 };
-        adoptLocal(); persist(); closeSheet(); hap(2);
+        S.sync = { url, couple: r.couple, token: r.token, member: r.member, cursor: 0, pushed: 0, code: null, partner: true, lastOk: 0 };
+        adoptLocal(); S.mu = Date.now(); persist(); closeSheet(); hap(2);
         await syncNow();
-        if (create) openInvite(); else if (fromOb) { OB.step = 2; renderOb(); toast(`Connected to ${first(S.p.name)}'s Nest`); } else { show(U.tab, true); toast(`Connected to ${first(S.p.name)}'s Nest`); }
-      } catch (e) { go.disabled = false; go.textContent = create ? "Create Nest" : "Join Nest"; err(e.message); hap(3); }
+        if (fromOb) { OB.step = 2; renderOb(); } else show(U.tab, true);
+        toast(`Connected to ${first(S.p.name)}'s Nest`);
+      } catch (e) { go.disabled = false; go.textContent = label; err(e.message); hap(3); }
     };
   });
 }
-function inviteText() { return `Join me on Nest 💜 Open the app → Join your partner → code ${S.sync.code}`; }
-function openInvite() {
-  setTimeout(() => openSheet("Invite your partner", `
-  <div class="card" style="text-align:center;padding:26px 18px"><div class="muted">Your invite code</div><div class="code">${esc(S.sync.code || "")}</div><div class="muted" style="font-size:13.5px">Valid until ${esc(first(S.p.name))} joins</div></div>
-  <button class="btn prime block" data-act="share-code" style="margin-top:14px">Share invite</button>
-  <button class="btn soft block" data-act="close" style="margin-top:10px">Done</button>`), 350);
+async function handleInvite(code, server) {
+  if (!ready) { queuedInvite = { code, server }; return; }
+  if (syncOn()) { toast("You're already connected to a Nest"); return; }
+  try {
+    server = normUrl(server); const r = await api("/v1/pair/peek?code=" + encodeURIComponent(code), null, { base: server, token: "" });
+    if (r.full) { toast("That Nest already has two people."); return; }
+    closeSheet(); openPair("join", !S.onboarded, { code: String(code).toUpperCase(), server, inviter: r.inviter });
+  } catch (e) { toast(e.message || "That invite didn't work."); }
 }
-function shareText(title, text) { if (N && N.share) N.share(title, text); else if (navigator.share) navigator.share({ title, text }).catch(() => { }); else { try { navigator.clipboard.writeText(text); toast("Copied"); } catch (e) { } } }
+window.__invite = () => { try { const j = N && N.consumeInvite && N.consumeInvite(); if (j) { const o = JSON.parse(j); handleInvite(o.code, o.server); } } catch (e) { } };
+
+/* ---- inviting: WhatsApp link + QR the partner scans with the camera ---- */
+const inviteLink = () => `${S.sync.url}/j/${S.sync.code}`;
+const inviteText = () => `${first(S.p.name) === "Partner" ? "Hey" : first(S.p.name)}, join me on Nest 💜 one shared view of our money, month by month.\n${inviteLink()}`;
+function qrSvg(text) { try { const q = qrcode(0, "M"); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); } catch (e) { return ""; } }
+function sendWhatsApp() { if (!S.sync || !S.sync.code) return; if (N && N.shareWhatsApp) N.shareWhatsApp(inviteText()); else window.open("https://wa.me/?text=" + encodeURIComponent(inviteText()), "_blank"); }
+function openInvite(autoSend) {
+  const run = () => {
+    if (!syncOn() || !S.sync.code) { toast("You're already connected ✓"); return; }
+    const p = esc(first(S.p.name) === "Partner" ? "your partner" : first(S.p.name));
+    openSheet("Invite " + (first(S.p.name) === "Partner" ? "your partner" : esc(first(S.p.name))), `
+    <div class="card" style="text-align:center;padding:22px 18px">
+      <div class="qrbox" aria-label="Invite QR code">${qrSvg(inviteLink())}</div>
+      <div class="muted" style="margin-top:14px;font-size:14px;line-height:1.4">${p} can scan this with their phone camera,<br>or just tap the WhatsApp link.</div>
+      <div class="code" style="font-size:30px">${esc(S.sync.code)}</div></div>
+    <button class="btn wa block" data-act="wa-send" style="margin-top:14px;min-height:52px">Send on WhatsApp</button>
+    <div class="row" style="margin-top:10px"><button class="btn soft" style="flex:1;min-height:46px;font-size:15px" data-act="share-code">Share…</button><button class="btn soft" style="flex:1;min-height:46px;font-size:15px" data-act="copy-link">Copy link</button></div>
+    <div class="hint">The link opens Nest and connects you both automatically.</div>`);
+    if (autoSend) setTimeout(sendWhatsApp, 700);
+  };
+  setTimeout(run, $("#sheet").classList.contains("on") ? 350 : 0);
+}
+async function quickInvite(auto) {
+  if (!syncOn()) {
+    const url = DEFAULT_SERVER || savedUrl();
+    if (!url) { closeSheet(); setTimeout(() => openPair("create"), 350); return; }
+    toast("Creating your Nest…");
+    try { await connectCreate(url); } catch (e) { toast(e.message); return; }
+  }
+  openInvite(auto);
+}
+function openNudge() {
+  if (syncOn() || !S.exp.length) return; S.nudgedAt = Date.now(); persist();
+  const m = U.month, mo = S.exp.filter(e => inMonth(e.ts, m)), tot = mo.reduce((a, e) => a + e.amt, 0), n = net(), d = describe(n), p = esc(first(S.p.name));
+  openSheet("Your month is ready 🎉", `
+  <div class="card" style="text-align:center;padding:22px 18px"><div class="muted" style="font-size:13px;font-weight:700">${esc(monthLabel(m))}</div>
+    <div style="font-size:38px;font-weight:800;letter-spacing:-1.4px;margin:6px 0">${money(tot, { round: true })}</div>
+    <div class="muted">${mo.length} payment${mo.length === 1 ? "" : "s"}${d.k === "even" ? "" : ` · ${esc(d.who)} ${money(Math.abs(n), { round: true })}`}</div></div>
+  <p style="text-align:center;font-size:16px;line-height:1.45;margin:18px 6px 4px"><b>Invite ${p} now</b><br><span class="muted">${p} sees this exact month, and every new expense lands on both phones.</span></p>
+  <button class="btn wa block" data-act="quick-invite" style="margin-top:14px;min-height:54px">Invite on WhatsApp</button>
+  <button class="btn soft block" data-act="quick-qr" style="margin-top:10px">Show QR code instead</button>
+  <button class="link" data-act="close" style="display:block;margin:10px auto 0">Not now</button>`);
+}
 
 /* =========================================================
    AGENT — daily brief + chat (server-side AI) with an on-device fallback
@@ -832,11 +940,11 @@ function currentDigest() {
   const dg = S.digest, fresh = dg && dg.day === dkey(Date.now()) && dg.sig === S.exp.length + ":" + S.set.length;
   return fresh ? Object.assign({ ai: true }, dg.d) : Object.assign({ ai: false, loading: aiOk() && !!S.exp.length }, localDigest());
 }
-function agentCardHtml() {
+function agentCardHtml(compact) {
   const d = currentDigest(), n = net();
-  return `<section class="agent" id="agentCard" aria-label="Nest agent"><div class="ahead"><span class="st">✦</span>Nest<span class="spacer"></span><span class="tag">${d.ai ? "AI brief" : d.loading ? "Thinking…" : "Insights"}</span></div>
+  return `<section class="agent ${compact ? "compact" : ""}" id="agentCard" aria-label="Nest agent"><div class="ahead"><span class="st">✦</span>Nest<span class="spacer"></span><span class="tag">${d.ai ? "AI brief" : d.loading ? "Thinking…" : "Insights"}</span></div>
   <h3>${esc(d.headline)}</h3>
-  ${d.bullets.map(x => `<div class="bl"><span class="e">${esc(x.emoji)}</span><span>${esc(x.text)}</span></div>`).join("")}
+  ${d.bullets.slice(0, compact ? 1 : 3).map(x => `<div class="bl"><span class="e">${esc(x.emoji)}</span><span>${esc(x.text)}</span></div>`).join("")}
   <div class="nd">${esc(d.nudge.text)}</div>
   <div class="acts"><button class="btn soft" data-act="chat">💬 Ask Nest</button>${d.nudge.action === "settle" && Math.abs(n) >= 0.5 ? `<button class="btn prime" data-act="settle">Settle up</button>` : ""}</div></section>`;
 }
@@ -848,7 +956,7 @@ async function refreshDigest() {
   if (Date.now() - digestAt < 60000) return; digestAt = Date.now(); digestBusy = true;
   try {
     const d = await api("/v1/agent/digest"); S.digest = { day: dkey(Date.now()), sig, d: { headline: d.headline, bullets: d.bullets, nudge: d.nudge } }; persist();
-    const el = $("#agentCard"); if (el && U.tab === "home") { const t = document.createElement("div"); t.innerHTML = agentCardHtml(); el.replaceWith(t.firstElementChild); }
+    const el = $("#agentCard"); if (el && U.tab === "month") { const t = document.createElement("div"); t.innerHTML = agentCardHtml(true); el.replaceWith(t.firstElementChild); }
   } catch (e) { if (e.status === 503) { S.sync.agent = false; persist(); } }
   finally { digestBusy = false; }
 }
@@ -870,7 +978,7 @@ function closeChat() { const c = $("#chat"); if (!c.classList.contains("on")) re
 function actionCard(a, mi, ai) {
   if (a.type === "add_expense") {
     const rec = actionRec(a), fx = effectText(rec), m = person(rec.paid).name;
-    return `<div class="acard ${a.done ? "done" : ""}"><div class="t">${ico(rec.cat)}<div><b>${esc(rec.title)} · ${money(rec.amt)}</b><span class="s">${esc(first(m))} paid · ${rec.sm === 50 ? "split equally" : rec.sm === 100 ? "just " + esc(first(S.me.name)) : "just " + esc(first(S.p.name))} · ${dayLabel(dkey(rec.ts))}</span></div></div><div class="fx">${fx.t}</div>
+    return `<div class="acard ${a.done ? "done" : ""}"><div class="t">${ico(rec.cat, rec.title)}<div><b>${esc(rec.title)} · ${money(rec.amt)}</b><span class="s">${esc(first(m))} paid · ${rec.sm === 50 ? "split equally" : rec.sm === 100 ? "just " + esc(first(S.me.name)) : "just " + esc(first(S.p.name))} · ${dayLabel(dkey(rec.ts))}</span></div></div><div class="fx">${fx.t}</div>
     ${a.done ? `<div class="pos" style="font-weight:700">Added ✓</div>` : `<div class="r"><button class="btn soft" data-act="act-no" data-arg="${mi}|${ai}">Dismiss</button><button class="btn prime" data-act="act-yes" data-arg="${mi}|${ai}">Add expense</button></div>`}</div>`;
   }
   const n = net(), amt = Math.min(Math.abs(n), a.amount || Math.abs(n)), debtor = n > 0 ? "p" : "me";
@@ -915,19 +1023,80 @@ function doAction(mi, ai, yes) {
   renderChat(false); pendingRefresh = true;
 }
 
+
+/* ---------- disputes: "Question this" keeps arguments about money small and kind ---------- */
+const REASONS = ["Not mine", "Wrong amount", "Split it differently", "What was this?", "Paid twice?"];
+let qSel = -1, qId = null;
+function openQuestion(id) {
+  const e = S.exp.find(x => x.id === id); if (!e) return; qSel = -1; qId = id; const p = esc(first(S.p.name));
+  openSheet("Question this", `<div class="card"><p style="line-height:1.5">Something look off with <b>${esc(e.title)}</b> · ${money(e.amt)}? ${p} gets a gentle nudge and can fix or explain it — no awkward chat needed.</p></div>
+  <div class="field"><label>What's up?</label><div class="reasons">${REASONS.map(r => `<button class="chip" data-act="q-pick" data-arg="${REASONS.indexOf(r)}">${r}</button>`).join("")}</div></div>
+  <div class="field"><label for="q-note">Add a note (optional)</label><input class="inp" id="q-note" maxlength="80" placeholder="e.g. I was at work that night"></div>
+  <button class="btn prime block" id="q-go" data-act="q-go" disabled style="margin-top:16px">Send to ${p}</button>`);
+}
+function sendQuestion() {
+  const e = S.exp.find(x => x.id === qId); if (!e || qSel < 0) return;
+  const note = ($("#q-note") || {}).value || ""; e.fl = { by: "me", why: REASONS[qSel] + (note.trim() ? " — " + note.trim().slice(0, 80) : ""), at: Date.now() }; touch(e);
+  save(); closeSheet(); hap(2); refresh(); toast(`Sent to ${first(S.p.name)}`);
+}
+function resolveQuestion(id) { const e = S.exp.find(x => x.id === id); if (!e) return; delete e.fl; touch(e); save(); closeSheet(); hap(2); refresh(); toast("Marked as sorted ✓"); }
+
+/* ---------- Play-safe import: paste or share bank texts (no inbox permission needed) ---------- */
+function dateIn(t) {
+  let m = /(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/.exec(t), d;
+  if (m) { const y = +m[3] < 100 ? 2000 + +m[3] : +m[3]; d = new Date(y, +m[2] - 1, +m[1], 12); }
+  else if ((m = /(\d{1,2})[-\s]([A-Za-z]{3})[a-z]*[-\s,]*(\d{2,4})/.exec(t))) { const mi = "janfebmaraprmayjunjulaugsepoctnovdec".indexOf(m[2].toLowerCase()) / 3; const y = +m[3] < 100 ? 2000 + +m[3] : +m[3]; if (mi >= 0 && Number.isInteger(mi)) d = new Date(y, mi, +m[1], 12); }
+  return d && !isNaN(d) && d.getTime() <= Date.now() + DAY && d.getTime() > Date.now() - 800 * DAY ? d.getTime() : Date.now();
+}
+function parseChunks(text) {
+  const t = String(text || "").trim(); if (!t) return [];
+  let chunks = t.split(/\n\s*\n/); if (chunks.length === 1) chunks = t.split(/\n/).filter(x => x.trim());
+  const seen = new Set(S.seen), out = [];
+  chunks.forEach(c => { const p = parseSms({ b: c, d: dateIn(c), id: null }); if (p && !seen.has(p.sid) && !out.some(o => o.sid === p.sid)) out.push(Object.assign(p, { on: true, sm: 50, paid: "me" })); });
+  return out.sort((a, b) => b.ts - a.ts);
+}
+function openPaste() {
+  openSheet("Paste bank texts", `<div class="card"><p style="line-height:1.5;color:var(--sub)">Copy one or more payment messages from your messages app and paste them here. Nest reads them on this phone only. You can also share any bank text straight to Nest from your messages app.</p></div>
+  <div class="field"><textarea class="inp" id="paste-in" placeholder="Rs.450 debited from A/c XX4821 … to swiggy@axb"></textarea></div>
+  <button class="btn prime block" data-act="paste-go" style="margin-top:14px">Find payments</button><div class="hint" id="paste-h"></div>`);
+}
+function pasteGo() {
+  const c = parseChunks(($("#paste-in") || {}).value); if (!c.length) { $("#paste-h").textContent = "No payments found — check the text includes the amount and 'debited / spent / paid'."; hap(3); return; }
+  closeSheet(); OB = { step: 4, cands: c, scanned: 0, detected: "", sample: false, from: S.onboarded ? "settings" : "ob" }; applyTheme(false); renderOb();
+}
+function handleShared(t) {
+  const c = parseChunks(t);
+  if (c.length === 1) { const x = c[0]; openForm({ amt: x.amt, title: x.title, cat: x.cat, ts: x.ts, paid: "me", sm: 50, src: "sms" }); toast("Found a payment — check and save"); }
+  else if (c.length > 1) { OB = { step: 4, cands: c, scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); renderOb(); }
+  else { toast("No payment found in that text"); openForm(); }
+}
+window.__shared = () => { try { const t = N && N.consumeShared && N.consumeShared(); if (!t) return; if (!ready || !S.onboarded) { queuedShare = t; return; } handleShared(t); } catch (e) { } };
+
 /* ---------- tab routing ---------- */
-const RENDER = { home: renderHome, activity: renderActivity, insights: renderInsights, you: renderYou };
+const RENDER = { month: renderMonth, you: renderYou };
 function show(tab, keepScroll) {
   U.tab = tab; const main = $("#main"), prev = $(".page", main), sc = prev && keepScroll ? prev.scrollTop : 0;
   main.innerHTML = `<div class="page" id="page-${tab}">${RENDER[tab]()}</div>`;
   const pg = $(".page", main); pg.scrollTop = sc; if (keepScroll) pg.style.animation = "none";
   $$("#tabbar .t").forEach(b => b.classList.toggle("on", b.dataset.arg === tab));
+  requestAnimationFrame(() => animateIn(pg, keepScroll));
+  if (tab === "month") bindSwipe(pg);
+}
+function bindSwipe(pg) {
+  let x0 = 0, y0 = 0;
+  pg.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  pg.addEventListener("touchend", e => {
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 80 && Math.abs(dy) < 45) { if (dx > 0) A.mprev(); else if (U.month < monthStart(new Date())) A.mnext(); }
+  }, { passive: true });
+}
+function animateIn(root, keepScroll) {
   requestAnimationFrame(() => {
-    const big = $("#bigbal"); if (big && !keepScroll && +big.dataset.v) countUp(big, +big.dataset.v, 1000);
-    $$("[data-count]").forEach(el => { if (!keepScroll) countUp(el, +el.dataset.count, 900); });
-    $$(".seg-c").forEach(c => c.setAttribute("stroke-dasharray", `${c.dataset.len} ${c.dataset.c}`));
-    $$("[data-w]").forEach(b => b.style.width = b.dataset.w + "%");
-    $$("[data-h]").forEach(b => b.style.height = Math.max(3, +b.dataset.h) + "%");
+    const big = $("#bigbal", root); if (big && !keepScroll && +big.dataset.v) countUp(big, +big.dataset.v, 1000);
+    $$("[data-count]", root).forEach(el => { if (!keepScroll) countUp(el, +el.dataset.count, 900); });
+    $$(".seg-c", root).forEach(c => c.setAttribute("stroke-dasharray", `${c.dataset.len} ${c.dataset.c}`));
+    $$("[data-w]", root).forEach(b => b.style.width = b.dataset.w + "%");
+    $$("[data-h]", root).forEach(b => b.style.height = Math.max(3, +b.dataset.h) + "%");
   });
 }
 const refresh = () => show(U.tab, true);
@@ -988,6 +1157,7 @@ function saveForm() {
   const eff = effectMe(rec);
   setTimeout(() => { U.month = monthStart(new Date(rec.ts)); refresh(); }, 120);
   const msg = editing ? "Changes saved" : Math.abs(eff) < 0.005 ? `Added ${money(rec.amt)}` : eff > 0 ? `Added ${money(rec.amt)} · ${first(S.p.name)} owes you ${money(eff, { round: true })} more` : `Added ${money(rec.amt)} · you owe ${first(S.p.name)} ${money(-eff, { round: true })} more`;
+  if (!editing && !syncOn() && !S.nudgedAt && S.exp.length === 1) setTimeout(openNudge, 2600);
   toast(msg, editing ? null : () => { removeRec("exp", rec.id); save(); refresh(); toast("Expense removed"); });
 }
 
@@ -997,7 +1167,7 @@ function openDetail(id) {
   const mine = shareMe(e), theirs = r2(e.amt - mine), eff = effectMe(e), fx = effectText(e);
   openSheet(esc(e.title), `
   <div class="card" style="text-align:center;padding:24px 18px">
-    <div style="display:inline-grid">${ico(e.cat)}</div>
+    <div style="display:inline-grid">${ico(e.cat, e.title)}</div>
     <div style="font-size:42px;font-weight:700;letter-spacing:-1.6px;margin-top:10px">${money(e.amt)}</div>
     <div class="muted" style="margin-top:4px">${CAT[e.cat].n} · ${new Date(e.ts).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</div>
   </div>
@@ -1011,7 +1181,9 @@ function openDetail(id) {
     <div class="kv"><span>Paid by</span><b>${esc(person(e.paid).name)}</b></div>
     <div class="kv"><span>Added</span><b>${e.src === "sms" ? "From SMS" : "Manually"}</b></div>
   </div>
-  <div class="row" style="margin-top:16px"><button class="btn soft" style="flex:1" data-act="edit" data-arg="${e.id}">Edit</button><button class="btn danger" style="flex:1" data-act="del" data-arg="${e.id}">Delete</button></div>`);
+  ${e.fl ? `<div class="card" style="margin-top:14px;border:1.5px solid rgba(245,165,36,.5)"><div style="font-weight:700">⚠️ ${e.fl.by === "p" ? esc(first(S.p.name)) + " asked" : "You asked"}</div><div style="margin:6px 0 12px;line-height:1.4">“${esc(e.fl.why)}”</div>
+    <div class="row"><button class="btn soft" style="flex:1;min-height:44px;font-size:15px" data-act="edit" data-arg="${e.id}">${e.fl.by === "p" ? "Fix it" : "Edit"}</button><button class="btn prime" style="flex:1;min-height:44px;font-size:15px" data-act="q-resolve" data-arg="${e.id}">${e.fl.by === "p" ? "Sorted ✓" : "Withdraw"}</button></div></div>` : ""}
+  <div class="row" style="margin-top:16px"><button class="btn soft" style="flex:1" data-act="edit" data-arg="${e.id}">Edit</button>${e.fl ? "" : `<button class="btn soft" style="flex:1" data-act="question" data-arg="${e.id}">Question</button>`}<button class="btn danger" style="flex:1" data-act="del" data-arg="${e.id}">Delete</button></div>`);
 }
 function deleteExp(id) {
   const i = S.exp.findIndex(e => e.id === id); if (i < 0) return; const [rec] = S.exp.splice(i, 1); tomb("exp", rec.id); save(); closeSheet(); hap(1); refresh();
@@ -1141,12 +1313,12 @@ function renderOb() {
   if (s === 2) h = obShell(2, `
     <div class="orb" style="height:170px;margin-top:22px" aria-hidden="true"><i class="a" style="top:20px"></i><i class="b" style="top:20px"></i><span style="position:absolute;inset:0;display:grid;place-items:center;font-size:56px;z-index:2">💬</span></div>
     <h1 class="ob-h" style="margin-top:12px">Skip the typing.</h1>
-    <p class="ob-p">Let Nest look through your recent bank &amp; UPI texts and build your spending history in seconds.</p>
+    <p class="ob-p">${SMS_INBOX ? "Let Nest look through your recent bank &amp; UPI texts and build your spending history in seconds." : "Share any bank text to Nest, or paste a few, and they turn into expenses in seconds."}</p>
     <div class="stagger" style="margin-top:12px">
       <div class="feat"><span class="ico" style="background:#12A59422">📱</span><div><b>Read on this phone only</b><span>Texts are never uploaded — only expenses you approve can sync.</span></div></div>
       <div class="feat"><span class="ico" style="background:#5B5BD622">🧾</span><div><b>Only payments are used</b><span>OTPs, chats and everything else are ignored.</span></div></div>
       <div class="feat"><span class="ico" style="background:#F5A52422">✋</span><div><b>You approve every item</b><span>Review and untick anything before it's added.</span></div></div></div>`,
-    `<button class="btn prime block" data-act="ob-scan">Scan my SMS inbox</button><button class="btn soft block" data-act="ob-sample">Preview with sample messages</button><button class="link" data-act="ob-skip" style="align-self:center">Start empty</button>`);
+    `${SMS_INBOX ? `<button class="btn prime block" data-act="ob-scan">Scan my SMS inbox</button>` : `<button class="btn prime block" data-act="paste">Paste bank texts</button>`}<button class="btn soft block" data-act="ob-sample">Preview with sample messages</button><button class="link" data-act="ob-skip" style="align-self:center">${syncOn() ? "Skip — show our month" : "Start empty"}</button>`);
   if (s === 3) h = `<div class="stage"><div class="scanwrap"><div class="radar"><div class="core">💬</div></div><h2 id="sc-h">Reading your inbox…</h2><div class="st" id="sc-s">Looking back 90 days</div>
     <div class="counter"><div><b id="sc-n">0</b><span>messages read</span></div><div><b id="sc-f">0</b><span>payments found</span></div></div><div class="prog"><i id="sc-p"></i></div></div></div>`;
   if (s === 4) {
@@ -1163,7 +1335,7 @@ function renderOb() {
 }
 function rvRow(c) {
   const lbl = c.sm === 50 ? "Split equally" : c.sm === 100 ? "Just " + first(S.me.name) : "Just " + first(S.p.name);
-  return `<div class="rv ${c.on ? "on" : ""}" data-act="ob-tog" data-arg="${c.sid}" role="checkbox" aria-checked="${c.on}" tabindex="0"><span class="ck">✓</span>${ico(c.cat)}<div class="mid"><div class="t1">${esc(c.title)}</div><div class="t2">${new Date(c.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · ${CAT[c.cat].n}${c.paid === "p" ? " · " + esc(first(S.p.name)) + " paid" : ""}</div></div><div class="amt">${money(c.amt)}<button data-act="ob-split" data-arg="${c.sid}" aria-label="Change split">${esc(lbl)}</button></div></div>`;
+  return `<div class="rv ${c.on ? "on" : ""}" data-act="ob-tog" data-arg="${c.sid}" role="checkbox" aria-checked="${c.on}" tabindex="0"><span class="ck">✓</span>${ico(c.cat, c.title)}<div class="mid"><div class="t1">${esc(c.title)}</div><div class="t2">${new Date(c.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · ${CAT[c.cat].n}${c.paid === "p" ? " · " + esc(first(S.p.name)) + " paid" : ""}</div></div><div class="amt">${money(c.amt)}<button data-act="ob-split" data-arg="${c.sid}" aria-label="Change split">${esc(lbl)}</button></div></div>`;
 }
 async function runScan(sample) {
   OB.step = 3; OB.sample = sample; renderOb(); const t0 = Date.now(); let granted = true;
@@ -1188,10 +1360,10 @@ function finishOb(add) {
   if (add) {
     OB.cands.filter(c => c.on).forEach(c => { S.exp.push({ id: uid(), amt: c.amt, title: c.title, cat: c.cat, paid: c.paid || "me", sm: c.sm, ts: c.ts, src: "sms", u: Date.now() }); S.seen.push(c.sid); });
   }
-  S.onboarded = true; smartMonth(); save(); const n = add ? OB.cands.filter(c => c.on).length : 0;
+  S.onboarded = true; smartMonth(); save(); if (queuedShare) { const q = queuedShare; queuedShare = ""; setTimeout(() => handleShared(q), 900); } const n = add ? OB.cands.filter(c => c.on).length : 0;
   $("#ob").classList.remove("on"); setTimeout(() => { $("#ob").innerHTML = ""; }, 500);
-  applyTheme(); show("home"); hap(2);
-  if (n) setTimeout(() => toast(`${n} expenses added — your balance is ready`), 700);
+  applyTheme(); show("month"); hap(2);
+  if (n) { setTimeout(() => toast(`${n} expenses added — your balance is ready`), 700); if (!syncOn()) setTimeout(openNudge, 2200); }
 }
 
 /* =========================================================
@@ -1201,16 +1373,24 @@ const A = {
   tab: a => { if (U.tab !== a) hap(1); closeSheet(); show(a); },
   add: () => openForm(), open: id => openDetail(id), edit: id => { closeSheet(); setTimeout(() => openForm(S.exp.find(e => e.id === id)), 320); },
   del: id => deleteExp(id), close: () => closeSheet(), settle: () => openSettle(), howBalance: () => openHow(),
-  mprev: () => { U.month = new Date(U.month.getFullYear(), U.month.getMonth() - 1, 1); show("activity"); },
-  mnext: () => { U.month = new Date(U.month.getFullYear(), U.month.getMonth() + 1, 1); show("activity"); },
-  iprev: () => { U.insMonth = new Date(U.insMonth.getFullYear(), U.insMonth.getMonth() - 1, 1); show("insights"); },
-  inext: () => { U.insMonth = new Date(U.insMonth.getFullYear(), U.insMonth.getMonth() + 1, 1); show("insights"); },
-  filter: a => { U.filter = a; hap(1); show("activity", true); },
-  scope: a => { U.scope = a; hap(1); show("insights", true); },
+  mprev: () => { U.month = new Date(U.month.getFullYear(), U.month.getMonth() - 1, 1); U.cat = "all"; U.week = null; hap(1); show("month"); },
+  mnext: () => { U.month = new Date(U.month.getFullYear(), U.month.getMonth() + 1, 1); U.cat = "all"; U.week = null; hap(1); show("month"); },
+  cat: a => { U.cat = a; hap(1); show("month", true); },
+  week: a => { U.week = a === "all" ? null : +a; hap(1); show("month", true); const t = $("#tl"); if (t && U.week != null) { const pg = $(".page"); pg.scrollTo({ top: Math.max(0, t.offsetTop - 120), behavior: "smooth" }); } },
+  breakdown: () => openBreakdown(),
+  today: () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; hap(1); show("month"); },
+  scope: a => { U.scope = a; hap(1); const bd = $("#bd"); if (bd) { bd.innerHTML = renderInsights(); animateIn(bd, false); } },
+  "quick-invite": () => quickInvite(true), "quick-qr": () => quickInvite(false), "wa-send": () => sendWhatsApp(), "show-invite": () => openInvite(false),
+  "copy-link": () => { if (N && N.copy) N.copy(inviteLink()); else { try { navigator.clipboard.writeText(inviteLink()); } catch (e) { } } toast("Link copied"); },
+  "review-flags": () => openSheet("Questioned expenses", `<div class="list">${S.exp.filter(e => e.fl).map(e => rowHtml(e)).join("")}</div>`),
+  "q-pick": a => { qSel = +a; $$("#sheet .reasons .chip").forEach((el, i) => el.classList.toggle("on", i === qSel)); $("#q-go").disabled = false; hap(1); },
+  "q-go": () => sendQuestion(), "q-resolve": a => resolveQuestion(a), question: a => openQuestion(a),
+  paste: () => openPaste(), "paste-go": () => pasteGo(),
   pair: () => openPair("create"), "pair-join": () => openPair("join"), "ob-join": () => openPair("join", true),
   "share-code": () => shareText("Join me on Nest", inviteText()),
   "sync-now": () => { toast("Syncing…"); syncNow(); },
-  disconnect: () => openSheet("Disconnect?", `<div class="card"><p style="line-height:1.5">This phone stops syncing. Everything stays on this phone and ${esc(first(S.p.name))} keeps their copy. You can't re-join the same Nest without a new code.</p></div><button class="btn danger block" data-act="disconnect-go" style="margin-top:14px">Disconnect</button><button class="btn soft block" data-act="close" style="margin-top:10px">Stay connected</button>`),
+  disconnect: () => openSheet("Disconnect?", `<div class="card"><p style="line-height:1.5">This phone stops syncing. Everything stays on this phone and ${esc(first(S.p.name))} keeps their copy. You can't re-join the same Nest without a new code.</p></div><button class="btn danger block" data-act="disconnect-go" style="margin-top:14px">Disconnect this phone</button><button class="btn danger block" data-act="nest-delete" style="margin-top:10px">Delete our Nest data from the server</button><div class="hint">Deleting removes the shared data for both of you. Each phone keeps its own copy until erased.</div><button class="btn soft block" data-act="close" style="margin-top:10px">Stay connected</button>`),
+  "nest-delete": async () => { try { await api("/v1/nest/delete", {}); S.sync = null; S.digest = null; S.tomb = []; persist(); closeSheet(); show("you", true); toast("Server data deleted"); } catch (e) { toast(e.message); } },
   "disconnect-go": () => { S.sync = null; S.digest = null; persist(); closeSheet(); show("you", true); toast("Disconnected"); },
   chat: () => openChat(), "chat-close": () => closeChat(), ask: a => sendChat(a),
   "act-yes": a => { const [i, j] = a.split("|"); doAction(+i, +j, true); }, "act-no": a => { const [i, j] = a.split("|"); doAction(+i, +j, false); },
@@ -1220,7 +1400,7 @@ const A = {
   "f-mode": a => { F.mode = a; if (a === "eq") F.sm = 50; if (a === "me") F.sm = 100; if (a === "p") F.sm = 0; if (a === "custom" && (F.sm === 50 || F.sm === 100 || F.sm === 0)) F.sm = 60; $$('[data-act="f-mode"]').forEach(el => el.classList.toggle("on", el.dataset.arg === a)); $("#f-custom").style.display = a === "custom" ? "block" : "none"; $("#f-sm").value = F.sm; hap(1); updateForm(); },
   "f-save": () => saveForm(),
   theme: a => { S.theme = a; save(); applyTheme(); show("you", true); },
-  cur: a => { S.cur = a; save(); show("you", true); },
+  cur: a => { S.cur = a; S.mu = Date.now(); save(); show("you", true); },
   color: a => { const [k, c] = a.split("|"); person(k).color = c; if (k === "me") S.mu = Date.now(); save(); show("you", true); hap(1); },
   rescan: () => { S.onboarded = true; OB = { step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false); },
   sample: () => { OB = { step: 3, cands: [], scanned: 0, detected: "", sample: true, from: "settings" }; runScan(true); },
@@ -1239,7 +1419,7 @@ const A = {
   "ob-tog": a => { const c = OB.cands.find(x => x.sid === a); c.on = !c.on; hap(1); const st = $("#ob .stage").scrollTop; renderOb(); $("#ob .stage").scrollTop = st; },
   "ob-split": a => { const c = OB.cands.find(x => x.sid === a); c.sm = c.sm === 50 ? 100 : c.sm === 100 ? 0 : 50; hap(1); const st = $("#ob .stage").scrollTop; renderOb(); $("#ob .stage").scrollTop = st; },
   "ob-add": () => {
-    if (OB.from === "settings") { OB.cands.filter(c => c.on).forEach(c => { S.exp.push({ id: uid(), amt: c.amt, title: c.title, cat: c.cat, paid: c.paid || "me", sm: c.sm, ts: c.ts, src: "sms", u: Date.now() }); S.seen.push(c.sid); }); smartMonth(); save(); const n = OB.cands.filter(c => c.on).length; $("#ob").classList.remove("on"); applyTheme(); show("home"); hap(2); setTimeout(() => toast(`${n} expenses added`), 500); }
+    if (OB.from === "settings") { OB.cands.filter(c => c.on).forEach(c => { S.exp.push({ id: uid(), amt: c.amt, title: c.title, cat: c.cat, paid: c.paid || "me", sm: c.sm, ts: c.ts, src: "sms", u: Date.now() }); S.seen.push(c.sid); }); smartMonth(); save(); const n = OB.cands.filter(c => c.on).length; $("#ob").classList.remove("on"); applyTheme(); show("month"); hap(2); setTimeout(() => toast(`${n} expenses added`), 500); }
     else finishOb(true);
   }
 };
@@ -1251,7 +1431,7 @@ document.addEventListener("input", ev => {
   if (ev.target.id === "nm-me" || ev.target.id === "nm-p") { const k = ev.target.id.slice(3); person(k).name = ev.target.value.trim() || (k === "me" ? "You" : "Partner"); if (k === "me") S.mu = Date.now(); save(); const a = ev.target.previousElementSibling; if (a) a.textContent = (person(k).name[0] || "?").toUpperCase(); }
 });
 document.addEventListener("keydown", ev => { if ((ev.key === "Enter" || ev.key === " ") && ev.target.classList && ev.target.classList.contains("rv")) { ev.preventDefault(); A["ob-tog"](ev.target.dataset.arg); } });
-window.__back = () => { if (closeSheet()) return true; if (closeChat()) return true; const ob = $("#ob"); if (ob.classList.contains("on")) { if (OB.step === 1 || OB.step === 2) { OB.step--; renderOb(); return true; } return OB.step === 0 ? false : true; } if (U.tab !== "home") { show("home"); return true; } return false; };
+window.__back = () => { if (closeSheet()) return true; if (closeChat()) return true; const ob = $("#ob"); if (ob.classList.contains("on")) { if (OB.step === 1 || OB.step === 2) { OB.step--; renderOb(); return true; } return OB.step === 0 ? false : true; } if (U.tab !== "month") { show("month"); return true; } return false; };
 
 /* ---------- boot ---------- */
 function smartMonth() {
@@ -1263,8 +1443,10 @@ function boot() {
   load(); smartMonth(); if (syncOn()) setTimeout(syncNow, 1200); applyTheme(true);
   const done = () => { const sp = $("#splash"); sp.classList.add("out"); setTimeout(() => sp.remove(), 700); };
   setTimeout(() => {
-    if (S.onboarded) { applyTheme(); show("home"); done(); }
+    if (S.onboarded) { applyTheme(); show("month"); done(); }
     else { OB.step = 0; renderOb(); done(); }
+    ready = true; if (queuedInvite) { const q = queuedInvite; queuedInvite = null; handleInvite(q.code, q.server); } else window.__invite();
+    window.__shared();
   }, window.__fast ? 50 : 2300);
 }
 boot();

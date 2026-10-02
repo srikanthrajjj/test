@@ -24,6 +24,12 @@ try {
   const B = (await api("/v1/pair/join", { method: "POST", body: { code: A.code.toLowerCase(), name: "Meera", color: "#F0508B" } })).body;
   assert.equal(B.member, "b"); assert.equal(B.couple, A.couple);
   assert.equal((await api("/v1/pair/join", { method: "POST", body: { code: A.code, name: "Eve" } })).status, 409);
+  const pk = await fetch(base + "/v1/pair/peek?code=" + A.code); assert.equal((await pk.json()).inviter, "Arjun");
+  assert.equal((await fetch(base + "/v1/pair/peek?code=ZZZZZZ")).status, 404);
+  const lp = await (await fetch(base + "/j/" + A.code)).text(); assert.match(lp, /Arjun invited you/); assert.match(lp, /intent:\/\/join\?code=/); assert.match(lp, /scheme=nest;package=com.nest.couples/);
+  assert.match(await (await fetch(base + "/j/NOPE12")).text(), /Invite not found/);
+  assert.match(await (await fetch(base + "/privacy")).text(), /Privacy Policy/);
+  console.log("peek + landing + privacy ok");
   console.log("pairing ok");
 
   const t0 = Date.now();
@@ -59,6 +65,11 @@ try {
   assert.equal(seen.every(s => s.model === "claude-opus-5-5"), true);
   assert.equal(seen.some(s => "temperature" in s || JSON.stringify(s).includes("budget_tokens")), false);
   console.log("agent ok (digest cache, tool loop, proposals, query tool, model=claude-opus-5-5)");
+  assert.match(await (await fetch(base + "/delete")).text(), /Delete your Nest data/);
+  const dres = await api("/v1/nest/delete", { method: "POST", token: A.token, body: {} }); assert.equal(dres.body.deleted, true);
+  assert.equal((await api("/v1/sync", { method: "POST", token: B.token, body: { since: 0 } })).status, 401);
+  assert.equal((await api("/v1/pair/peek?code=" + A.code)).status, 404);
+  console.log("deletion ok (data gone, tokens revoked)");
   console.log("ALL PASSED");
 } catch (e) { console.error("FAILED", e); console.error(log.slice(-2500)); process.exitCode = 1; }
 finally { w.kill("SIGTERM"); srv.close(); setTimeout(() => process.exit(process.exitCode || 0), 500); }

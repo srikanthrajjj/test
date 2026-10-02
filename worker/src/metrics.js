@@ -57,6 +57,7 @@ export function summary({ exp, set, prof }, now = Date.now()) {
       biggest_30d: [...d30].sort((x, y) => y.amt - x.amt).slice(0, 3).map(e => ({ title: e.title, amount: e.amt, date: dkey(e.ts), paid_by: prof[e.paid].name }))
     },
     individual: { a: person("a"), b: person("b") },
+    disputed: exp.filter(e => e.fl).slice(0, 8).map(e => ({ title: e.title, amount: e.amt, date: dkey(e.ts), questioned_by: prof[e.fl.by] ? prof[e.fl.by].name : "?", reason: e.fl.why })),
     totals: { expenses: exp.length, settlements: set.length }
   };
 }

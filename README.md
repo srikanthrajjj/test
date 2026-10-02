@@ -25,6 +25,12 @@ Requires Android 8.0+.
   settlements you confirm with one tap. Without a server it falls back to on-device insights.
 - Backend: [`worker/`](worker/README.md) - Cloudflare Worker + D1, in your own account.
 
+## v1.3 — Month timeline, WhatsApp/QR invite, disputes, Play kit
+- One **Month** screen (balance → Together/each person → week chips → timeline with real merchant logos); breakdown opens as a sheet.
+- **Invite**: WhatsApp link + QR (partner scans with the camera → landing page → app opens via `nest://join`), shown right after the SMS import.
+- **Question this** for disagreements; partner edits surface as toasts; couple currency syncs; in-app + web data deletion.
+- `PLAY=1 ./android/build.sh` builds the Play-policy variant (no READ_SMS). See `play/` (listing, data safety, checklist, 5-couple test report).
+
 ## Balance rule
 `Balance = what you paid − your fair share` (positive ⇒ partner owes you). Settlements are added on top.
 

@@ -1,4 +1,5 @@
 import { chat, digest } from "./agent.js";
+import { landing, privacy, deletion } from "./pages.js";
 
 const CORS = {
   "access-control-allow-origin": "*",
@@ -8,6 +9,7 @@ const CORS = {
 };
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", ...CORS } });
 const err = (status, message) => json({ error: message }, status);
+const html = (body, status = 200) => new Response(body, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 
 const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const rand = n => b64u(crypto.getRandomValues(new Uint8Array(n)));
@@ -28,7 +30,7 @@ async function body(req, max = 256 * 1024) {
   if (t.length > max) throw Object.assign(new Error("payload too large"), { status: 413 });
   try { return JSON.parse(t || "{}"); } catch { throw Object.assign(new Error("invalid JSON"), { status: 400 }); }
 }
-const cleanProfile = p => ({ name: String((p && p.name) || "").trim().slice(0, 18) || "Partner", color: /^#[0-9a-fA-F]{6}$/.test(p && p.color) ? p.color : "#5B5BD6" });
+const cleanProfile = p => ({ name: String((p && p.name) || "").trim().slice(0, 18) || "Partner", color: /^#[0-9a-fA-F]{6}$/.test(p && p.color) ? p.color : "#5B5BD6", cur: /^[A-Z]{3}$/.test(p && p.cur) ? p.cur : "INR" });
 
 async function createPair(req, env) {
   const b = await body(req), id = rand(9), token = rand(32);
@@ -63,9 +65,9 @@ function validChange(ch, member) {
   if (ch.kind === "profile" && ch.id !== "profile:" + member) return false;      // you may only edit your own profile
   if (ch.del) return true;
   const d = ch.data; if (!d || typeof d !== "object" || JSON.stringify(d).length > 2048) return false;
-  if (ch.kind === "exp") return d.amt > 0 && d.amt < 1e8 && typeof d.title === "string" && ["a", "b"].includes(d.paid) && d.sa >= 0 && d.sa <= 100 && Number.isFinite(d.ts);
+  if (ch.kind === "exp") return d.amt > 0 && d.amt < 1e8 && typeof d.title === "string" && ["a", "b"].includes(d.paid) && d.sa >= 0 && d.sa <= 100 && Number.isFinite(d.ts) && (d.fl === undefined || (d.fl && typeof d.fl.why === "string" && d.fl.why.length <= 160 && ["a", "b"].includes(d.fl.by)));
   if (ch.kind === "set") return d.amt > 0 && ["a", "b"].includes(d.from) && Number.isFinite(d.ts);
-  return typeof d.name === "string";
+  return typeof d.name === "string" && (d.cur === undefined || /^[A-Z]{3}$/.test(d.cur));
 }
 
 async function sync(req, env, who) {
@@ -115,11 +117,27 @@ export default {
     const url = new URL(req.url), path = url.pathname.replace(/\/+$/, "");
     try {
       if (path === "" || path === "/v1/health") return json({ ok: true, agent: !!env.ANTHROPIC_API_KEY });
+      if (req.method === "GET" && path.startsWith("/j/")) return html(await landing(env, url, path.slice(3)));
+      if (req.method === "GET" && path === "/delete") return html(deletion(env));
+      if (req.method === "GET" && path === "/privacy") return html(privacy(env));
+      if (req.method === "GET" && path === "/.well-known/assetlinks.json") return json(env.ASSET_FINGERPRINT ? [{ relation: ["delegate_permission/common.handle_all_urls"], target: { namespace: "android_app", package_name: env.APP_PACKAGE || "com.nest.couples", sha256_cert_fingerprints: String(env.ASSET_FINGERPRINT).split(",") } }] : []);
+      if (req.method === "GET" && path === "/v1/pair/peek") {
+        const code = (url.searchParams.get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+        const c = code && await env.DB.prepare("SELECT id FROM couples WHERE code=?").bind(code).first();
+        if (!c) return err(404, "That code doesn't match any Nest.");
+        const p = await env.DB.prepare("SELECT data FROM rec WHERE couple=? AND id='profile:a'").bind(c.id).first();
+        const joined = await env.DB.prepare("SELECT 1 FROM members WHERE couple=? AND member='b'").bind(c.id).first();
+        const pd = p ? JSON.parse(p.data) : {}; return json({ inviter: pd.name || "Your partner", cur: pd.cur || "INR", color: pd.color, full: !!joined });
+      }
       if (req.method === "POST" && path === "/v1/pair/create") return await createPair(req, env);
       if (req.method === "POST" && path === "/v1/pair/join") return await joinPair(req, env);
       const who = await auth(req, env);
       if (!who) return err(401, "Not signed in to a Nest.");
       if (req.method === "POST" && path === "/v1/sync") return await sync(req, env, who);
+      if (req.method === "POST" && path === "/v1/nest/delete") {   // erase this couple's server-side data (either partner may do it)
+        await env.DB.batch(["rec", "digests", "usage", "members"].map(t => env.DB.prepare(`DELETE FROM ${t} WHERE couple=?`).bind(who.couple)).concat([env.DB.prepare("DELETE FROM couples WHERE id=?").bind(who.couple)]));
+        return json({ deleted: true });
+      }
       if (req.method === "GET" && path === "/v1/me") {
         const c = await env.DB.prepare("SELECT code FROM couples WHERE id=?").bind(who.couple).first();
         const partner = await env.DB.prepare("SELECT 1 FROM members WHERE couple=? AND member=?").bind(who.couple, who.member === "a" ? "b" : "a").first();
