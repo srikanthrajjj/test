@@ -393,6 +393,17 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .acard{border:0;border-radius:14px;box-shadow:none}.bub.u{background:var(--accent)}.composer button{background:var(--accent)}
 .ob-h{font-weight:700}.btn.wa{background:#25D366}
 @media (prefers-color-scheme:dark){}
+
+/* month summary tables */
+.tbl{padding:0}.tr{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr));gap:6px;align-items:center;padding:11px 14px;width:100%;text-align:left;font-size:14.5px;font-variant-numeric:tabular-nums}
+.tr>div:not(.tn1){text-align:right;white-space:nowrap}.tr+.tr{border-top:1px solid var(--line)}
+.tr.thead{font-size:12px;font-weight:600;color:var(--sub);padding:9px 14px;background:transparent}.tr.thead>div{display:flex;align-items:center;justify-content:flex-end;overflow:hidden;text-overflow:ellipsis}
+.tn1{min-width:0}.tn1 span{display:block;font-weight:500;font-size:15px;overflow-wrap:anywhere;line-height:1.2}.tn1 small{display:block;font-size:11.5px;color:var(--sub);margin-top:1px}
+.tr .hi{font-weight:700}.tr .tt{font-weight:700}.tr.tcat{cursor:pointer}.tr.tcat .tn1 span::after{content:" ›";color:var(--faint)}
+.tr.tsub{padding:8px 14px 8px 26px;background:var(--card2);font-size:13.5px;border-top:1px solid var(--line)}.tr.tsub .tn1 span{font-weight:400;font-size:14px}
+.subs{display:none}.subs.on{display:block}.tr.tfoot{font-weight:700;background:var(--card2);font-size:15px}
+.pt{padding:12px 16px;font-size:15px;line-height:1.4}.pt+.pt{border-top:1px solid var(--line)}.pt b{font-weight:600}
+.cap .acc{color:var(--accent)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -435,8 +446,8 @@ const DAY = 864e5;
 /* ---------- constants ---------- */
 const CUR = { INR: { sym: "₹", loc: "en-IN", name: "INR" }, USD: { sym: "$", loc: "en-US", name: "USD" }, EUR: { sym: "€", loc: "en-IE", name: "EUR" }, GBP: { sym: "£", loc: "en-GB", name: "GBP" } };
 const CATS = [
-  { id: "food", n: "Dining", e: "🍜", c: "#FF8A4C", re: /swiggy|zomato|restaurant|cafe|coffee|starbucks|dominos|domino|pizza|burger|mcdonald|kfc|subway|barista|bakery|biryani|eats|dining|food|dinner|lunch|breakfast|brunch|meal|drinks|dunzo food|chaayos|haldiram|mess/i },
-  { id: "groc", n: "Groceries", e: "🛒", c: "#34C48B", re: /bigbasket|blinkit|zepto|instamart|dmart|d-mart|grocer|supermarket|reliance fresh|fresh|more retail|nature'?s basket|milk|vegetable|kirana|spencer/i },
+  { id: "food", n: "Dining", e: "🍜", c: "#FF8A4C", re: /swiggy|zomato|restaurant|cafe|coffee|starbucks|dominos|domino|pizza|burger|mcdonald|kfc|subway|barista|bakery|biryani|eats|dining|food|chai|tea stall|juice|snack|dhaba|canteen|dinner|lunch|breakfast|brunch|meal|drinks|dunzo food|chaayos|haldiram|mess/i },
+  { id: "groc", n: "Groceries", e: "🛒", c: "#34C48B", re: /bigbasket|blinkit|zepto|instamart|dmart|d-mart|grocer|supermarket|reliance fresh|fresh|more retail|nature'?s basket|milk|vegetable|kirana|corner shop|provision|spencer/i },
   { id: "move", n: "Transport", e: "🚕", c: "#4C9AFF", re: /uber|ola\b|olacabs|rapido|metro|irctc|fuel|petrol|diesel|hp pay|indian oil|iocl|bharat petrol|shell|fastag|parking|redbus|namma/i },
   { id: "shop", n: "Shopping", e: "🛍️", c: "#B06BFF", re: /amazon|flipkart|myntra|ajio|nykaa|meesho|decathlon|ikea|zara|h&m|croma|lifestyle|westside|shoppers|tata cliq|mall/i },
   { id: "home", n: "Home & Bills", e: "🏡", c: "#FFC247", re: /rent|electric|bescom|tneb|power|water|gas|jio|airtel|vodafone|vi\b|broadband|act fibernet|maintenance|society|urban company|bill|recharge|dth|tata play/i },
@@ -631,6 +642,18 @@ const BRANDS = [["swiggy", /swiggy|instamart/i], ["zomato", /zomato/i], ["netfli
   ["ebay", /\bebay\b/i], ["etsy", /\betsy\b/i], ["shopify", /shopify/i], ["hbomax", /hbo/i], ["audible", /audible/i], ["bookingdotcom", /booking\.com/i], ["expedia", /expedia/i], ["emirates", /emirates/i], ["ryanair", /ryanair/i], ["easyjet", /easyjet/i],
   ["lufthansa", /lufthansa/i], ["qatarairways", /qatar air/i], ["grab", /\bgrab\b/i], ["gojek", /gojek/i], ["deliveroo", /deliveroo/i], ["justeat", /just ?eat/i], ["revolut", /revolut/i], ["monzo", /monzo/i], ["wise", /\bwise\b/i], ["tata", /tata/i], ["anthropic", /anthropic|claude/i], ["google", /\bgoogle\b/i]];
 const brandOf = t => { const x = String(t || ""); for (const [k, re] of BRANDS) if (re && re.test(x) && window.LOGOS && LOGOS[k]) return k; return null; };
+const BRAND_NAME = { bookmyshow: "BookMyShow", phonepe: "PhonePe", googlepay: "Google Pay", bigbasket: "BigBasket", ubereats: "Uber Eats", applemusic: "Apple Music", googleplay: "Google Play", playstation: "PlayStation", icloud: "iCloud", paypal: "PayPal", kfc: "KFC", ikea: "IKEA", hbomax: "HBO Max", airindia: "Air India", bookingdotcom: "Booking.com", mcdonalds: "McDonald's", burgerking: "Burger King", doordash: "DoorDash", youtube: "YouTube", qatarairways: "Qatar Airways", easyjet: "easyJet", justeat: "Just Eat", airbnb: "Airbnb", paytm: "Paytm", zomato: "Zomato", swiggy: "Swiggy" };
+const brandName = k => BRAND_NAME[k] || k.charAt(0).toUpperCase() + k.slice(1);
+const ALIASES = [["Swiggy Instamart", /instamart/i], ["Prime Video", /prime video/i], ["Amazon", /amazon|amzn/i], ["Flipkart", /flipkart/i], ["Myntra", /myntra/i], ["Zepto", /zepto/i], ["Blinkit", /blinkit/i], ["Ola", /\bola(cabs)?\b/i], ["Rapido", /rapido/i],
+  ["MakeMyTrip", /make ?my ?trip|\bmmt\b/i], ["Nykaa", /nykaa/i], ["Meesho", /meesho/i], ["Ajio", /\bajio\b/i], ["DMart", /d-?mart|avenue supermarts/i], ["CRED", /\bcred\b/i], ["BESCOM", /bescom/i], ["Tata Power", /tata power/i], ["Cult.fit", /cult\.?fit/i], ["Apollo Pharmacy", /apollo/i], ["Decathlon", /decathlon/i], ["IRCTC", /irctc/i]];
+function canonMerchant(raw) {
+  if (/^upi payment$/i.test(raw)) return "UPI payment"; if (/^atm withdrawal$/i.test(raw)) return "ATM withdrawal"; if (/^card payment$/i.test(raw)) return "Card payment";
+  let t = String(raw || "").replace(/\.(stores?|com|in|co)\b/ig, " ").replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+  for (const [n, re] of ALIASES) if (re.test(t)) return n;
+  const k = brandOf(t); if (k) return brandName(k);
+  const u = t.replace(/\b(pvt|ltd|limited|private|india|systems|services|technologies|solutions|retail|llp|inc)\b\.?/ig, "").replace(/\s+/g, " ").trim();
+  return titleCase(u.length > 2 ? u : t);
+}
 const darkish = hex => { const n = parseInt(hex, 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) < 70; };
 function ico(c, title) {
   const k = brandOf(title);
@@ -704,48 +727,87 @@ function renderMonth() {
     <div class="tr1"><button class="ib2" data-act="chat" aria-label="Ask Nest"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg></button><button class="ib2 pr" data-act="tab" data-arg="you" aria-label="Settings"><span class="pair">${av("me", "sm")}${av("p", "sm")}</span></button></div></div>
   <h1 class="lt">${monthLabel(m)}</h1>
   <button class="sum" data-act="breakdown" aria-label="Open breakdown">
-    <div class="tot" id="bigbal" data-v="${total}">${money(total, { round: true })}</div><div class="cap">spent together${isNow ? "" : ""}</div>
+    <div class="tot" id="bigbal" data-v="${total}">${money(total, { round: true })}</div><div class="cap">spent together · <span class="acc">Month summary ›</span></div>
     ${total ? `<div class="bar2"><i style="background:${S.me.color};flex-grow:${me}"></i><i style="background:${S.p.color};flex-grow:${pp}"></i></div>
     <div class="who2"><span><i class="dot2" style="background:${S.me.color}"></i>${esc(first(S.me.name))} <b>${money(me, { round: true })}</b></span><span><i class="dot2" style="background:${S.p.color}"></i>${esc(first(S.p.name))} <b>${money(pp, { round: true })}</b></span></div>` : ""}</button>
-  ${inv}
+  ${inv}${isNow && new Date().getDate() >= lastD.getDate() - 2 ? `<button class="lnk" data-act="breakdown">Month ends soon — review who spent what</button>` : ""}
   ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
   <div class="tl" id="tl">${tl}</div>
   ${!mExp.length ? `<div class="empty"><b>${isNow ? "A fresh month" : "Nothing here"}</b>${isNow ? "Tap + to add your first expense." : "No expenses in " + monthLabel(m) + "."}</div>` : ""}`;
 }
-function openBreakdown() { U.insMonth = U.month; openSheet("Breakdown", `<div id="bd">${renderInsights()}</div>`, b => animateIn(b)); }
-
 function rowHtml(e) {
   return `<button class="li" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div>
     <div class="t2"><i class="pd" style="background:${person(e.paid).color}" aria-hidden="true"></i>${esc(first(person(e.paid).name))} · ${CAT[e.cat].n}</div></div>
     <div class="amt">${money(e.amt)}</div></button>`;
 }
 
-function renderInsights() {
-  const m = U.month, sc = U.scope;
-  const mo = S.exp.filter(e => inMonth(e.ts, m) && (sc === "all" || e.paid === sc)), total = mo.reduce((a, e) => a + e.amt, 0);
-  const by = {}; mo.forEach(e => { const o = by[e.cat] = by[e.cat] || { t: 0, n: 0 }; o.t += e.amt; o.n++; });
-  const cats = Object.entries(by).sort((a, b) => b[1].t - a[1].t);
-  const dim = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate(), perDay = Array(dim).fill(0); mo.forEach(e => perDay[new Date(e.ts).getDate() - 1] += e.amt);
-  const mx = Math.max(...perDay, 1), isNow = m.getTime() === monthStart(new Date()).getTime(), todayIdx = isNow ? new Date().getDate() - 1 : -1;
-  const merch = {}; mo.forEach(e => { const k = e.title.trim(); merch[k] = merch[k] || { t: 0, n: 0, c: e.cat }; merch[k].t += e.amt; merch[k].n++; });
-  const top = Object.entries(merch).sort((a, b) => b[1].t - a[1].t).slice(0, 5);
-  const R = 70, C = 2 * Math.PI * R; let off = 0; const segs = cats.map(([c, v]) => { const len = v.t / (total || 1) * C, x = { c, len, off }; off += len; return x; });
-  const all = S.exp.filter(e => inMonth(e.ts, m)), me = spentBy(all, "me"), pp = spentBy(all, "p"), at = me + pp;
-  return `
-  <div class="seg" style="margin-bottom:12px"><button class="${sc === "all" ? "on" : ""}" data-act="scope" data-arg="all">Together</button><button class="${sc === "me" ? "on" : ""}" data-act="scope" data-arg="me">${esc(first(S.me.name))}</button><button class="${sc === "p" ? "on" : ""}" data-act="scope" data-arg="p">${esc(first(S.p.name))}</button></div>
-  ${total ? `
-  <div class="card"><div class="donutw"><svg viewBox="0 0 180 180" aria-label="Spending by category"><circle cx="90" cy="90" r="${R}" stroke="var(--card2)"/>
-    ${segs.map(x => `<circle class="seg-c" cx="90" cy="90" r="${R}" stroke="${CAT[x.c].c}" stroke-dasharray="0 ${C}" data-len="${Math.max(0, x.len - 2.5)}" data-c="${C}" stroke-dashoffset="${-x.off}"/>`).join("")}</svg>
-    <div class="ctr"><small>${monthLabel(m)}</small><b>${money(total, { round: true })}</b></div></div></div>
-  <div class="lab" style="margin:22px 4px 8px">By category</div>
-  <div class="list">${cats.map(([c, v]) => `<div class="li"><i class="cdot" style="background:${CAT[c].c}"></i><div class="mid"><div class="t1">${CAT[c].n}</div><div class="bar"><i data-w="${v.t / cats[0][1].t * 100}" style="background:${CAT[c].c}"></i></div></div><div class="amt">${money(v.t, { round: true })}<small class="muted">${Math.round(v.t / total * 100)}%</small></div></div>`).join("")}</div>
-  ${sc === "all" && at ? `<div class="lab" style="margin:22px 4px 8px">Who spent</div><div class="list"><div class="li"><i class="cdot" style="background:${S.me.color}"></i><div class="mid"><div class="t1">${esc(S.me.name)}</div></div><div class="amt">${money(me, { round: true })}<small class="muted">${Math.round(me / at * 100)}%</small></div></div><div class="li"><i class="cdot" style="background:${S.p.color}"></i><div class="mid"><div class="t1">${esc(S.p.name)}</div></div><div class="amt">${money(pp, { round: true })}<small class="muted">${Math.round(pp / at * 100)}%</small></div></div></div>` : ""}
-  <div class="lab" style="margin:22px 4px 8px">Day by day</div>
-  <div class="card"><div class="daily" role="img" aria-label="Daily spending">${perDay.map((v, i) => `<i class="${v ? "has" : ""} ${i === todayIdx ? "today" : ""}" data-h="${v / mx * 100}"></i>`).join("")}</div><div class="axis"><span>1</span><span>${Math.round(dim / 2)}</span><span>${dim}</span></div></div>
-  <div class="lab" style="margin:22px 4px 8px">Top places</div>
-  <div class="list">${top.map(([k, v]) => `<div class="li">${ico(v.c, k)}<div class="mid"><div class="t1">${esc(k)}</div><div class="t2">${v.n} time${v.n > 1 ? "s" : ""}</div></div><div class="amt">${money(v.t, { round: true })}</div></div>`).join("")}</div>`
-  : `<div class="empty"><b>No spending</b>Nothing recorded for ${monthLabel(m)}.</div>`}`;
+/* =========================================================
+   MONTH SUMMARY — the month-end check: who spent on what, how much
+   ========================================================= */
+const merchKey = t => canonMerchant(t).toLowerCase();
+function monthReport(m) {
+  const mo = S.exp.filter(e => inMonth(e.ts, m)), pm = new Date(m.getFullYear(), m.getMonth() - 1, 1), prev = S.exp.filter(e => inMonth(e.ts, pm));
+  const T = { me: 0, p: 0, t: 0 }, cats = {}, merch = {};
+  mo.forEach(e => {
+    T[e.paid] = r2(T[e.paid] + e.amt); T.t = r2(T.t + e.amt);
+    const c = cats[e.cat] = cats[e.cat] || { id: e.cat, me: 0, p: 0, t: 0, n: 0, m: {} };
+    c[e.paid] = r2(c[e.paid] + e.amt); c.t = r2(c.t + e.amt); c.n++;
+    const k = merchKey(e.title), g = merch[k] = merch[k] || { k, names: {}, me: 0, p: 0, t: 0, n: 0, cats: {} };
+    g.names[e.title] = (g.names[e.title] || 0) + 1; g[e.paid] = r2(g[e.paid] + e.amt); g.t = r2(g.t + e.amt); g.n++; g.cats[e.cat] = (g.cats[e.cat] || 0) + 1;
+    const cm = c.m[k] = c.m[k] || { k, me: 0, p: 0, t: 0, n: 0, names: g.names }; cm[e.paid] = r2(cm[e.paid] + e.amt); cm.t = r2(cm.t + e.amt); cm.n++;
+  });
+  const nm = g => canonMerchant(Object.entries(g.names).sort((a, b) => b[1] - a[1])[0][0]);
+  const catList = Object.values(cats).sort((a, b) => b.t - a.t);
+  catList.forEach(c => { c.list = Object.values(c.m).sort((a, b) => b.t - a.t).map(g => ({ name: nm(g), me: g.me, p: g.p, t: g.t, n: g.n })); });
+  const mList = Object.values(merch).sort((a, b) => b.t - a.t).map(g => ({ name: nm(g), me: g.me, p: g.p, t: g.t, n: g.n, cat: Object.entries(g.cats).sort((a, b) => b[1] - a[1])[0][0] }));
+  // fold the long tail into one honest "smaller" line (< 2% of the month, beyond the top 8)
+  const keep = [], tail = { name: "", me: 0, p: 0, t: 0, n: 0, cnt: 0 };
+  mList.forEach((g, i) => { if (i < 8 || g.t >= T.t * 0.02) keep.push(g); else { tail.me = r2(tail.me + g.me); tail.p = r2(tail.p + g.p); tail.t = r2(tail.t + g.t); tail.n += g.n; tail.cnt++; } });
+  // patterns
+  const pat = [], pt = prev.reduce((a, e) => a + e.amt, 0), nn = (n) => esc(first(n));
+  if (T.t && pt) { const d = Math.round((T.t - pt) / pt * 100); pat.push(`${d >= 0 ? "Up" : "Down"} <b>${Math.abs(d)}%</b> on ${pm.toLocaleDateString("en-GB", { month: "long" })} (${money(pt, { round: true })}).`); }
+  if (T.t) { const big = [...mo].sort((a, b) => b.amt - a.amt)[0]; pat.push(`Largest single expense: <b>${esc(canonMerchant(big.title))} ${money(big.amt, { round: true })}</b> (${nn(person(big.paid).name)}, ${new Date(big.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}).`); }
+  // recurring: same merchant in 2+ of the last 4 months, similar amounts
+  const rec = {}; for (let i = 0; i < 4; i++) { const mm = new Date(m.getFullYear(), m.getMonth() - i, 1); S.exp.filter(e => inMonth(e.ts, mm)).forEach(e => { const k = merchKey(e.title), r = rec[k] = rec[k] || { months: new Set(), amts: [], name: canonMerchant(e.title) }; r.months.add(i); r.amts.push(e.amt); }); }
+  const rc = Object.values(rec).filter(r => r.months.size >= 2 && r.months.has(0)).filter(r => { const mn = Math.min(...r.amts), mx = Math.max(...r.amts); return mx <= mn * 1.15; }).sort((a, b) => b.amts[0] - a.amts[0]).slice(0, 3);
+  if (rc.length) pat.push(`Recurring: <b>${rc.map(r => esc(r.name) + " " + money(r.amts[0], { round: true })).join(", ")}</b>.`);
+  const days = {}; mo.forEach(e => days[dkey(e.ts)] = (days[dkey(e.ts)] || 0) + e.amt);
+  const pk = Object.entries(days).sort((a, b) => b[1] - a[1])[0]; if (pk && Object.keys(days).length > 3) pat.push(`Busiest day: <b>${new Date(pk[0] + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}</b> · ${money(pk[1], { round: true })}.`);
+  const we = mo.filter(e => [0, 6].includes(new Date(e.ts).getDay())).reduce((a, e) => a + e.amt, 0); if (T.t && mo.length > 8) pat.push(`<b>${Math.round(we / T.t * 100)}%</b> of spending happened on weekends.`);
+  const both = catList.filter(c => c.me >= c.t * 0.25 && c.p >= c.t * 0.25 && c.t >= T.t * 0.04).slice(0, 3).map(c => CAT[c.id].n), solo = catList.filter(c => c.id !== "other" && c.t >= T.t * 0.05 && (c.me >= c.t * 0.9 || c.p >= c.t * 0.9)).slice(0, 3).map(c => `${CAT[c.id].n} (${nn(person(c.me >= c.p ? "me" : "p").name)})`);
+  if (both.length) pat.push(`You both spend on: <b>${both.join(", ")}</b>.`); if (solo.length) pat.push(`Mostly one person: <b>${solo.join(", ")}</b>.`);
+  return { T, catList, keep, tail, pat: pat.slice(0, 6), pt, n: mo.length };
 }
+function reportText(m) {
+  const R = monthReport(m), f = x => money(x, { round: true }), nm = [first(S.me.name), first(S.p.name)];
+  let t = `${monthLabel(m)} — ${f(R.T.t)} together\n${nm[0]} ${f(R.T.me)} · ${nm[1]} ${f(R.T.p)}\n\nBy category (${nm[0]} / ${nm[1]} / total)\n`;
+  R.catList.forEach(c => { t += `${CAT[c.id].n}: ${f(c.me)} / ${f(c.p)} / ${f(c.t)}\n`; });
+  t += `\nTop places\n` + R.keep.map(g => `${g.name} ×${g.n}: ${f(g.me)} / ${f(g.p)} / ${f(g.t)}`).join("\n");
+  if (R.tail.cnt) t += `\n${R.tail.cnt} smaller: ${f(R.tail.me)} / ${f(R.tail.p)} / ${f(R.tail.t)}`;
+  return t;
+}
+const num = v => (v > 0 ? money(v, { round: true }) : "–");
+function trow(name, sub, me, p, t, cls = "", attrs = "") {
+  const hi = me === p ? "" : me > p ? 1 : 2;
+  return `<${attrs ? "button" : "div"} class="tr ${cls}" ${attrs}><div class="tn1"><span>${name}</span>${sub ? `<small>${sub}</small>` : ""}</div><div class="${hi === 1 ? "hi" : ""}">${num(me)}</div><div class="${hi === 2 ? "hi" : ""}">${num(p)}</div><div class="tt">${num(t)}</div></${attrs ? "button" : "div"}>`;
+}
+function renderSummary() {
+  const m = U.month, R = monthReport(m), T = R.T, a = esc(first(S.me.name)), b = esc(first(S.p.name));
+  if (!T.t) return `<div class="empty"><b>No spending</b>Nothing recorded for ${monthLabel(m)}.</div>`;
+  const head = `<div class="tr thead"><div></div><div><i class="dot2" style="background:${S.me.color}"></i>${a}</div><div><i class="dot2" style="background:${S.p.color}"></i>${b}</div><div>Total</div></div>`;
+  return `
+  <div class="dh" style="padding-bottom:4px"><div class="ds" style="margin:0">${monthLabel(m)}</div><div class="da">${money(T.t, { round: true })}</div>
+    <div class="bar2" style="margin:12px 0 0"><i style="background:${S.me.color};flex-grow:${T.me}"></i><i style="background:${S.p.color};flex-grow:${T.p}"></i></div></div>
+  <div class="lab">Who spent on what</div>
+  <div class="grp tbl">${head}${R.catList.map(c => trow(CAT[c.id].n, c.n + " expense" + (c.n > 1 ? "s" : ""), c.me, c.p, c.t, "tcat", `data-act="exp-cat" data-arg="${c.id}"`) + `<div class="subs" id="sub-${c.id}">${c.list.slice(0, 7).map(g => trow(esc(g.name), g.n > 1 ? "×" + g.n : "", g.me, g.p, g.t, "tsub")).join("")}${c.list.length > 7 ? trow(`${c.list.length - 7} smaller`, "", c.list.slice(7).reduce((x, g) => x + g.me, 0), c.list.slice(7).reduce((x, g) => x + g.p, 0), c.list.slice(7).reduce((x, g) => x + g.t, 0), "tsub") : ""}</div>`).join("")}
+    ${trow("Total", "", T.me, T.p, T.t, "tfoot")}</div>
+  <div class="hint" style="text-align:left;margin:6px 16px 0">Tap a category to see its places.</div>
+  <div class="lab">Top places</div>
+  <div class="grp tbl">${head}${R.keep.map(g => trow(esc(g.name), `${CAT[g.cat].n}${g.n > 1 ? " · ×" + g.n : ""}`, g.me, g.p, g.t)).join("")}${R.tail.cnt ? trow(`${R.tail.cnt} smaller places`, "", R.tail.me, R.tail.p, R.tail.t) : ""}</div>
+  ${R.pat.length ? `<div class="lab">Worth noticing</div><div class="grp">${R.pat.map(x => `<div class="pt">${x}</div>`).join("")}</div>` : ""}
+  <div class="acts2"><button class="tx" data-act="share-report">Share this month</button></div>`;
+}
+function openBreakdown() { openSheet("Month summary", `<div id="bd">${renderSummary()}</div>`, b => animateIn(b)); }
 
 function renderYou() {
   const tg = (k, l) => `<button class="${S.theme === k ? "on" : ""}" data-act="theme" data-arg="${k}">${l}</button>`;
@@ -1089,11 +1151,12 @@ function parseSms(m) {
   if (!(amt > 0) || amt > 5e6) return null;
   let merch = "";
   const vpa = body.match(/(?:vpa|to|@)\s*([a-z0-9._-]{2,}@[a-z]{2,})/i) || body.match(/\b([a-z0-9._-]{2,})@(?:ok[a-z]+|ybl|ibl|axl|paytm|upi|axis|icici|hdfcbank|sbi|apl|okhdfc|oksbi|okaxis|okicici|freecharge|[a-z]{2,6})\b/i);
-  const named = body.match(/\b(?:at|to|towards|for|trf to|info:?)\s+(?!a\/c|account|your|card|vpa|upi|bank|ref|the\b)([A-Za-z0-9][A-Za-z0-9 &'._*-]{1,32}?)(?=\s+(?:on|via|ref|using|from|upi|avl|bal|txn|a\/c|acct|card|is|has|if|not|call|dated|through|\d{1,2}[-/.]\d{1,2})|[.,;(]|$)/i);
-  if (named) merch = named[1]; else if (vpa) merch = (vpa[1] || vpa[0]).split("@")[0];
+  const named = body.match(/\b(?:at|to|towards|for|trf to|info:?)\s+(?!a\/c|account|your|card|vpa|upi|bank|ref|the\b|(?:rs|inr|usd|eur|gbp)\b|\d|dispute|details|more\b|any\b|assist|quer|report)([A-Za-z0-9][A-Za-z0-9 &'._*-]{1,32}?)(?=\s+(?:on|via|ref|using|from|upi|avl|bal|txn|a\/c|acct|card|is|has|if|not|call|dated|through|\d{1,2}[-/.]\d{1,2})|[.,;(]|$)/i);
+  const upiSlash = body.match(/UPI\/(?:DR|CR|P2[AM])?\/?\d{4,}\/([^\/]{2,30})\//i), afterDate = body.match(/\b\d{1,2}[-\/ ]?(?:[A-Za-z]{3}|\d{1,2})[-\/ ]?\d{2,4}(?:[: ]\d{2}:\d{2}(?::\d{2})?)?\s+(?:on|at)\s+([A-Za-z][A-Za-z0-9 &'.-]{1,28}?)(?=[.;,]|\s+(?:avl|bal|ref|upi)|\s*$)/i), beforeCredited = body.match(/[;,]\s*([A-Za-z][A-Za-z0-9 .&'-]{2,28}?)\s+credited/i);
+  if (upiSlash) merch = upiSlash[1]; else if (beforeCredited) merch = beforeCredited[1]; else if (named) merch = named[1]; else if (afterDate) merch = afterDate[1]; else if (vpa) merch = (vpa[1] || vpa[0]).split("@")[0];
   merch = merch.replace(/[*_.\-]+$/g, "").replace(/\d{5,}/g, "").replace(/^(?:upi|pos|ecom|pur|imps|neft)[\s*_-]+/i, "").trim();
-  if (/^[\d\s]*$/.test(merch) || merch.length < 2) merch = (/atm|cash/i.test(body) ? "ATM withdrawal" : "Card payment");
-  merch = titleCase(merch.replace(/[_]+/g, " ").replace(/\s+(approved|declined|successful|completed)\b.*$/i, "")).slice(0, 28);
+  if (/^[\d\s]*$/.test(merch) || merch.length < 2 || /^(rs|inr|usd|eur|gbp)\.?$/i.test(merch)) merch = (/atm|cash|wdl/i.test(body) ? "ATM withdrawal" : /upi/i.test(body) ? "UPI payment" : "Card payment");
+  merch = canonMerchant(merch.replace(/[_]+/g, " ").replace(/\s+(approved|declined|successful|completed)\b.*$/i, "")).slice(0, 28);
   return { amt, title: merch, cat: /atm withdrawal/i.test(merch) ? "other" : catOf(merch), ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)) };
 }
 function hash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
@@ -1222,7 +1285,8 @@ const A = {
   week: a => { U.week = a === "all" ? null : +a; hap(1); show("month", true); const t = $("#tl"); if (t && U.week != null) { const pg = $(".page"); pg.scrollTo({ top: Math.max(0, t.offsetTop - 120), behavior: "smooth" }); } },
   breakdown: () => openBreakdown(),
   today: () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; hap(1); show("month"); },
-  scope: a => { U.scope = a; hap(1); const bd = $("#bd"); if (bd) { bd.innerHTML = renderInsights(); animateIn(bd, false); } },
+  "exp-cat": a => { const el = $("#sub-" + a); if (el) { el.classList.toggle("on"); hap(1); } },
+  "share-report": () => shareText("Nest — " + monthLabel(U.month), reportText(U.month)),
   "quick-invite": () => quickInvite(true), "quick-qr": () => quickInvite(false), "wa-send": () => sendWhatsApp(), "show-invite": () => openInvite(false),
   "copy-link": () => { if (N && N.copy) N.copy(inviteLink()); else { try { navigator.clipboard.writeText(inviteLink()); } catch (e) { } } toast("Link copied"); },
 

@@ -25,6 +25,9 @@ Requires Android 8.0+.
   settlements you confirm with one tap. Without a server it falls back to on-device insights.
 - Backend: [`worker/`](worker/README.md) - Cloudflare Worker + D1, in your own account.
 
+## v1.5 — Month-end summary
+Tap the month total → **Who spent on what**: category × person table (tap a category for its places), **Top places**, **Worth noticing** (vs last month, recurring, biggest, weekends, shared vs solo categories), and *Share this month*. Merchant names are merged (Swiggy / swiggy@axb / Swiggy.Stores → one line; long tail folded into "smaller places"). Totals are asserted to add up (`android/tests/report.test.js`); the SMS parser is checked on 25 realistic bank/UPI formats (`parser.test.js`) — written by me, not your real messages.
+
 ## v1.4 — Minimal: no balances, one Month screen, details on tap
 Nest is now a plain shared tracker (no owing/settle-up). Month screen = total + two-colour bar + week tabs + timeline; tap an expense for full details. Apple-style flat design.
 
