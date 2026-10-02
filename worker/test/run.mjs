@@ -54,17 +54,15 @@ try {
   assert.equal(bad.accepted, 0); assert.equal(bad.changes.find(c => c.id === "profile:b").data.name, "Meera"); console.log("validation ok");
 
   // agent
-  const dg = (await api("/v1/agent/digest", { token: A.token })).body; assert.equal(dg.headline, "Dining is trending up");
-  const dg2 = (await api("/v1/agent/digest", { token: A.token })).body; assert.equal(dg2.cached, true);
   const c1 = (await api("/v1/agent/chat", { method: "POST", token: A.token, body: { messages: [{ role: "user", content: "log dinner 1240 I paid" }] } })).body;
-  assert.equal(c1.actions[0].type, "add_expense"); assert.equal(c1.actions[0].paid, "a"); assert.equal(c1.actions[0].sa, 50);
+  assert.equal(c1.actions[0].type, "add_expense"); assert.equal(c1.actions[0].paid, "a");
   const c2 = (await api("/v1/agent/chat", { method: "POST", token: B.token, body: { messages: [{ role: "user", content: "how much on food?" }] } })).body;
   assert.match(c2.reply, /"count":1/); assert.match(c2.reply, /"total":1300/);
   const sys = seen.find(s => typeof s.system === "string" && s.messages.some(m => /how much/.test(String(m.content)))).system;
-  assert.match(sys, /talking to Meera/); assert.match(sys, /Arjun owes Meera|Meera owes Arjun/);
+  assert.match(sys, /talking to Meera/); assert.doesNotMatch(sys, /"balance"/);
   assert.equal(seen.every(s => s.model === "claude-opus-5-5"), true);
   assert.equal(seen.some(s => "temperature" in s || JSON.stringify(s).includes("budget_tokens")), false);
-  console.log("agent ok (digest cache, tool loop, proposals, query tool, model=claude-opus-5-5)");
+  console.log("agent ok (tool loop, proposals, query tool, model=claude-opus-5-5)");
   assert.match(await (await fetch(base + "/delete")).text(), /Delete your Nest data/);
   const dres = await api("/v1/nest/delete", { method: "POST", token: A.token, body: {} }); assert.equal(dres.body.deleted, true);
   assert.equal((await api("/v1/sync", { method: "POST", token: B.token, body: { since: 0 } })).status, 401);

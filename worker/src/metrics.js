@@ -17,39 +17,27 @@ export function load(rows) {
   return { exp, set, prof };
 }
 
-export const shareA = e => r2(e.amt * e.sa / 100);
-// + means 'b' owes 'a'
-export function netA(exp, set) {
-  let n = 0;
-  for (const e of exp) n += (e.paid === "a" ? e.amt : 0) - shareA(e);
-  for (const s of set) n += s.from === "a" ? s.amt : -s.amt;
-  return r2(n);
-}
-
 function agg(list, key) {
   const m = {};
   for (const e of list) { const k = key(e); const o = (m[k] = m[k] || { total: 0, n: 0 }); o.total = r2(o.total + e.amt); o.n++; }
   return Object.entries(m).sort((x, y) => y[1].total - x[1].total).map(([k, v]) => ({ k, ...v }));
 }
 
-export function summary({ exp, set, prof }, now = Date.now()) {
+export function summary({ exp, prof }, now = Date.now()) {
   const d30 = exp.filter(e => e.ts > now - 30 * DAY), d90 = exp.filter(e => e.ts > now - 90 * DAY);
   const mk = new Date(now).toISOString().slice(0, 7), pm = new Date(Date.UTC(new Date(now).getUTCFullYear(), new Date(now).getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
   const month = ym => exp.filter(e => dkey(e.ts).startsWith(ym));
   const sum = l => r2(l.reduce((a, e) => a + e.amt, 0));
   const person = id => {
-    const mine = d30.filter(e => e.paid === id), shareOf = e => (id === "a" ? shareA(e) : r2(e.amt - shareA(e)));
-    const cats = {}; for (const e of d30) cats[e.cat] = r2((cats[e.cat] || 0) + shareOf(e));
-    return { name: prof[id].name, paid_30d: sum(mine), fair_share_30d: r2(d30.reduce((a, e) => a + shareOf(e), 0)), share_by_category_30d: cats };
+    const mine = d30.filter(e => e.paid === id), cats = {}; for (const e of mine) cats[e.cat] = r2((cats[e.cat] || 0) + e.amt);
+    return { name: prof[id].name, spent_30d: sum(mine), by_category_30d: cats };
   };
   const merchants = agg(d90, e => e.title.toLowerCase()).slice(0, 8).map(m => ({ merchant: m.k, total: m.total, times: m.n }));
   const recurring = agg(d90, e => e.title.toLowerCase()).filter(m => m.n >= 3).slice(0, 6).map(m => ({ merchant: m.k, times: m.n, avg: r2(m.total / m.n) }));
   const daily = []; for (let i = 13; i >= 0; i--) { const k = dkey(now - i * DAY); daily.push({ day: k, spent: sum(exp.filter(e => dkey(e.ts) === k)) }); }
-  const net = netA(exp, set);
-  return {
+    return {
     today: dkey(now),
     people: { a: prof.a.name, b: prof.b.name },
-    balance: Math.abs(net) < 0.5 ? { state: "settled" } : { state: net > 0 ? `${prof.b.name} owes ${prof.a.name}` : `${prof.a.name} owes ${prof.b.name}`, amount: Math.abs(net) },
     combined: {
       last_30d_total: sum(d30), this_month: sum(month(mk)), last_month: sum(month(pm)),
       by_category_30d: agg(d30, e => e.cat).map(c => ({ category: c.k, total: c.total, count: c.n })),
@@ -57,8 +45,7 @@ export function summary({ exp, set, prof }, now = Date.now()) {
       biggest_30d: [...d30].sort((x, y) => y.amt - x.amt).slice(0, 3).map(e => ({ title: e.title, amount: e.amt, date: dkey(e.ts), paid_by: prof[e.paid].name }))
     },
     individual: { a: person("a"), b: person("b") },
-    disputed: exp.filter(e => e.fl).slice(0, 8).map(e => ({ title: e.title, amount: e.amt, date: dkey(e.ts), questioned_by: prof[e.fl.by] ? prof[e.fl.by].name : "?", reason: e.fl.why })),
-    totals: { expenses: exp.length, settlements: set.length }
+    totals: { expenses: exp.length }
   };
 }
 
@@ -70,5 +57,5 @@ export function query(data, q = {}) {
   if (q.paid_by === "a" || q.paid_by === "b") l = l.filter(e => e.paid === q.paid_by);
   if (q.text) { const t = String(q.text).toLowerCase(); l = l.filter(e => e.title.toLowerCase().includes(t)); }
   l = [...l].sort((x, y) => y.ts - x.ts);
-  return { count: l.length, total: r2(l.reduce((a, e) => a + e.amt, 0)), rows: l.slice(0, Math.min(+q.limit || 15, 40)).map(e => ({ id: e.id, date: dkey(e.ts), title: e.title, category: e.cat, amount: e.amt, paid_by: prof[e.paid].name, split_a_pct: e.sa })) };
+  return { count: l.length, total: r2(l.reduce((a, e) => a + e.amt, 0)), rows: l.slice(0, Math.min(+q.limit || 15, 40)).map(e => ({ id: e.id, date: dkey(e.ts), title: e.title, category: e.cat, amount: e.amt, paid_by: prof[e.paid].name, split_a_pct: undefined })) };
 }

@@ -14,17 +14,12 @@ const TOOLS = [
   },
   {
     name: "add_expense",
-    description: "Propose a new expense. The couple confirms it in the app before it is saved - never claim it is already saved.",
-    input_schema: { type: "object", additionalProperties: false, required: ["amount", "title", "category", "paid_by", "split"], properties: {
+    description: "Propose a new expense. The couple confirms it in the app before it is saved - never claim it is already saved. Expenses are just records of who spent what; there is no splitting or owing.",
+    input_schema: { type: "object", additionalProperties: false, required: ["amount", "title", "category", "paid_by"], properties: {
       amount: { type: "number" }, title: { type: "string" }, category: { type: "string", enum: CATEGORIES },
       paid_by: { type: "string", enum: ["me", "partner"], description: "Relative to the person you are talking to" },
-      split: { type: "string", enum: ["equal", "me_only", "partner_only"] }, date: { type: "string", description: "YYYY-MM-DD, default today" } } }
+      date: { type: "string", description: "YYYY-MM-DD, default today" } } }
   },
-  {
-    name: "settle_up",
-    description: "Propose recording a settlement payment that clears (or reduces) the current balance. The couple confirms in the app.",
-    input_schema: { type: "object", additionalProperties: false, properties: { amount: { type: "number", description: "Omit to settle the full balance" } } }
-  }
 ];
 
 function client(env) {
@@ -39,10 +34,10 @@ function persona(sum, me, partner) {
 You are talking to ${me} (their partner is ${partner}). "I/me/my" means ${me}. Currency symbol/code is in the data's context; amounts are plain numbers in the couple's currency.
 Rules:
 - Every number you state must come from the summary below or from query_expenses. Never guess or invent figures; if you can't know, say so.
-- Balance rule: balance = what someone paid minus their fair share of each expense; settlements adjust it. The summary's "balance" is authoritative.
-- To change data you may only call add_expense or settle_up. They are proposals the couple confirms in the app - never say something is already saved.
+- This is a simple shared tracker for two people: it records who spent what. There is no splitting, owing or settling - never mention balances or who owes whom.
+- To change data you may only call add_expense. It is a proposal the couple confirms in the app - never say something is already saved.
 - Keep answers to 1-4 short sentences unless asked for detail. Prefer concrete observations and one useful suggestion. At most one emoji. No lecturing about spending habits, no financial-advice disclaimers.
-- Be fair to both partners; never take sides. If an expense is questioned (see "disputed"), help them settle it kindly: suggest a concrete fair split or ask one clarifying question.
+- Be fair to both partners; never take sides.
 
 Today's data summary (JSON):
 ${JSON.stringify(sum)}`;
@@ -70,14 +65,9 @@ export async function chat(env, rows, member, history) {
         const a = b.input || {};
         if (!(a.amount > 0)) out = { error: "amount must be > 0" };
         else {
-          const paid = a.paid_by === "partner" ? other : member;
-          const sa = a.split === "equal" ? 50 : (a.split === "me_only") === (member === "a") ? 100 : 0;
-          actions.push({ type: "add_expense", amount: Math.round(a.amount * 100) / 100, title: String(a.title || "Expense").slice(0, 40), category: CATEGORIES.includes(a.category) ? a.category : "other", paid, sa, date: /^\d{4}-\d{2}-\d{2}$/.test(a.date || "") ? a.date : null });
+          actions.push({ type: "add_expense", amount: Math.round(a.amount * 100) / 100, title: String(a.title || "Expense").slice(0, 40), category: CATEGORIES.includes(a.category) ? a.category : "other", paid: a.paid_by === "partner" ? other : member, date: /^\d{4}-\d{2}-\d{2}$/.test(a.date || "") ? a.date : null });
           out = { status: "proposed", note: "Shown to the couple as a confirm card." };
         }
-      } else if (b.name === "settle_up") {
-        actions.push({ type: "settle_up", amount: b.input && b.input.amount > 0 ? Math.round(b.input.amount * 100) / 100 : null });
-        out = { status: "proposed", note: "Shown to the couple as a confirm card." };
       } else out = { error: "unknown tool" };
       results.push({ type: "tool_result", tool_use_id: b.id, content: JSON.stringify(out) });
     }
@@ -86,24 +76,3 @@ export async function chat(env, rows, member, history) {
   return { reply: "That took more steps than expected - could you try asking in a simpler way?", actions };
 }
 
-const DIGEST_SCHEMA = {
-  type: "object", additionalProperties: false, required: ["headline", "bullets", "nudge"],
-  properties: {
-    headline: { type: "string" },
-    bullets: { type: "array", items: { type: "object", additionalProperties: false, required: ["emoji", "text"], properties: { emoji: { type: "string" }, text: { type: "string" } } } },
-    nudge: { type: "object", additionalProperties: false, required: ["text", "action"], properties: { text: { type: "string" }, action: { type: "string", enum: ["settle", "none"] } } }
-  }
-};
-
-export async function digest(env, rows) {
-  const data = load(rows), sum = summary(data);
-  if (!data.exp.length) return { headline: "Your Nest is ready", bullets: [{ emoji: "🌱", text: "Add a few expenses and I'll start spotting patterns for you both." }], nudge: { text: "Tap + to log your first one.", action: "none" } };
-  const res = await client(env).messages.create({
-    model: model(env), max_tokens: 1200,
-    system: `You are Nest, a warm money agent for a couple. Write today's brief from the data. Rules: headline <= 8 words, specific and friendly (not generic). 2-3 bullets, each one sentence with one concrete figure from the data and one emoji. A nudge: one practical suggestion; action "settle" only if the balance is not settled and >= 500 in magnitude (else "none"). Use only numbers present in the data. Refer to people by name, be fair to both. No financial-advice disclaimers.\n\nData:\n${JSON.stringify(sum)}`,
-    messages: [{ role: "user", content: "Write today's brief." }],
-    output_config: { effort: env.DIGEST_EFFORT || "low", format: { type: "json_schema", schema: DIGEST_SCHEMA } }
-  });
-  if (res.stop_reason === "refusal") throw Object.assign(new Error("refused"), { status: 502 });
-  try { return JSON.parse(text(res)); } catch { throw Object.assign(new Error("bad digest"), { status: 502 }); }
-}

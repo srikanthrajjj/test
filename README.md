@@ -25,6 +25,9 @@ Requires Android 8.0+.
   settlements you confirm with one tap. Without a server it falls back to on-device insights.
 - Backend: [`worker/`](worker/README.md) - Cloudflare Worker + D1, in your own account.
 
+## v1.4 — Minimal: no balances, one Month screen, details on tap
+Nest is now a plain shared tracker (no owing/settle-up). Month screen = total + two-colour bar + week tabs + timeline; tap an expense for full details. Apple-style flat design.
+
 ## v1.3 — Month timeline, WhatsApp/QR invite, disputes, Play kit
 - One **Month** screen (balance → Together/each person → week chips → timeline with real merchant logos); breakdown opens as a sheet.
 - **Invite**: WhatsApp link + QR (partner scans with the camera → landing page → app opens via `nest://join`), shown right after the SMS import.

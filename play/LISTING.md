@@ -3,12 +3,11 @@
 **App name:** Nest – Couples Expense Tracker  (≤30 chars)
 **Short description (≤80):** One shared view of what you two spend, month by month. Invite in one tap.
 **Full description:**
-Nest is the calm way for two people to share money. See who paid what, who owes whom, and settle up — all in one monthly timeline.
+Nest is the calm way for two people to keep track of what they spend, together.
 
-• One honest balance — "Meera owes you ₹10,358", updated with every expense
-• Month at a glance — Together, you, and your partner's fair share, plus a week-by-week timeline with real merchant logos
-• Invite in one tap — send a WhatsApp link or let your partner scan a QR code; they're connected instantly
-• Kind disagreements — question an expense with one tap, fix it together, mark it sorted
+• One calm monthly timeline — what you two spend, week by week, with real merchant logos
+• Tap any expense for the full story: who, when, category, notes and how it compares
+• Invite in one tap — a WhatsApp link or a QR code your partner scans; you're connected instantly
 • Nest agent — ask "Where did we spend most?" or "Log ₹500 groceries I paid"; you confirm before anything is saved
 • Smart import — share or paste a bank text and Nest turns it into an expense
 • Private by design — no account, no ads. Texts are read on your phone and never uploaded

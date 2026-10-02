@@ -1,4 +1,4 @@
-import { chat, digest } from "./agent.js";
+import { chat } from "./agent.js";
 import { landing, privacy, deletion } from "./pages.js";
 
 const CORS = {
@@ -65,7 +65,7 @@ function validChange(ch, member) {
   if (ch.kind === "profile" && ch.id !== "profile:" + member) return false;      // you may only edit your own profile
   if (ch.del) return true;
   const d = ch.data; if (!d || typeof d !== "object" || JSON.stringify(d).length > 2048) return false;
-  if (ch.kind === "exp") return d.amt > 0 && d.amt < 1e8 && typeof d.title === "string" && ["a", "b"].includes(d.paid) && d.sa >= 0 && d.sa <= 100 && Number.isFinite(d.ts) && (d.fl === undefined || (d.fl && typeof d.fl.why === "string" && d.fl.why.length <= 160 && ["a", "b"].includes(d.fl.by)));
+  if (ch.kind === "exp") return d.amt > 0 && d.amt < 1e8 && typeof d.title === "string" && ["a", "b"].includes(d.paid) && d.sa >= 0 && d.sa <= 100 && Number.isFinite(d.ts) && (d.note === undefined || (typeof d.note === "string" && d.note.length <= 160));
   if (ch.kind === "set") return d.amt > 0 && ["a", "b"].includes(d.from) && Number.isFinite(d.ts);
   return typeof d.name === "string" && (d.cur === undefined || /^[A-Z]{3}$/.test(d.cur));
 }
@@ -142,17 +142,6 @@ export default {
         const c = await env.DB.prepare("SELECT code FROM couples WHERE id=?").bind(who.couple).first();
         const partner = await env.DB.prepare("SELECT 1 FROM members WHERE couple=? AND member=?").bind(who.couple, who.member === "a" ? "b" : "a").first();
         return json({ couple: who.couple, member: who.member, code: partner ? null : c.code, partnerJoined: !!partner, agent: !!env.ANTHROPIC_API_KEY });
-      }
-      if (req.method === "GET" && path === "/v1/agent/digest") {
-        const off = agentReady(env); if (off) return off;
-        const day = today(), seq = (await env.DB.prepare("SELECT seq FROM couples WHERE id=?").bind(who.couple).first()).seq;
-        const c = await env.DB.prepare("SELECT seq,at,json FROM digests WHERE couple=? AND day=?").bind(who.couple, day).first();
-        // reuse the day's brief unless the data moved on AND it is over an hour old
-        if (c && (c.seq === seq || Date.now() - c.at < 36e5)) return json({ ...JSON.parse(c.json), cached: true });
-        if (!(await meter(env, who.couple))) return err(429, "Daily agent limit reached - try again tomorrow.");
-        const d = await digest(env, await allRows(env, who.couple));
-        await env.DB.prepare("INSERT INTO digests (couple,day,seq,at,json) VALUES (?,?,?,?,?) ON CONFLICT(couple,day) DO UPDATE SET seq=excluded.seq,at=excluded.at,json=excluded.json").bind(who.couple, day, seq, Date.now(), JSON.stringify(d)).run();
-        return json(d);
       }
       if (req.method === "POST" && path === "/v1/agent/chat") {
         const off = agentReady(env); if (off) return off;
