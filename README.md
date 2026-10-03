@@ -25,6 +25,12 @@ Requires Android 8.0+.
   settlements you confirm with one tap. Without a server it falls back to on-device insights.
 - Backend: [`worker/`](worker/README.md) - Cloudflare Worker + D1, in your own account.
 
+## v1.6 — Wrong-amount fixes, guiding Month screen, automatic SMS
+- **Amounts:** balances/limits are never read as the amount; NEFT/IMPS/SIP/card-bill/loan texts become **Transfers (not counted)**; unusually large payments start unticked in review and raise a one-tap *"real spending?"* check (*Not spending* removes it from totals). Same purchase reported by bank + card SMS is counted once.
+- **Automatic:** new payment texts are added as they arrive (app open) and caught up on every open / every 20 s; a notification appears if the app is closed (sideload build). Scan older messages = up to a year. Partner's phone gets them via sync.
+- **Guiding Month screen:** weeks, not rows — same-merchant payments merge ("Swiggy · 3 payments"), top 5 per week + "Show N more", payer dots removed, 1–2 plain-language hints.
+- Tests: `android/tests/` (parser 33 traps, auto-import + sync, report maths, two-phone sim).
+
 ## v1.5 — Month-end summary
 Tap the month total → **Who spent on what**: category × person table (tap a category for its places), **Top places**, **Worth noticing** (vs last month, recurring, biggest, weekends, shared vs solo categories), and *Share this month*. Merchant names are merged (Swiggy / swiggy@axb / Swiggy.Stores → one line; long tail folded into "smaller places"). Totals are asserted to add up (`android/tests/report.test.js`); the SMS parser is checked on 25 realistic bank/UPI formats (`parser.test.js`) — written by me, not your real messages.
 

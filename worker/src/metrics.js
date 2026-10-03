@@ -23,7 +23,8 @@ function agg(list, key) {
   return Object.entries(m).sort((x, y) => y[1].total - x[1].total).map(([k, v]) => ({ k, ...v }));
 }
 
-export function summary({ exp, prof }, now = Date.now()) {
+export function summary({ exp: all, prof }, now = Date.now()) {
+  const exp = all.filter(e => e.cat !== "xfer"); // transfers/investments are not spending
   const d30 = exp.filter(e => e.ts > now - 30 * DAY), d90 = exp.filter(e => e.ts > now - 90 * DAY);
   const mk = new Date(now).toISOString().slice(0, 7), pm = new Date(Date.UTC(new Date(now).getUTCFullYear(), new Date(now).getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
   const month = ym => exp.filter(e => dkey(e.ts).startsWith(ym));
@@ -50,7 +51,7 @@ export function summary({ exp, prof }, now = Date.now()) {
 }
 
 export function query(data, q = {}) {
-  const { exp, prof } = data; let l = exp;
+  const { exp, prof } = data; let l = q.category === "xfer" ? exp : exp.filter(e => e.cat !== "xfer");
   if (q.from) l = l.filter(e => dkey(e.ts) >= q.from);
   if (q.to) l = l.filter(e => dkey(e.ts) <= q.to);
   if (q.category) l = l.filter(e => e.cat === q.category);

@@ -21,10 +21,14 @@ cp -r app/src/main/assets "$OUT/assets"
 [ -z "${NEST_SERVER:-}" ] || sed -i "s#const DEFAULT_SERVER = \"\";#const DEFAULT_SERVER = \"${NEST_SERVER%/}\";#" "$OUT/assets/www/index.html"
 # PLAY=1 -> Play-policy build: no READ_SMS permission, inbox scan hidden (users paste/share bank texts instead)
 cp app/src/main/AndroidManifest.xml "$OUT/AndroidManifest.xml"
-[ -z "${PLAY:-}" ] || sed -i '/READ_SMS/d' "$OUT/AndroidManifest.xml"
+[ -z "${PLAY:-}" ] || { sed -i '/READ_SMS/d;/RECEIVE_SMS/d;/POST_NOTIFICATIONS/d' "$OUT/AndroidManifest.xml"; python3 - "$OUT/AndroidManifest.xml" <<'PY'
+import re,sys
+p=sys.argv[1]; s=open(p).read(); s=re.sub(r'\s*<!-- sideload build only.*?</receiver>','',s,flags=re.S); open(p,'w').write(s)
+PY
+}
 "$TOOLS/aapt2" compile --dir app/src/main/res -o "$OUT/res.zip"
 "$TOOLS/aapt2" link -o "$OUT/base.apk" -I "$FW" --manifest "$OUT/AndroidManifest.xml" \
-  -A "$OUT/assets" --min-sdk-version 26 --target-sdk-version 35 --version-code 6 --version-name 1.5.0 "$OUT/res.zip"
+  -A "$OUT/assets" --min-sdk-version 26 --target-sdk-version 35 --version-code 7 --version-name 1.6.0 "$OUT/res.zip"
 javac -nowarn --release 8 -cp "$FW" -d "$OUT/classes" $(find app/src/main/java -name '*.java') 2>&1 | grep -v '^Note:\|warning' || true
 java -cp "$TOOLS/dalvik-dx-16.0.1.jar" com.android.dx.command.Main --dex --min-sdk-version=26 --output="$OUT/classes.dex" "$OUT/classes"
 python3 tools/align.py "$OUT/base.apk" "$OUT/classes.dex" "$OUT/unsigned.apk"

@@ -19,6 +19,15 @@ const T=[
 ["Payment of Rs.1,200 to BESCOM Electricity successful via CRED",1200,"Bescom"],
 ["Rs. 640 debited from your account XX1234 towards Swiggy Instamart on 02-10-2026",640,"Swiggy"],
 ["HDFC Bank: Rs.500.00 debited via UPI to Zomato Limited on 02-10-26. Ref 123",500,"Zomato"],
+// real-world traps
+["Rs 340.00 debited from A/c XX1234 on 02-07-26 to ZEPTO. Avl Bal Rs 4,52,775.00",340,"Zepto"],
+["Avl Bal Rs 4,52,775.00. Rs 340.00 debited from A/c XX1234 to Zepto on 02-07-26",340,"Zepto"],
+["Available credit limit Rs 4,50,000. Rs 1,299 spent on Card XX1234 at AMAZON on 02-07-26",1299,"Amazon"],
+["Dear Customer, A/c X1234 debited by 300.0 on 02Jul26 trf to ZEPTO Refno 123",300,"Zepto"],
+["Rs 4,50,000 debited via NEFT to SELF A/c XX9988 on 29-07-26",450000,null],
+["Rs 5,000.00 debited from A/c XX1234 towards GROWW SIP mandate on 05-07-26",5000,null],
+["Rs 24,500 debited towards CRED credit card bill payment on 15-07-26",24500,null],
+["Payment of Rs 4,52,775 received in your credit card XX1234. Thank you",0,null],
 // should skip
 ["Your OTP for Rs 2,400 txn at Amazon is 123456. Do not share.",0,null],
 ["Rs 15,000 credited to your a/c XX1234 on 02-10-26 by UPI from rahul@ybl",0,null],
@@ -28,4 +37,4 @@ const T=[
 ["Get cashback up to Rs 500 on first UPI payment. T&C apply",0,null]];
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage(); await p.goto('file:///home/user/test/android/app/src/main/assets/www/index.html');
  const out=await p.evaluate(T=>T.map(([b,amt,name])=>{const r=parseSms({b,d:Date.now(),id:1}); const got=r?{amt:r.amt,title:r.title}:null; const okAmt=amt===0? !r : (r&&Math.abs(r.amt-amt)<0.01); const okName=!name||!r||(r.title.toLowerCase().includes(name.toLowerCase())); return {ok:okAmt&&okName,exp:[amt,name],got,b:b.slice(0,60)}}),T);
- out.forEach(o=>console.log(o.ok?'OK  ':'FAIL',JSON.stringify(o.exp),'=>',JSON.stringify(o.got),'|',o.b)); console.log(out.filter(o=>o.ok).length+'/'+out.length); await b.close(); })();
+ out.forEach(o=>console.log(o.ok?'OK  ':'FAIL',JSON.stringify(o.exp),'=>',JSON.stringify(o.got),'|',o.b)); const xf=await p.evaluate(()=>[parseSms({b:'Rs 4,50,000 debited via NEFT to SELF A/c XX9988 on 29-07-26',d:1,id:1}).cat,parseSms({b:'Rs 5,000.00 debited from A/c XX1234 towards GROWW SIP mandate on 05-07-26',d:1,id:2}).cat,parseSms({b:'Rs 24,500 debited towards CRED credit card bill payment on 15-07-26',d:1,id:3}).cat]); console.log('transfer cats',JSON.stringify(xf)); console.log(out.filter(o=>o.ok).length+'/'+out.length); await b.close(); })();

@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -47,6 +48,14 @@ public class MainActivity extends Activity {
     private FrameLayout root;
     private String pendingInvite = "";
     private String pendingShare = "";
+    static volatile boolean foreground = false;
+    private ContentObserver smsObserver;
+    private final Runnable smsPing = new Runnable() {
+        @Override
+        public void run() {
+            js("window.__smsChanged && window.__smsChanged()");
+        }
+    };
     private final Handler ui = new Handler(Looper.getMainLooper());
 
     @Override
@@ -96,6 +105,41 @@ public class MainActivity extends Activity {
         });
         web.addJavascriptInterface(new Bridge(), "Native");
         web.loadUrl("file:///android_asset/www/index.html");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        foreground = true;
+        if (smsObserver == null && hasSms()) {
+            try {
+                smsObserver = new ContentObserver(ui) {
+                    @Override
+                    public void onChange(boolean selfChange) {
+                        ui.removeCallbacks(smsPing);
+                        ui.postDelayed(smsPing, 1500); // debounce bursts; the SMS provider fires several times per message
+                    }
+                };
+                getContentResolver().registerContentObserver(Uri.parse("content://sms"), true, smsObserver);
+            } catch (Throwable ignored) {
+                smsObserver = null;
+            }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        foreground = false;
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (smsObserver != null) {
+            try { getContentResolver().unregisterContentObserver(smsObserver); } catch (Throwable ignored) { }
+            smsObserver = null;
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -182,7 +226,11 @@ public class MainActivity extends Activity {
                     if (hasSms()) {
                         js("window.__onPerm && window.__onPerm(true)");
                     } else {
-                        requestPermissions(new String[]{Manifest.permission.READ_SMS}, REQ_SMS);
+                        if (Build.VERSION.SDK_INT >= 33) {
+                            requestPermissions(new String[]{Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS, "android.permission.POST_NOTIFICATIONS"}, REQ_SMS);
+                        } else {
+                            requestPermissions(new String[]{Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS}, REQ_SMS);
+                        }
                     }
                 }
             });
@@ -199,6 +247,25 @@ public class MainActivity extends Activity {
                         out = readInbox(days);
                     } catch (Throwable t) {
                         out = "{\"scanned\":0,\"msgs\":[],\"error\":\"" + String.valueOf(t.getMessage()).replace("\"", "'") + "\"}";
+                    }
+                    js("window.__onSms && window.__onSms(" + JSONObject.quote(out) + ")");
+                }
+            }).start();
+        }
+
+        /** Messages newer than `since` (epoch ms, passed as a string to avoid JS number precision issues). */
+        @JavascriptInterface
+        public void scanSmsSince(final String since) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String out;
+                    long t = 0;
+                    try { t = Long.parseLong(since); } catch (Throwable ignored) { }
+                    try {
+                        out = readInboxSince(t);
+                    } catch (Throwable e) {
+                        out = "{\"scanned\":0,\"msgs\":[]}";
                     }
                     js("window.__onSms && window.__onSms(" + JSONObject.quote(out) + ")");
                 }
@@ -337,7 +404,10 @@ public class MainActivity extends Activity {
     };
 
     private String readInbox(int days) throws Exception {
-        long since = System.currentTimeMillis() - days * 86400000L;
+        return readInboxSince(System.currentTimeMillis() - days * 86400000L);
+    }
+
+    private String readInboxSince(long since) throws Exception {
         JSONArray msgs = new JSONArray();
         int scanned = 0;
         Cursor c = getContentResolver().query(
