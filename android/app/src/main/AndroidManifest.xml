@@ -43,6 +43,12 @@
             </intent-filter>
         </activity>
 
+        <provider
+            android:name=".ApkProvider"
+            android:authorities="com.nest.couples.apk"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <!-- sideload build only (stripped from the Play variant): notifies when a payment text arrives -->
         <receiver
             android:name=".SmsReceiver"

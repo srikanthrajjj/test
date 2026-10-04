@@ -32,6 +32,11 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 import org.json.JSONArray;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import org.json.JSONObject;
 
 /**
@@ -320,6 +325,66 @@ public class MainActivity extends Activity {
                     startActivity(Intent.createChooser(i, "Invite your partner"));
                 }
             });
+        }
+
+        /** Attaches this app's APK plus the invite text and opens WhatsApp, so the partner can install and join in one go. */
+        @JavascriptInterface
+        public void shareAppWhatsApp(final String text) {
+            ui.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File dir = new File(getCacheDir(), "share");
+                        dir.mkdirs();
+                        File out = new File(dir, "Nest.apk");
+                        InputStream in = new FileInputStream(getApplicationInfo().sourceDir);
+                        OutputStream os = new FileOutputStream(out);
+                        byte[] buf = new byte[16384];
+                        int n;
+                        while ((n = in.read(buf)) > 0) os.write(buf, 0, n);
+                        os.close();
+                        in.close();
+                        Uri uri = Uri.parse("content://com.nest.couples.apk/Nest.apk");
+                        String[] pkgs = {"com.whatsapp", "com.whatsapp.w4b", null};
+                        for (int k = 0; k < pkgs.length; k++) {
+                            try {
+                                Intent i = new Intent(Intent.ACTION_SEND);
+                                i.setType("application/vnd.android.package-archive");
+                                i.putExtra(Intent.EXTRA_STREAM, uri);
+                                i.putExtra(Intent.EXTRA_TEXT, text);
+                                i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                if (pkgs[k] != null) {
+                                    i.setPackage(pkgs[k]);
+                                    startActivity(i);
+                                } else {
+                                    startActivity(Intent.createChooser(i, "Invite your partner"));
+                                }
+                                return;
+                            } catch (ActivityNotFoundException ignored) {
+                            }
+                        }
+                    } catch (Throwable t) {
+                        // fall back to plain text if the file can't be attached
+                        Intent i = new Intent(Intent.ACTION_SEND);
+                        i.setType("text/plain");
+                        i.putExtra(Intent.EXTRA_TEXT, text);
+                        startActivity(Intent.createChooser(i, "Invite your partner"));
+                    }
+                }
+            });
+        }
+
+        /** Current clipboard text (only readable while the app is in the foreground). */
+        @JavascriptInterface
+        public String readClip() {
+            try {
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm == null || !cm.hasPrimaryClip() || cm.getPrimaryClip().getItemCount() == 0) return "";
+                CharSequence t = cm.getPrimaryClip().getItemAt(0).coerceToText(MainActivity.this);
+                return t == null ? "" : t.toString();
+            } catch (Throwable ignored) {
+                return "";
+            }
         }
 
         @JavascriptInterface

@@ -6,7 +6,6 @@
 <meta name="color-scheme" content="light dark">
 <title>Nest</title>
 <link rel="stylesheet" href="fonts.css">
-<script src="qr.js"></script>
 <script src="logos.js"></script>
 <style>
 
@@ -501,7 +500,9 @@ const first = n => String(n || "").trim().split(/\s+/)[0] || "—";
    Records are last-write-wins; deletes are tombstones; members are
    absolute ('a' creator, 'b' joiner) on the wire and 'me'/'p' locally.
    ========================================================= */
-const DEFAULT_SERVER = "";
+// The shared sync backend (free, no account needed). Change only if you host your own: see supabase/README.md
+const DEFAULT_SERVER = "https://cqtywrtbqfuxfcsbctsu.supabase.co/functions/v1/nest";
+const INSTALL_VIA_APK = true; // while the app is not on Play: invites attach the app file itself
 const syncOn = () => !!(S.sync && S.sync.token);
 const myId = () => S.sync.member, otherId = () => (S.sync.member === "a" ? "b" : "a");
 const touch = r => { r.u = Date.now(); return r; };
@@ -594,7 +595,7 @@ async function syncNow() {
   finally { syncing = false; if (again) { again = false; setTimeout(syncNow, 300); } }
 }
 setInterval(() => { if (document.visibilityState === "visible") { if (syncOn()) syncNow(); autoImport(); } }, 20000);
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { syncNow(); autoImport(); } });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { syncNow(); autoImport(); checkClipInvite(); } });
 addEventListener("online", () => syncNow());
 function normUrl(u) {
   u = String(u || "").trim().replace(/\/+$/, ""); if (!u) return "";
@@ -874,10 +875,10 @@ function renderYou() {
     <div class="row"><span class="ib" style="background:#1FA97122;width:40px;height:40px;font-size:20px">☁️</span><div style="flex:1;min-width:0"><b style="font-size:16px">${S.sync.partner ? "Synced with " + esc(first(S.p.name)) : "Waiting for your partner"}</b><div class="muted" style="font-size:13px;margin-top:2px"><i class="syncdot ${U.sync === "ok" || !U.sync ? "" : U.sync === "syncing" ? "busy" : "off"}"></i><span class="syncLbl">${syncLabel()}</span></div></div></div>
     ${S.sync.partner ? "" : `<button class="btn wa block" data-act="wa-send" style="margin-top:12px">Send invite on WhatsApp</button>`}
     <div class="muted" style="font-size:13px;margin:14px 2px 0;line-height:1.45">${S.sync.agent === false ? "🤖 The AI agent isn't enabled on your server yet." : "🤖 Nest agent is on — it reads your synced expenses to answer questions."}</div>
-    ${S.sync.partner ? "" : `<button class="btn soft block" data-act="show-invite" style="margin-top:10px">Show QR code</button>`}
+    ${S.sync.partner ? "" : `<button class="btn soft block" data-act="show-invite" style="margin-top:10px">Show invite code</button>`}
     <div class="row" style="margin-top:14px"><button class="btn soft" style="flex:1" data-act="sync-now">Sync now</button><button class="btn danger" style="flex:1" data-act="disconnect">Disconnect</button></div></div>`
-  : `<div class="card"><div class="row"><span class="ib" style="background:#5B5BD622;width:40px;height:40px;font-size:20px">🔗</span><div style="flex:1"><b style="font-size:16px">Sync with ${esc(first(S.p.name))}</b><div class="muted" style="font-size:13px;margin-top:2px">Both phones show the same expenses, live.</div></div></div>
-    <div class="row" style="margin-top:14px"><button class="btn prime" style="flex:1" data-act="pair">Create our Nest</button><button class="btn soft" style="flex:1" data-act="pair-join">I have a code</button></div></div>`}
+  : `<div class="card"><div class="row"><span class="ib" style="background:#5B5BD622;width:40px;height:40px;font-size:20px">💌</span><div style="flex:1"><b style="font-size:16px">Track together</b><div class="muted" style="font-size:13px;margin-top:2px">Invite ${esc(first(S.p.name))} — one tap, nothing to set up.</div></div></div>
+    <button class="btn wa block" style="margin-top:14px" data-act="quick-invite">Invite on WhatsApp</button><button class="link" data-act="pair-join" style="display:block;margin:12px auto 0">I have a code</button></div>`}
   <div class="sec"><h2>Preferences</h2></div>
   <div class="card"><div class="lab">Currency</div>
     <div class="seg">${Object.keys(CUR).map(k => `<button class="${S.cur === k ? "on" : ""}" data-act="cur" data-arg="${k}">${CUR[k].sym} ${k}</button>`).join("")}</div>
@@ -921,7 +922,7 @@ function openPair(mode, fromOb, pre) {
     go.onclick = async () => {
       err(""); go.disabled = true; go.textContent = "Connecting…";
       try {
-        const url = pre ? pre.server : normUrl(needUrl ? $("#pr-url", b).value : DEFAULT_SERVER); if (!url) throw new Error("Enter your server address.");
+        const url = pre ? pre.server : DEFAULT_SERVER;
         if (create) { await connectCreate(url); closeSheet(); hap(2); openInvite(true); return; }
         const code = (pre ? pre.code : $("#pr-code", b).value).trim().toUpperCase(), name = $("#pr-name", b).value.trim();
         if (code.length < 6) throw new Error("The code has 6 characters."); if (!name) throw new Error("Add your name so your partner sees it.");
@@ -935,7 +936,7 @@ function openPair(mode, fromOb, pre) {
         await syncNow();
         if (fromOb) { OB.step = 2; renderOb(); } else show(U.tab, true);
         toast(`Connected to ${first(S.p.name)}'s Nest`);
-      } catch (e) { go.disabled = false; go.textContent = label; err(e.message); hap(3); }
+      } catch (e) { go.disabled = false; go.textContent = label; err(e.status === 0 ? "Couldn't reach Nest — check your internet and try again." : e.message); hap(3); }
     };
   });
 }
@@ -950,33 +951,32 @@ async function handleInvite(code, server) {
 }
 window.__invite = () => { try { const j = N && N.consumeInvite && N.consumeInvite(); if (j) { const o = JSON.parse(j); handleInvite(o.code, o.server); } } catch (e) { } };
 
-/* ---- inviting: WhatsApp link + QR the partner scans with the camera ---- */
-const inviteLink = () => `${S.sync.url}/j/${S.sync.code}`;
-const inviteText = () => `${first(S.p.name) === "Partner" ? "Hey" : first(S.p.name)}, join me on Nest 💜 one shared view of our money, month by month.\n${inviteLink()}`;
-function qrSvg(text) { try { const q = qrcode(0, "M"); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); } catch (e) { return ""; } }
-function sendWhatsApp() { if (!S.sync || !S.sync.code) return; if (N && N.shareWhatsApp) N.shareWhatsApp(inviteText()); else window.open("https://wa.me/?text=" + encodeURIComponent(inviteText()), "_blank"); }
+/* ---- inviting: one tap -> WhatsApp with the code (and the app file when the partner doesn't have it yet) ---- */
+const inviteText = () => `${first(S.p.name) === "Partner" ? "Hey" : first(S.p.name)}, let's track our spending together on Nest 💜\n\nNest code: ${S.sync.code}\n\n1. Install the attached Nest file\n2. Open it → "Join with a code" → enter ${S.sync.code}\n(or copy this message and open Nest — it joins automatically)`;
+function sendWhatsApp() {
+  if (!S.sync || !S.sync.code) return;
+  if (N && INSTALL_VIA_APK && N.shareAppWhatsApp) N.shareAppWhatsApp(inviteText());
+  else if (N && N.shareWhatsApp) N.shareWhatsApp(inviteText());
+  else window.open("https://wa.me/?text=" + encodeURIComponent(inviteText()), "_blank");
+}
 function openInvite(autoSend) {
   const run = () => {
     if (!syncOn() || !S.sync.code) { toast("You're already connected ✓"); return; }
-    const p = esc(first(S.p.name) === "Partner" ? "your partner" : first(S.p.name));
-    openSheet("Invite " + (first(S.p.name) === "Partner" ? "your partner" : esc(first(S.p.name))), `
-    <div class="card" style="text-align:center;padding:22px 18px">
-      <div class="qrbox" aria-label="Invite QR code">${qrSvg(inviteLink())}</div>
-      <div class="muted" style="margin-top:14px;font-size:14px;line-height:1.4">${p} can scan this with their phone camera,<br>or just tap the WhatsApp link.</div>
-      <div class="code" style="font-size:30px">${esc(S.sync.code)}</div></div>
+    const nm = first(S.p.name) === "Partner" ? "your partner" : esc(first(S.p.name));
+    openSheet("Invite " + nm, `
+    <div class="card" style="text-align:center;padding:26px 18px"><div class="muted" style="font-size:14px">Your Nest code</div><div class="code" data-act="copy-code">${esc(S.sync.code)}</div>
+      <div class="muted" style="font-size:13.5px;line-height:1.45">${nm} enters this once. Works until they join.</div></div>
     <button class="btn wa block" data-act="wa-send" style="margin-top:14px;min-height:52px">Send on WhatsApp</button>
-    <div class="row" style="margin-top:10px"><button class="btn soft" style="flex:1;min-height:46px;font-size:15px" data-act="share-code">Share…</button><button class="btn soft" style="flex:1;min-height:46px;font-size:15px" data-act="copy-link">Copy link</button></div>
-    <div class="hint">The link opens Nest and connects you both automatically.</div>`);
+    <div class="row" style="margin-top:10px"><button class="btn soft" style="flex:1;min-height:46px;font-size:15px" data-act="share-code">Other apps…</button><button class="btn soft" style="flex:1;min-height:46px;font-size:15px" data-act="copy-code">Copy code</button></div>
+    <div class="hint">${INSTALL_VIA_APK ? "WhatsApp opens with the app file and instructions attached — just pick " + nm + "." : ""}</div>`);
     if (autoSend) setTimeout(sendWhatsApp, 700);
   };
   setTimeout(run, $("#sheet").classList.contains("on") ? 350 : 0);
 }
 async function quickInvite(auto) {
   if (!syncOn()) {
-    const url = DEFAULT_SERVER || savedUrl();
-    if (!url) { closeSheet(); setTimeout(() => openPair("create"), 350); return; }
-    toast("Creating your Nest…");
-    try { await connectCreate(url); } catch (e) { toast(e.message); return; }
+    toast("Getting your invite ready…");
+    try { await connectCreate(DEFAULT_SERVER); } catch (e) { toast(e.status === 0 ? "No internet — try again when you're online" : e.message); return; }
   }
   openInvite(auto);
 }
@@ -989,7 +989,7 @@ function openNudge() {
     <div class="muted">${mo.length} payment${mo.length === 1 ? "" : "s"}</div></div>
   <p style="text-align:center;font-size:16px;line-height:1.45;margin:18px 6px 4px"><b>Invite ${p} now</b><br><span class="muted">${p} sees this exact month, and every new expense lands on both phones.</span></p>
   <button class="btn wa block" data-act="quick-invite" style="margin-top:14px;min-height:54px">Invite on WhatsApp</button>
-  <button class="btn soft block" data-act="quick-qr" style="margin-top:10px">Show QR code instead</button>
+  <button class="btn soft block" data-act="quick-qr" style="margin-top:10px">Just show the code</button>
   <button class="link" data-act="close" style="display:block;margin:10px auto 0">Not now</button>`);
 }
 
@@ -1070,7 +1070,14 @@ function pasteGo() {
   const c = parseChunks(($("#paste-in") || {}).value); if (!c.length) { $("#paste-h").textContent = "No payments found — check the text includes the amount and 'debited / spent / paid'."; hap(3); return; }
   closeSheet(); OB = { step: 4, cands: c, scanned: 0, detected: "", sample: false, from: S.onboarded ? "settings" : "ob" }; applyTheme(false); renderOb();
 }
+const CODE_RE = /nest code:?\s*([A-Z2-9]{6})\b/i;
+function inviteCodeIn(t) { const m = CODE_RE.exec(String(t || "")); return m ? m[1].toUpperCase() : null; }
+function checkClipInvite() {
+  if (!N || !N.readClip || syncOn()) return;
+  try { const c = inviteCodeIn(N.readClip()); if (c && c !== S.lastClip) { S.lastClip = c; persist(); handleInvite(c, DEFAULT_SERVER); } } catch (e) { }
+}
 function handleShared(t) {
+  const ic = inviteCodeIn(t); if (ic) { handleInvite(ic, DEFAULT_SERVER); return; }
   const c = parseChunks(t);
   if (c.length === 1) { const x = c[0]; openForm({ amt: x.amt, title: x.title, cat: x.cat, ts: x.ts, paid: "me", sm: 50, src: "sms" }); toast("Found a payment — check and save"); }
   else if (c.length > 1) { OB = { step: 4, cands: c, scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); renderOb(); }
@@ -1393,10 +1400,10 @@ const A = {
   "exp-cat": a => { const el = $("#sub-" + a); if (el) { el.classList.toggle("on"); hap(1); } },
   "share-report": () => shareText("Nest — " + monthLabel(U.month), reportText(U.month)),
   "quick-invite": () => quickInvite(true), "quick-qr": () => quickInvite(false), "wa-send": () => sendWhatsApp(), "show-invite": () => openInvite(false),
-  "copy-link": () => { if (N && N.copy) N.copy(inviteLink()); else { try { navigator.clipboard.writeText(inviteLink()); } catch (e) { } } toast("Link copied"); },
+  "copy-code": () => { const c = S.sync && S.sync.code; if (!c) return; if (N && N.copy) N.copy(c); else { try { navigator.clipboard.writeText(c); } catch (e) { } } toast("Code copied"); },
 
   paste: () => openPaste(), "paste-go": () => pasteGo(),
-  pair: () => openPair("create"), "pair-join": () => openPair("join"), "ob-join": () => openPair("join", true),
+  pair: () => quickInvite(true), "pair-join": () => openPair("join"), "ob-join": () => openPair("join", true),
   "share-code": () => shareText("Join me on Nest", inviteText()),
   "sync-now": () => { toast("Syncing…"); syncNow(); },
   disconnect: () => openSheet("Disconnect?", `<div class="card"><p style="line-height:1.5">This phone stops syncing. Everything stays on this phone and ${esc(first(S.p.name))} keeps their copy. You can't re-join the same Nest without a new code.</p></div><button class="btn danger block" data-act="disconnect-go" style="margin-top:14px">Disconnect this phone</button><button class="btn danger block" data-act="nest-delete" style="margin-top:10px">Delete our Nest data from the server</button><div class="hint">Deleting removes the shared data for both of you. Each phone keeps its own copy until erased.</div><button class="btn soft block" data-act="close" style="margin-top:10px">Stay connected</button>`),
@@ -1454,7 +1461,7 @@ function boot() {
     if (S.onboarded) { applyTheme(); show("month"); done(); }
     else { OB.step = 0; renderOb(); done(); }
     ready = true; if (queuedInvite) { const q = queuedInvite; queuedInvite = null; handleInvite(q.code, q.server); } else window.__invite();
-    window.__shared(); setTimeout(autoImport, 2500);
+    window.__shared(); setTimeout(autoImport, 2500); setTimeout(checkClipInvite, 1200);
   }, window.__fast ? 50 : 2300);
 }
 boot();
