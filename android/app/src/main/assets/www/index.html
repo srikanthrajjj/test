@@ -489,6 +489,26 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .quests{display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding:2px 0;scrollbar-width:none}.quests::-webkit-scrollbar{display:none}
 .q{flex:none;display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:99px;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);font-size:13px;color:var(--sub);white-space:nowrap}.q b{color:var(--ink)}.q svg{width:18px;height:18px;stroke:var(--c);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 @media (max-width:340px){.ring{width:108px;height:108px}}
+/* flat, borderless */
+.hero2{background:none;border:0;box-shadow:none;padding:8px 2px 4px;border-radius:0}
+.hero2 .tot{font-size:clamp(34px,11vw,46px)}
+.ms{border:0;padding:0;color:var(--accent);font-weight:600}
+.ring{display:none}.quests{display:none}
+.pbar{display:flex!important;gap:3px;height:4px;margin-top:16px;background:var(--card2)}
+.duo{margin-top:16px}.dp{flex-direction:row;gap:0}
+.dp .pi{background:none;padding:0;flex:1}.dp .pi+.pi{padding-left:18px;margin-left:18px;border-left:1px solid var(--line);flex:1}
+.dp .pi .avc{display:none}.pi small{font-size:13.5px}.pi b{font-size:clamp(17px,5.4vw,22px);font-weight:650}
+.gcard,.gcard.warn{background:none;border:0;border-radius:0;padding:14px 2px;margin-top:6px;border-top:1px solid var(--line)}
+.gic{width:40px;height:40px}.gic svg{width:20px;height:20px}
+.chev{font-size:22px}
+.weeks{gap:22px;padding:16px 2px 10px;border-bottom:1px solid var(--line)}
+.wchip{background:none!important;border:0;border-bottom:2px solid transparent;border-radius:0;padding:6px 0;color:var(--sub);font-size:15px;font-weight:500}
+.wchip.on{border-bottom-color:var(--accent);color:var(--ink);font-weight:650}.wchip.cur:not(.on){color:var(--sub)}
+.tn .list,.tn .morerows.on{gap:0}
+.tn .li{background:none;border:0;border-radius:0;padding:13px 0;border-bottom:1px solid var(--line);min-height:68px}
+.tn .li.moreb{border:0;justify-content:flex-start;padding:12px 0;min-height:44px}
+.tn-h{padding:2px 0 4px}
+.dp .pi{border-radius:0!important}.ib2{background:none;border:0}.avc{box-shadow:none}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -899,9 +919,9 @@ function renderMonth() {
     <div class="tr1"><button class="ib2" data-act="chat" aria-label="Ask Nest">${svgIc("spark", 22)}</button><button class="pr2" data-act="tab" data-arg="you" aria-label="Settings"><span class="avc" style="background:${S.me.color}">${esc((S.me.name.trim()[0] || "?").toUpperCase())}</span><span class="avc" style="background:${S.p.color}">${esc((S.p.name.trim()[0] || "?").toUpperCase())}</span></button></div></div>
   <button class="hero2" data-act="breakdown" aria-label="Open month summary">
     <div class="h2t"><div><small>Spent together</small><div class="tot" id="bigbal" data-v="${total}">${money(total, { round: true })}</div></div><span class="ms">Month summary <i>›</i></span></div>
+    <div class="pbar"><i style="background:${S.me.color};width:${total ? Math.max(share, 2) : 0}%"></i>${pp > 0 ? `<i style="background:${S.p.color};width:${100 - share}%"></i>` : ""}</div>
     <div class="duo">${ring}<div class="dp">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<div class="pi"><span class="avc" style="background:${u.color}">${esc((u.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(u.name))} <em style="color:${u.color}">${total ? pc : 0}%</em></small><b>${money(v, { round: true })}</b></div></div>`).join("")}</div></div>
   </button>
-  ${quests}
   ${hints.map(h => `<button class="gcard ${h.warn ? "warn" : ""}" data-act="${h.a}"><span class="gic" style="color:${h.warn ? "#FFB340" : h.col || "#8B7CFF"};background:${h.warn ? "#FFB34022" : (h.col || "#8B7CFF") + "26"}">${svgIc(h.ic || "card", 26)}</span><div class="gtx"><span>${h.t}</span><b>${h.v}</b></div><span class="chev">›</span></button>`).join("")}
   ${inv}
   ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
