@@ -473,6 +473,22 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .h2t small{white-space:nowrap;font-size:13px}
 .tl::before{left:38px}.rdot{left:34px}.tn{padding-left:54px}.tn .dot{width:34px;left:0}.tn .dot b{font-size:20px}.wk{padding-left:54px}
 .tn .li{padding:10px 10px;gap:9px}.tn .li .t2{font-size:12.5px}.tn .li .t1{font-size:15px}
+/* gamified duo hero */
+.hero2 .h2t{margin-bottom:6px}
+.duo{display:flex;align-items:center;gap:16px;margin-top:10px}
+.ring{position:relative;width:132px;height:132px;flex:none}.ring svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.ring circle{fill:none;stroke-width:9;stroke-linecap:round}.rt{stroke:var(--card2)}
+.ra{filter:drop-shadow(0 0 5px currentColor);animation:ringin 1.1s var(--ease) both}
+@keyframes ringin{from{stroke-dasharray:0 300}}
+.rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1px}
+.rc .avc{width:26px;height:26px;border:0;margin-bottom:2px}.rc .avc svg{width:14px;height:14px;fill:#fff;stroke:#fff;stroke-width:1.2}
+.rc small{font-size:11.5px;color:var(--sub);font-weight:600}.rc b{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.dp{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+.dp .pi{padding:10px 12px;border-radius:16px;background:var(--card2);gap:10px}.dp .pi>div{flex:1;min-width:0}.dp .pi em{font-style:normal;font-weight:800;font-size:12.5px;margin-left:4px}
+.pbar,.pp{display:none}
+.quests{display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding:2px 0;scrollbar-width:none}.quests::-webkit-scrollbar{display:none}
+.q{flex:none;display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:99px;background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);font-size:13px;color:var(--sub);white-space:nowrap}.q b{color:var(--ink)}.q svg{width:18px;height:18px;stroke:var(--c);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:340px){.ring{width:108px;height:108px}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -732,6 +748,10 @@ function canonMerchant(raw) {
 }
 const darkish = hex => { const n = parseInt(hex, 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) < 70; };
 const IC = {
+  flame: '<path d="M12 3c1 3.2 4.5 5 4.5 9.2A4.5 4.5 0 0 1 12 17a4.5 4.5 0 0 1-4.5-4.8c0-1.6.7-2.8 1.7-3.8.2 1.2.8 1.9 1.6 2.2C10.5 7.5 10.8 5 12 3z"/><path d="M12 21c-2.8 0-4.5-1.5-4.5-3.5"/>',
+  down: '<path d="M5 8l5 5 3-3 6 6M19 11v5h-5"/>',
+  up: '<path d="M5 16l5-5 3 3 6-6M19 13V8h-5"/>',
+  crown: '<path d="M4 8l4 4 4-6 4 6 4-4-1.5 10h-13z"/>',
   card: '<rect x="3" y="5.5" width="18" height="13" rx="3"/><path d="M3 10h18M7 15h4"/>',
   store: '<path d="M4 9.5 5.6 4.5h12.8L20 9.5M4 9.5v10h16v-10M4 9.5c0 1.4 1.1 2.3 2.7 2.3S9.4 10.9 9.4 9.5c0 1.4 1.2 2.3 2.6 2.3s2.6-.9 2.6-2.3c0 1.4 1.1 2.3 2.7 2.3S20 10.9 20 9.5M10 19.5v-4h4v4"/>',
   cart: '<path d="M3 4h2.5l2 11h10l2-8H7"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="16.5" cy="19" r="1.4"/>',
@@ -862,14 +882,26 @@ function renderMonth() {
   const inv = invHidden ? "" : !syncOn() && S.exp.length ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Track together with ${esc(first(S.p.name))}</span><button class="lk" data-act="quick-invite">Invite on WhatsApp</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : syncOn() && !S.sync.partner ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Waiting for ${esc(first(S.p.name))}</span><button class="lk" data-act="show-invite">Share invite again</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : "";
   const hints = guideHints(m, cExp, total, isNow);
   const share = total ? Math.round(me / total * 100) : 0;
+  const C = 2 * Math.PI * 44, gap = total && me && pp ? 6 : 0, la = Math.max(0, C * me / (total || 1) - gap), lb = Math.max(0, C * pp / (total || 1) - gap);
+  const lead = me === pp ? null : me > pp ? S.me : S.p, leadV = Math.abs(me - pp);
+  const ring = `<div class="ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" class="rt"/>${total ? `<circle cx="50" cy="50" r="44" class="ra" style="stroke:${S.me.color};stroke-dasharray:${la} ${C}"/><circle cx="50" cy="50" r="44" class="ra" style="stroke:${S.p.color};stroke-dasharray:${lb} ${C};stroke-dashoffset:${-(la + gap)}"/>` : ""}</svg><div class="rc">${lead ? `<span class="avc" style="background:${lead.color}">${esc((lead.name.trim()[0] || "?").toUpperCase())}</span><small>${esc(first(lead.name))} leads</small><b>${money(leadV, { round: true })}</b>` : `<small>${total ? "All even" : "No spends"}</small>`}</div></div>`;
+  const qs = [], today = new Date(), dayN = isNow ? today.getDate() : lastD.getDate();
+  { const days = new Set(cExp.map(e => new Date(e.ts).getDate())); let run = 0, best = 0; for (let d = 1; d <= dayN; d++) { if (days.has(d)) run = 0; else best = Math.max(best, ++run); }
+    let cur = 0; if (isNow) for (let d = dayN; d >= 1 && !days.has(d); d--) cur++;
+    const n = isNow ? cur : best; if (n >= 2) qs.push(`<span class="q" style="--c:#FF9F43">${svgIc("flame", 18)}<b>${n}</b> ${isNow ? "no-spend day streak" : "no-spend days in a row"}</span>`); }
+  { const pm = new Date(m.getFullYear(), m.getMonth() - 1, 1), prev = S.exp.filter(e => inMonth(e.ts, pm) && counted(e) && new Date(e.ts).getDate() <= dayN).reduce((a, e) => a + e.amt, 0);
+    if (prev > 0 && total > 0) { const d = Math.round((total - prev) / prev * 100); if (Math.abs(d) >= 3) qs.push(`<span class="q" style="--c:${d < 0 ? "#3DDC97" : "#FFB340"}">${svgIc(d < 0 ? "down" : "up", 18)}<b>${Math.abs(d)}%</b> ${d < 0 ? "less" : "more"} than last month</span>`); } }
+  { const per = {}; cExp.forEach(e => { const d = new Date(e.ts).getDate(); per[d] = (per[d] || 0) + e.amt; }); const top = Object.entries(per).sort((a, b) => b[1] - a[1])[0];
+    if (top && cExp.length > 4) qs.push(`<span class="q" style="--c:#8B7CFF">${svgIc("spark", 18)}Priciest day <b>${top[0]} ${mon}</b> ${money(top[1], { round: true })}</span>`); }
+  const quests = qs.length ? `<div class="quests">${qs.join("")}</div>` : "";
   return `
   <div class="top"><div class="tl1"><button class="nv" data-act="mprev" aria-label="Previous month">‹</button><button class="mt2" data-act="monthpick" aria-label="Choose month">${monthLabel(m)}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><button class="nv" data-act="mnext" ${isNow ? "disabled" : ""} aria-label="Next month">›</button></div>
     <div class="tr1"><button class="ib2" data-act="chat" aria-label="Ask Nest">${svgIc("spark", 22)}</button><button class="pr2" data-act="tab" data-arg="you" aria-label="Settings"><span class="avc" style="background:${S.me.color}">${esc((S.me.name.trim()[0] || "?").toUpperCase())}</span><span class="avc" style="background:${S.p.color}">${esc((S.p.name.trim()[0] || "?").toUpperCase())}</span></button></div></div>
   <button class="hero2" data-act="breakdown" aria-label="Open month summary">
     <div class="h2t"><div><small>Spent together</small><div class="tot" id="bigbal" data-v="${total}">${money(total, { round: true })}</div></div><span class="ms">Month summary <i>›</i></span></div>
-    <div class="pbar"><i class="a" style="background:linear-gradient(90deg,${S.me.color},${S.me.color}cc);width:${total ? Math.max(share, 2) : 0}%"></i>${pp > 0 ? `<i class="b" style="background:${S.p.color};width:${100 - share}%"></i>` : ""}</div>
-    <div class="pp"><div class="pi"><span class="avc" style="background:${S.me.color}">${esc((S.me.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(S.me.name))}</small><b>${money(me, { round: true })}</b></div></div><i class="vd"></i><div class="pi"><span class="avc" style="background:${S.p.color}">${esc((S.p.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(S.p.name))}</small><b>${money(pp, { round: true })}</b></div></div></div>
+    <div class="duo">${ring}<div class="dp">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<div class="pi"><span class="avc" style="background:${u.color}">${esc((u.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(u.name))} <em style="color:${u.color}">${total ? pc : 0}%</em></small><b>${money(v, { round: true })}</b></div></div>`).join("")}</div></div>
   </button>
+  ${quests}
   ${hints.map(h => `<button class="gcard ${h.warn ? "warn" : ""}" data-act="${h.a}"><span class="gic" style="color:${h.warn ? "#FFB340" : h.col || "#8B7CFF"};background:${h.warn ? "#FFB34022" : (h.col || "#8B7CFF") + "26"}">${svgIc(h.ic || "card", 26)}</span><div class="gtx"><span>${h.t}</span><b>${h.v}</b></div><span class="chev">›</span></button>`).join("")}
   ${inv}
   ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
