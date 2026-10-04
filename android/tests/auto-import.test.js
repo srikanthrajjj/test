@@ -33,7 +33,7 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  ok(await A.evaluate(b=>S.exp.length===b+1,before),'new SMS (and its duplicate) added exactly once automatically');
  await A.evaluate(()=>window.__smsChanged()); await A.waitForTimeout(600); ok(await A.evaluate(b=>S.exp.length===b+1,before),'running auto-import again adds nothing (no duplicates)');
  // pair, sync
- await A.evaluate(()=>{ show('month'); }); await A.waitForTimeout(400); const code=await (async()=>{ await A.click('[data-act=quick-invite]'); await A.waitForSelector('.code',{timeout:8000}); return A.evaluate(()=>S.sync.code); })(); await A.click('#sheet .x');
+ await A.evaluate(()=>{ show('month'); }); await A.waitForTimeout(400); const code=await (async()=>{ await A.click('[data-act=quick-invite]'); await A.waitForFunction(()=>S.sync&&S.sync.code,null,{timeout:8000}); return A.evaluate(()=>S.sync.code); })(); await A.click('#sheet .x');
  await B.evaluate(([c,s])=>handleInvite(c,s),[code,SERVER]); await B.waitForSelector('#pr-name',{timeout:8000}); await B.fill('#pr-name','Gun'); await B.click('#pr-go'); await B.waitForTimeout(2500); await B.click('[data-act=ob-skip]'); await B.waitForTimeout(1000);
  for(let i=0;i<3;i++){ await A.evaluate(()=>syncNow()); await B.evaluate(()=>syncNow()); await B.waitForTimeout(500); }
  const cnt=await B.evaluate(()=>S.exp.length), cntA=await A.evaluate(()=>S.exp.length); ok(cnt===cntA,'partner receives every imported + auto-added expense ('+cnt+'/'+cntA+')');
@@ -42,9 +42,9 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  await A.evaluate(()=>syncNow()); await B.evaluate(()=>syncNow()); await B.waitForTimeout(1200); ok(await B.evaluate(()=>S.exp.some(e=>e.title==='Rapido'&&e.amt===120)),'a message arriving later appears on the partner\'s phone');
  // UI: grouping + no dots + guide
  await A.evaluate(()=>{ const n=Date.now(); for(const a of [210,180,330]) S.exp.push({id:uid(),amt:a,title:'swiggy@axb',cat:'food',paid:'me',sm:50,ts:n-3600e3*a/100,src:'sms',u:n}); S.exp.push({id:uid(),amt:480000,title:'Sandeep Kumar',cat:'other',paid:'me',sm:50,ts:n-7200e3,src:'sms',u:n}); U.month=monthStart(new Date()); U.week=null; show('month'); }); await A.waitForTimeout(800);
- const ui=await A.evaluate(()=>({dots:document.querySelectorAll('.pd, .dot2').length, swiggyRows:[...document.querySelectorAll('#tl .li .t1')].filter(e=>/swiggy/i.test(e.innerText)).length, group:/\d payments/.test(document.querySelector('#tl').innerText), guide:!!document.querySelector('.guide .warn')}));
+ const ui=await A.evaluate(()=>({dots:document.querySelectorAll('.pd, .dot2').length, swiggyRows:[...document.querySelectorAll('#tl .li .t1')].filter(e=>/swiggy/i.test(e.innerText)).length, group:/\d payments/.test(document.querySelector('#tl').innerText), guide:!!document.querySelector('.gcard.warn')}));
  ok(ui.dots===0,'no payer dots anywhere on the Month screen'); ok(ui.swiggyRows<=2,'same-merchant payments are merged into one row per week ('+ui.swiggyRows+' Swiggy rows)'); ok(ui.group,'merged rows say "N payments"'); ok(ui.guide,'a guiding line flags the large payment share');
- await A.screenshot({path:'shots/g_1.png'}); await A.click('.guide .warn'); await A.waitForTimeout(700); await A.screenshot({path:'shots/g_2.png'}); const t1=await A.evaluate(()=>S.exp.filter(counted).reduce((a,e)=>a+e.amt,0));
+ await A.screenshot({path:'shots/g_1.png'}); await A.click('.gcard.warn'); await A.waitForTimeout(700); await A.screenshot({path:'shots/g_2.png'}); const t1=await A.evaluate(()=>S.exp.filter(counted).reduce((a,e)=>a+e.amt,0));
  await A.click('[data-act=lg-no]'); await A.waitForTimeout(600); const t2=await A.evaluate(()=>S.exp.filter(counted).reduce((a,e)=>a+e.amt,0)); ok(t1-t2===480000,'"Not spending" removes it from the total');
  await A.evaluate(()=>closeSheet()); await A.waitForTimeout(500); await A.screenshot({path:'shots/g_3.png'});
  await A.click('#tl .li >> nth=0'); await A.waitForTimeout(500); await A.screenshot({path:'shots/g_4.png'});
