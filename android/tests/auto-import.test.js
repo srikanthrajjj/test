@@ -1,5 +1,5 @@
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const URL='file:///home/user/test/android/app/src/main/assets/www/index.html', SERVER='http://127.0.0.1:8788';
+const URL='file:///tmp/claude-0/-home-user-test/efa09150-834c-5941-8bea-cc0b76604455/scratchpad/www-test/index.html', SERVER='http://127.0.0.1:8788';
 const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
 (async()=>{ const b=await chromium.launch();
  const mk=async(withSms)=>{ const ctx=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,locale:'en-IN'}); const p=await ctx.newPage(); p.errs=[]; p.on('pageerror',e=>p.errs.push(e.message));
@@ -33,7 +33,7 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  ok(await A.evaluate(b=>S.exp.length===b+1,before),'new SMS (and its duplicate) added exactly once automatically');
  await A.evaluate(()=>window.__smsChanged()); await A.waitForTimeout(600); ok(await A.evaluate(b=>S.exp.length===b+1,before),'running auto-import again adds nothing (no duplicates)');
  // pair, sync
- await A.evaluate(()=>{ show('month'); }); await A.waitForTimeout(400); const code=await (async()=>{ await A.click('[data-act=quick-invite]'); await A.waitForSelector('.qrbox',{timeout:8000}); return A.evaluate(()=>S.sync.code); })(); await A.click('#sheet .x');
+ await A.evaluate(()=>{ show('month'); }); await A.waitForTimeout(400); const code=await (async()=>{ await A.click('[data-act=quick-invite]'); await A.waitForSelector('.code',{timeout:8000}); return A.evaluate(()=>S.sync.code); })(); await A.click('#sheet .x');
  await B.evaluate(([c,s])=>handleInvite(c,s),[code,SERVER]); await B.waitForSelector('#pr-name',{timeout:8000}); await B.fill('#pr-name','Gun'); await B.click('#pr-go'); await B.waitForTimeout(2500); await B.click('[data-act=ob-skip]'); await B.waitForTimeout(1000);
  for(let i=0;i<3;i++){ await A.evaluate(()=>syncNow()); await B.evaluate(()=>syncNow()); await B.waitForTimeout(500); }
  const cnt=await B.evaluate(()=>S.exp.length), cntA=await A.evaluate(()=>S.exp.length); ok(cnt===cntA,'partner receives every imported + auto-added expense ('+cnt+'/'+cntA+')');

@@ -1,14 +1,14 @@
 // Five simulated couples, two devices each, against the real Worker (local D1) + mocked Anthropic.
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const assert = require('node:assert/strict');
-const URL='file:///home/user/test/android/app/src/main/assets/www/index.html', SERVER='http://127.0.0.1:8788';
+const URL='file:///tmp/claude-0/-home-user-test/efa09150-834c-5941-8bea-cc0b76604455/scratchpad/www-test/index.html', SERVER='http://127.0.0.1:8788';
 const results=[], issues=[]; let browser;
 const ok=(c,msg)=>{ results.push([c?'PASS':'FAIL',msg]); if(!c) issues.push(msg); };
 async function device(label, opts={}) {
   const ctx = await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,locale:'en-IN'});
   const p = await ctx.newPage(); p.errs=[]; p.label=label; p.ctx=ctx;
   p.on('pageerror',e=>p.errs.push(e.message)); p.on('console',m=>{ if(m.type()==='error' && !/Failed to load resource|net::ERR/.test(m.text())) p.errs.push(m.text()); });
-  await p.addInitScript(([u])=>{ window.__fast=1; try{localStorage.setItem('nest.url',u)}catch(e){} }, [SERVER]);
+  await p.addInitScript(([u])=>{ window.__fast=1; window.Native={readClip:()=>window.__clip||''}; try{localStorage.setItem('nest.url',u)}catch(e){} }, [SERVER]);
   await p.goto(URL); await p.waitForTimeout(500); return p;
 }
 const canon = p => p.evaluate(()=>{ const M=S.sync?S.sync.member:'a'; const A=x=>x==='me'?M:(M==='a'?'b':'a');
@@ -19,17 +19,18 @@ async function converge(A,B,msg){ for(let i=0;i<4;i++){ await A.evaluate(()=>syn
 async function onboardEmpty(p,me,pt){ await p.click('[data-act=ob-next]'); await p.fill('#ob-me',me); await p.fill('#ob-p',pt); await p.click('[data-act=ob-names]'); await p.click('[data-act=ob-skip]'); await p.waitForTimeout(700); }
 async function addUI(p,amt,title,{paid,split}={}){ await p.click('#fab'); await p.waitForTimeout(450); await p.fill('#f-amt',String(amt)); await p.fill('#f-title',title);
   if(paid) await p.click(`[data-act=f-paid][data-arg=${paid}]`); await p.click('[data-act=f-save]'); await p.waitForTimeout(700); }
-async function inviteAndJoin(A,B,bName){ // A: quick invite via the month banner (WhatsApp)
+async function inviteAndJoin(A,B,bName){
   await A.evaluate(()=>{window.__opened=null;window.open=u=>{window.__opened=u}});
-  await A.click('[data-act=quick-invite]'); await A.waitForSelector('.qrbox',{timeout:8000}); await A.waitForTimeout(1200); const wa=await A.evaluate(()=>window.__opened);
-  const link=await A.evaluate(()=>inviteLink()); const code=await A.evaluate(()=>S.sync.code);
-  ok(!!wa && wa.includes('wa.me') && decodeURIComponent(wa).includes(link), 'WhatsApp opens with the invite link');
-  ok(await A.evaluate(()=>/<svg/.test(document.querySelector('.qrbox').innerHTML)), 'QR code is shown for the partner to scan');
-  const landing=await (await fetch(link)).text(); ok(/invited you/.test(landing)&&/intent:\/\/join/.test(landing),'invite link landing page opens the app via intent');
+  await A.click('[data-act=quick-invite]'); await A.waitForSelector('.code',{timeout:8000}); await A.waitForTimeout(1200); const wa=await A.evaluate(()=>window.__opened); const code=await A.evaluate(()=>S.sync.code);
+  ok(!!wa && wa.includes('wa.me') && decodeURIComponent(wa).includes(code), 'one tap opens WhatsApp with the invite + code (no URL/server typed anywhere)');
+  ok(await A.evaluate(()=>!document.querySelector('#pr-url')),'no server field exists');
   await A.click('#sheet .x'); await A.waitForTimeout(400);
-  await B.evaluate(([c,s])=>handleInvite(c,s),[code,SERVER]); await B.waitForSelector('#pr-name',{timeout:8000});
+  // partner copies the WhatsApp message -> Nest offers to join by itself (clipboard), or via Share
+  const msg=decodeURIComponent(wa.split('text=')[1]);
+  await B.evaluate(m=>{ window.__clip=m; checkClipInvite(); },msg); await B.waitForSelector('#pr-name',{timeout:8000});
+  ok(await B.evaluate(()=>!document.querySelector('#pr-code')&&!document.querySelector('#pr-url')),'partner only types their name (code detected from the copied message)');
   await B.fill('#pr-name',bName); await B.click('#pr-go'); await B.waitForTimeout(2500);
-  if(await B.evaluate(()=>document.querySelector('#ob').classList.contains('on'))){ ok(await B.evaluate(()=>!!document.querySelector('[data-act=ob-skip]')),'joiner lands on the SMS/skip-typing step (no names step)'); await B.click('[data-act=ob-skip]'); await B.waitForTimeout(900); } return code; }
+  if(await B.evaluate(()=>document.querySelector('#ob').classList.contains('on'))){ await B.click('[data-act=ob-skip]'); await B.waitForTimeout(900); } return code; }
 (async()=>{
  browser = await chromium.launch(); const t0=Date.now();
  // P1 happy path
