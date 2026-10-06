@@ -40,6 +40,15 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  // arrives after sync -> partner gets it live
  await A.evaluate(()=>{ window.__inbox.push({id:200,a:'VM-BANK',b:'Rs.120.00 debited from A/c XX4821 to VPA rapido@ybl (UPI Ref 4)',d:Date.now()+5000}); window.__smsChanged(); }); await A.waitForTimeout(1500);
  await A.evaluate(()=>syncNow()); await B.evaluate(()=>syncNow()); await B.waitForTimeout(1200); ok(await B.evaluate(()=>S.exp.some(e=>e.title==='Rapido'&&e.amt===120)),'a message arriving later appears on the partner\'s phone');
+ // partner adds an expense; A sees it on app resume (no manual sync), and via pull-to-refresh
+ await B.evaluate(()=>{ const n=Date.now(); S.exp.push({id:uid(),amt:777,title:'Resume Cafe',cat:'food',paid:'me',sm:50,ts:n,src:'manual',u:n}); persist(); return syncNow(); }); await B.waitForTimeout(800);
+ await A.evaluate(()=>window.__resume()); await A.waitForTimeout(2500);
+ ok(await A.evaluate(()=>S.exp.some(e=>e.title==='Resume Cafe')),'opening the app pulls the partner\'s latest expense');
+ await B.evaluate(()=>{ const n=Date.now(); S.exp.push({id:uid(),amt:888,title:'Pull Bakery',cat:'food',paid:'me',sm:50,ts:n,src:'manual',u:n}); persist(); return syncNow(); }); await B.waitForTimeout(800);
+ await A.evaluate(()=>{ show('month'); }); await A.waitForTimeout(500);
+ await A.evaluate(()=>{ const pg=document.querySelector('.page'); const mk=(t,y)=>{ const tc=new Touch({identifier:1,target:pg,clientX:150,clientY:y}); return new TouchEvent(t,{touches:t==='touchend'?[]:[tc],changedTouches:[tc],bubbles:true,cancelable:true}); }; pg.dispatchEvent(mk('touchstart',200)); pg.dispatchEvent(mk('touchmove',330)); pg.dispatchEvent(mk('touchend',330)); });
+ await A.waitForTimeout(3500);
+ ok(await A.evaluate(()=>S.exp.some(e=>e.title==='Pull Bakery')),'pull down on the Month screen refreshes and brings the partner\'s expense');
  // UI: grouping + no dots + guide
  await A.evaluate(()=>{ const n=Date.now(); for(const a of [210,180,330]) S.exp.push({id:uid(),amt:a,title:'swiggy@axb',cat:'food',paid:'me',sm:50,ts:n-3600e3*a/100,src:'sms',u:n}); S.exp.push({id:uid(),amt:480000,title:'Sandeep Kumar',cat:'other',paid:'me',sm:50,ts:n-7200e3,src:'sms',u:n}); U.month=monthStart(new Date()); U.week=null; show('month'); }); await A.waitForTimeout(800);
  const ui=await A.evaluate(()=>({dots:document.querySelectorAll('.pd, .dot2').length, swiggyRows:[...document.querySelectorAll('#tl .li .t1')].filter(e=>/swiggy/i.test(e.innerText)).length, group:/\d payments/.test(document.querySelector('#tl').innerText), guide:!!document.querySelector('.gcard.warn')}));

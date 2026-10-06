@@ -116,6 +116,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         foreground = true;
+        if (web != null) web.evaluateJavascript("window.__resume && window.__resume()", null);
         if (smsObserver == null && hasSms()) {
             try {
                 smsObserver = new ContentObserver(ui) {

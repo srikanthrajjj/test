@@ -509,6 +509,9 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .tn .li.moreb{border:0;justify-content:flex-start;padding:12px 0;min-height:44px}
 .tn-h{padding:2px 0 4px}
 .dp .pi{border-radius:0!important}.ib2{background:none;border:0}.avc{box-shadow:none}
+#ptr{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translate(-50%,-30px);width:34px;height:34px;border-radius:50%;background:var(--card2);display:grid;place-items:center;opacity:0;z-index:25;pointer-events:none;transition:opacity .2s}
+#ptr i{width:16px;height:16px;border-radius:50%;border:2px solid var(--sub);border-top-color:transparent;display:block;transition:transform .2s}#ptr.go i{border-color:var(--accent);border-top-color:transparent;transform:rotate(180deg)}
+#ptr.spin i{border-color:var(--accent);border-top-color:transparent;animation:ptrs .7s linear infinite}@keyframes ptrs{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -674,10 +677,11 @@ function applyRemote(res, initial) {
   }
   return changed;
 }
+let syncAt = 0;
 async function syncNow() {
-  if (!syncOn()) return;
-  if (syncing) { again = true; return; }
-  syncing = true; setSyncState("syncing");
+  if (!syncOn()) return false;
+  if (syncing && Date.now() - syncAt < 30000) { again = true; return false; }
+  syncing = true; syncAt = Date.now(); setSyncState("syncing"); let okSync = false;
   try {
     const ch = pending(), maxU = Math.max(S.sync.pushed || 0, ...ch.map(c => c.u));
     const firstPull = !S.sync.cursor;
@@ -687,13 +691,34 @@ async function syncNow() {
     if (firstPull && changed) smartMonth();
     if (res.partnerJoined) S.sync.code = null;
     if (res.changes.length >= 1000) again = true;
-    setSyncState("ok"); persist();
+    setSyncState("ok"); persist(); okSync = true;
     if (changed) { if ($("#sheet").classList.contains("on") || $("#chat").classList.contains("on") || $("#ob").classList.contains("on")) pendingRefresh = true; else if (U.tab !== "you" || true) refresh(); }
   } catch (e) { setSyncState(e.status === 401 ? "auth" : "offline"); }
   finally { syncing = false; if (again) { again = false; setTimeout(syncNow, 300); } }
+  return okSync;
 }
-setInterval(() => { if (document.visibilityState === "visible") { if (syncOn()) syncNow(); autoImport(); } }, 20000);
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { syncNow(); autoImport(); checkClipInvite(); } });
+/* refresh on every open / resume (native onResume + visibility), and every 15 s while open */
+let lastResume = 0;
+window.__resume = () => { if (Date.now() - lastResume < 800) return; lastResume = Date.now(); syncNow(); autoImport(); checkClipInvite(); };
+setInterval(() => { if (document.visibilityState === "visible") { if (syncOn()) syncNow(); autoImport(); } }, 15000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") window.__resume(); });
+addEventListener("focus", () => window.__resume());
+/* pull to refresh */
+(() => {
+  let y0 = null, dy = 0, busy = false, el = null;
+  const ind = () => el || (el = Object.assign(document.createElement("div"), { id: "ptr", innerHTML: '<i></i>' }), document.body.appendChild(el), el);
+  const pg = t => t.closest && t.closest(".page");
+  document.addEventListener("touchstart", e => { const p = pg(e.target); if (busy || !p || p.scrollTop > 0 || $("#sheet").classList.contains("on") || $("#ob").classList.contains("on") || $("#chat").classList.contains("on")) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; }, { passive: true });
+  document.addEventListener("touchmove", e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); if (dy > 8) { const d = Math.min(dy * .5, 70); ind().style.cssText = `transform:translate(-50%,${d - 10}px);opacity:${Math.min(1, d / 50)}`; ind().classList.toggle("go", d >= 50); } }, { passive: true });
+  document.addEventListener("touchend", async () => {
+    if (y0 == null) return; const go = dy * .5 >= 50; y0 = null; if (!el) return;
+    if (!go) { el.style.cssText = ""; return; }
+    busy = true; el.classList.add("spin"); el.style.cssText = "transform:translate(-50%,40px);opacity:1"; hap(0);
+    let ok = true; try { if (syncOn()) { const t0 = Date.now(); while (syncing && Date.now() - t0 < 15000) await new Promise(r => setTimeout(r, 200)); ok = await syncNow(); } await autoImport(); } catch (e) { ok = false; }
+    await new Promise(r => setTimeout(r, 500)); el.className = ""; el.style.cssText = ""; busy = false; refresh();
+    toast(!syncOn() ? "Up to date" : ok ? "Up to date · synced just now" : "Couldn't reach the server · try again");
+  }, { passive: true });
+})();
 addEventListener("online", () => syncNow());
 function normUrl(u) {
   u = String(u || "").trim().replace(/\/+$/, ""); if (!u) return "";
