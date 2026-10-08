@@ -1530,10 +1530,17 @@ function renderOb() {
 function rvRow(c) {
   return `<div class="rv ${c.on ? "on" : ""}" data-act="ob-tog" data-arg="${c.sid}" role="checkbox" aria-checked="${c.on}" tabindex="0"><span class="ck">✓</span>${ico(c.cat, c.title)}<div class="mid"><div class="t1">${esc(c.title)}</div><div class="t2">${new Date(c.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${c.paid === "p" ? " · " + esc(first(S.p.name)) : ""}${c.cat === "xfer" ? ` <span class="flag">Transfer</span>` : c.big ? ` <span class="flag">Large — real spending?</span>` : ""}</div></div><div class="amt">${money(c.amt)}</div></div>`;
 }
+function smsBlockedSheet() {
+  openSheet("Allow SMS access", `<p class="muted" style="margin:2px 2px 14px;line-height:1.45">Android blocks SMS access for apps installed from a file until you allow it once. Nest reads bank texts only on your phone to fill in your spending.</p>
+    <ol style="margin:0 2px 16px 20px;line-height:1.7;font-size:15px"><li>Tap <b>Open app settings</b></li><li>Tap <b>⋮</b> (top right) → <b>Allow restricted settings</b></li><li>Go to <b>Permissions → SMS → Allow</b></li><li>Come back to Nest and tap <b>Scan again</b></li></ol>
+    <button class="btn prime block" data-act="app-settings">Open app settings</button>
+    <button class="btn block" data-act="smsretry" style="margin-top:10px">Scan again</button>
+    <button class="link" data-act="paste" style="display:block;margin:14px auto 0">Or paste bank texts instead</button>`);
+}
 async function runScan(sample, days) {
   OB.step = 3; OB.sample = sample; renderOb(); const t0 = Date.now(); let granted = true;
   if (!sample) granted = await askSmsPerm();
-  if (!sample && !granted) { OB.step = 2; renderOb(); toast("SMS access was declined — try the sample, or start empty."); return; }
+  if (!sample && !granted) { OB.step = 2; renderOb(); smsBlockedSheet(); return; }
   const prog = $("#sc-p"), steps = ["Reading your inbox…", "Spotting payments…", "Matching merchants…", "Sorting into categories…"];
   let tick = 0; const iv = setInterval(() => { tick++; const h = $("#sc-h"); if (h) { h.textContent = steps[Math.min(steps.length - 1, Math.floor(tick / 2))]; } if (prog) prog.style.width = Math.min(92, tick * 11) + "%"; }, 600);
   const res = await readSms(sample, days);
@@ -1601,6 +1608,8 @@ const A = {
   theme: a => { S.theme = a; save(); applyTheme(); show("you", true); },
   cur: a => { S.cur = a; S.mu = Date.now(); save(); show("you", true); },
   color: a => { const [k, c] = a.split("|"); person(k).color = c; if (k === "me") S.mu = Date.now(); save(); show("you", true); hap(1); },
+  "app-settings": () => { try { N.openAppSettings(); } catch (e) { toast("Open Settings → Apps → Nest → Permissions"); } },
+  smsretry: () => { closeSheet(); OB.step = 3; if (OB.from !== "settings") OB.from = "ob"; runScan(false, OB.from === "settings" ? 365 : undefined); },
   rescan: () => { S.onboarded = true; OB = { step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false, 365); },
   sample: () => { OB = { step: 3, cands: [], scanned: 0, detected: "", sample: true, from: "settings" }; runScan(true); },
   export: () => {

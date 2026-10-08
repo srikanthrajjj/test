@@ -28,7 +28,7 @@ PY
 }
 "$TOOLS/aapt2" compile --dir app/src/main/res -o "$OUT/res.zip"
 "$TOOLS/aapt2" link -o "$OUT/base.apk" -I "$FW" --manifest "$OUT/AndroidManifest.xml" \
-  -A "$OUT/assets" --min-sdk-version 26 --target-sdk-version 35 --version-code 13 --version-name 1.9.2 "$OUT/res.zip"
+  -A "$OUT/assets" --min-sdk-version 26 --target-sdk-version 35 --version-code 14 --version-name 1.9.3 "$OUT/res.zip"
 javac -nowarn --release 8 -cp "$FW" -d "$OUT/classes" $(find app/src/main/java -name '*.java') 2>&1 | grep -v '^Note:\|warning' || true
 java -cp "$TOOLS/dalvik-dx-16.0.1.jar" com.android.dx.command.Main --dex --min-sdk-version=26 --output="$OUT/classes.dex" "$OUT/classes"
 python3 tools/align.py "$OUT/base.apk" "$OUT/classes.dex" "$OUT/unsigned.apk"
