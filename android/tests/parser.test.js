@@ -39,7 +39,10 @@ const T=[
 ["Your OTP for Rs 2,400 txn at Amazon is 123456. Do not share.",0,null],
 ["Rs 15,000 credited to your a/c XX1234 on 02-10-26 by UPI from rahul@ybl",0,null],
 ["Your credit card bill of Rs 24,500 is due on 15-Oct. Min due Rs 1,225",0,null],
-["Refund of Rs 799 processed for Myntra order",0,null],
+["Refund of Rs 799 processed for Myntra order",-799,"Myntra"],
+["Rs 1,299.00 refunded to your card XX3307 by Amazon on 06-10-26",-1299,null],
+["Your refund will be initiated within 3 days. Rs 500",0,null],
+["Txn of Rs 450 failed. Amount reversed",0,null],
 ["Rs 500 will be debited on 5th for Netflix autopay",0,null],
 ["Get cashback up to Rs 500 on first UPI payment. T&C apply",0,null]];
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage(); await p.goto('file:///home/user/test/android/app/src/main/assets/www/index.html');

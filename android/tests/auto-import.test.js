@@ -49,6 +49,12 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  await A.evaluate(()=>{ const pg=document.querySelector('.page'); const mk=(t,y)=>{ const tc=new Touch({identifier:1,target:pg,clientX:150,clientY:y}); return new TouchEvent(t,{touches:t==='touchend'?[]:[tc],changedTouches:[tc],bubbles:true,cancelable:true}); }; pg.dispatchEvent(mk('touchstart',200)); pg.dispatchEvent(mk('touchmove',330)); pg.dispatchEvent(mk('touchend',330)); });
  await A.waitForTimeout(3500);
  ok(await A.evaluate(()=>S.exp.some(e=>e.title==='Pull Bakery')),'pull down on the Month screen refreshes and brings the partner\'s expense');
+ // refund arrives by SMS -> lowers the month total, syncs to partner as a refund; balance noted
+ await A.evaluate(()=>{ window.__inbox.push({id:300,a:'VM-HDFCBK',b:'Rs 799.00 refunded to your A/c XX4821 by Myntra on 06-10-26. Avl Bal Rs 52,300.50',d:Date.now()+9000}); window.__smsChanged(); }); await A.waitForTimeout(1500);
+ ok(await A.evaluate(()=>S.exp.some(e=>e.cat==='refund'&&e.amt===-799)),'a refund text is added as a negative expense');
+ ok(await A.evaluate(()=>Object.values(S.bal||{}).some(b=>b.v===52300.5&&b.tail==='4821')),'bank balance is read from the text');
+ await A.evaluate(()=>syncNow()); await B.evaluate(()=>syncNow()); await B.waitForTimeout(1200);
+ ok(await B.evaluate(()=>S.exp.some(e=>e.cat==='refund'&&e.amt===-799)),'refund syncs to the partner as a refund');
  // UI: grouping + no dots + guide
  await A.evaluate(()=>{ const n=Date.now(); for(const a of [210,180,330]) S.exp.push({id:uid(),amt:a,title:'swiggy@axb',cat:'food',paid:'me',sm:50,ts:n-3600e3*a/100,src:'sms',u:n}); S.exp.push({id:uid(),amt:480000,title:'Sandeep Kumar',cat:'other',paid:'me',sm:50,ts:n-7200e3,src:'sms',u:n}); U.month=monthStart(new Date()); U.week=null; show('month'); }); await A.waitForTimeout(800);
  const ui=await A.evaluate(()=>({dots:document.querySelectorAll('.pd, .dot2').length, swiggyRows:[...document.querySelectorAll('#tl .li .t1')].filter(e=>/swiggy/i.test(e.innerText)).length, group:/\d payments/.test(document.querySelector('#tl').innerText), guide:!!document.querySelector('.gcard.warn')}));

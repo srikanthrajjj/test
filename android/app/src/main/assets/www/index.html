@@ -517,6 +517,7 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .pchart{width:100%;height:auto;margin:6px 0 4px;display:block;overflow:visible}
 #sheet .grp{background:none;border-radius:0;box-shadow:none;overflow:visible;margin-top:10px}#sheet .kv{padding:12px 2px;border-bottom:1px solid var(--line);background:none}#sheet .kv:last-child{border-bottom:0}
 #sheet .list{background:none;border-radius:0}#sheet .list .li{padding:12px 2px;border-bottom:1px solid var(--line)}
+.amt.rf{color:var(--ok)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -570,6 +571,7 @@ const CATS = [
   { id: "subs", n: "Subscriptions", e: "🔁", c: "#7A7CF5", re: /netflix|spotify|prime video|hotstar|disney|youtube|apple|google play|icloud|jiocinema|sonyliv|zee5|audible|subscription|openai|chatgpt|notion/i },
   { id: "gift", n: "Gifts", e: "🎁", c: "#F78FB3", re: /gift|ferns|igp|florist|flower|jewel|tanishq|caratlane/i },
   { id: "bill", n: "Bills & EMI", e: "🧾", c: "#FFB340", re: /emi|loan|insurance|premium|\blic\b|electric|bescom|tneb|postpaid|broadband|dth|tata play|recharge|bbps|water bill|maintenance/i },
+  { id: "refund", n: "Refunds", e: "↩", c: "#3DDC97", re: /^\b$/ },
   { id: "other", n: "Other", e: "✨", c: "#98A2B3", re: /^$/ },
   { id: "xfer", n: "Transfers (not counted)", e: "↔", c: "#8E8E93", re: /^\b$/ }
 ];
@@ -619,12 +621,12 @@ function removeRec(kind, id) { if (kind === "exp") S.exp = S.exp.filter(e => e.i
 function restoreRec(kind, rec) { untomb(rec.id); touch(rec); (kind === "exp" ? S.exp : S.set).push(rec); }
 function toWire(kind, r) {
   const M = myId(), O = otherId();
-  if (kind === "exp") return { amt: r.amt, title: r.title, cat: r.cat, paid: r.paid === "me" ? M : O, sa: M === "a" ? r.sm : 100 - r.sm, ts: r.ts, src: r.src || "manual", note: r.note || undefined, ok: r.ok || undefined };
+  if (kind === "exp") return { amt: Math.abs(r.amt), title: r.title, cat: r.cat, paid: r.paid === "me" ? M : O, sa: M === "a" ? r.sm : 100 - r.sm, ts: r.ts, src: r.src || "manual", note: r.note || undefined, ok: r.ok || undefined };
   return { from: r.from === "me" ? M : O, amt: r.amt, ts: r.ts };
 }
 function fromWire(kind, d, id, u) {
   const M = myId();
-  if (kind === "exp") return { id, amt: d.amt, title: d.title, cat: CAT[d.cat] ? d.cat : "other", paid: d.paid === M ? "me" : "p", sm: M === "a" ? d.sa : 100 - d.sa, ts: d.ts, src: d.src || "manual", u, note: d.note || "", ok: d.ok || undefined };
+  if (kind === "exp") return { id, amt: d.cat === "refund" ? -Math.abs(d.amt) : d.amt, title: d.title, cat: CAT[d.cat] ? d.cat : "other", paid: d.paid === M ? "me" : "p", sm: M === "a" ? d.sa : 100 - d.sa, ts: d.ts, src: d.src || "manual", u, note: d.note || "", ok: d.ok || undefined };
   return { id, from: d.from === M ? "me" : "p", amt: d.amt, ts: d.ts, u };
 }
 function pending() {
@@ -799,6 +801,7 @@ function canonMerchant(raw) {
 }
 const darkish = hex => { const n = parseInt(hex, 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) < 70; };
 const IC = {
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
   flame: '<path d="M12 3c1 3.2 4.5 5 4.5 9.2A4.5 4.5 0 0 1 12 17a4.5 4.5 0 0 1-4.5-4.8c0-1.6.7-2.8 1.7-3.8.2 1.2.8 1.9 1.6 2.2C10.5 7.5 10.8 5 12 3z"/><path d="M12 21c-2.8 0-4.5-1.5-4.5-3.5"/>',
   down: '<path d="M5 8l5 5 3-3 6 6M19 11v5h-5"/>',
   up: '<path d="M5 16l5-5 3 3 6-6M19 13V8h-5"/>',
@@ -821,8 +824,8 @@ const IC = {
   spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
   warn: '<path d="M12 4 3 19h18L12 4zM12 10v4M12 16.5v.5"/>'
 };
-const IC_COL = { bill: "#FFB340", card: "#8B7CFF", store: "#4C8DFF", cart: "#FF9F43", fork: "#FF8A4C", car: "#4C9AFF", bag: "#B06BFF", home: "#FFC247", ticket: "#FF5C8A", plane: "#28C3D9", heart: "#FF6B6B", repeat: "#7A7CF5", gift: "#F78FB3", swap: "#8E94A8", user: "#FF7AA8", people: "#6E8BFF", spark: "#8B7CFF", warn: "#FFB340", cred: "#3DDC97" };
-const CAT_IC = { bill: "repeat", food: "fork", groc: "cart", move: "car", shop: "bag", home: "home", fun: "ticket", trip: "plane", care: "heart", subs: "repeat", gift: "gift", other: "card", xfer: "swap" };
+const IC_COL = { refund: "#3DDC97", bill: "#FFB340", card: "#8B7CFF", store: "#4C8DFF", cart: "#FF9F43", fork: "#FF8A4C", car: "#4C9AFF", bag: "#B06BFF", home: "#FFC247", ticket: "#FF5C8A", plane: "#28C3D9", heart: "#FF6B6B", repeat: "#7A7CF5", gift: "#F78FB3", swap: "#8E94A8", user: "#FF7AA8", people: "#6E8BFF", spark: "#8B7CFF", warn: "#FFB340", cred: "#3DDC97" };
+const CAT_IC = { refund: "undo", bill: "repeat", food: "fork", groc: "cart", move: "car", shop: "bag", home: "home", fun: "ticket", trip: "plane", care: "heart", subs: "repeat", gift: "gift", other: "card", xfer: "swap" };
 function iconKey(c, title) {
   const t = String(title || "");
   if (/\bcred\b/i.test(t)) return "cred";
@@ -898,7 +901,7 @@ function groupRow(g) {
   const who = multiPeople() ? (g.me && g.p ? " · Both" : " · " + esc(first(person(g.me ? "me" : "p").name))) : "";
   const sub = g.x ? "Not counted" : (g.items.length > 1 ? `${g.items.length} payments · ${CAT[cat].n}` : `${shortDate(g.items[0].ts)} · ${CAT[cat].n}`) + who;
   const act = g.items.length > 1 ? `data-act="grp" data-arg="${g.id}"` : `data-act="open" data-arg="${g.items[0].id}"`;
-  return `<button class="li ${g.x ? "mute" : ""}" ${act}>${ico(cat, title)}<div class="mid"><div class="t1">${esc(title)}</div><div class="t2">${sub}</div></div><div class="amt">${money(g.t)}</div></button>`;
+  return `<button class="li ${g.x ? "mute" : ""}" ${act}>${ico(cat, title)}<div class="mid"><div class="t1">${esc(title)}</div><div class="t2">${sub}</div></div><div class="amt ${g.t < 0 ? "rf" : ""}">${money(g.t, { sign: g.t < 0 })}</div></button>`;
 }
 function guideHints(m, cExp, total, isNow) {
   const out = [], L = largeOf(m), mn = m.toLocaleDateString("en-GB", { month: "long" });
@@ -932,8 +935,8 @@ function renderMonth() {
   const invHidden = S.invHide && Date.now() - S.invHide < 864e5;
   const inv = invHidden ? "" : !syncOn() && S.exp.length ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Track together with ${esc(first(S.p.name))}</span><button class="lk" data-act="quick-invite">Invite on WhatsApp</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : syncOn() && !S.sync.partner ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Waiting for ${esc(first(S.p.name))}</span><button class="lk" data-act="show-invite">Share invite again</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : "";
   const hints = guideHints(m, cExp, total, isNow);
-  const share = total ? Math.round(me / total * 100) : 0;
-  const xferTot = mExp.filter(e => !counted(e)).reduce((a, e) => a + e.amt, 0);
+  const share = total > 0 ? Math.min(100, Math.max(0, Math.round(me / total * 100))) : 0;
+  const xferTot = mExp.filter(e => !counted(e)).reduce((a, e) => a + e.amt, 0), refTot = mExp.filter(e => e.cat === "refund").reduce((a, e) => a - e.amt, 0);
   const C = 2 * Math.PI * 44, gap = total && me && pp ? 6 : 0, la = Math.max(0, C * me / (total || 1) - gap), lb = Math.max(0, C * pp / (total || 1) - gap);
   const lead = me === pp ? null : me > pp ? S.me : S.p, leadV = Math.abs(me - pp);
   const ring = `<div class="ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" class="rt"/>${total ? `<circle cx="50" cy="50" r="44" class="ra" style="stroke:${S.me.color};stroke-dasharray:${la} ${C}"/><circle cx="50" cy="50" r="44" class="ra" style="stroke:${S.p.color};stroke-dasharray:${lb} ${C};stroke-dashoffset:${-(la + gap)}"/>` : ""}</svg><div class="rc">${lead ? `<span class="avc" style="background:${lead.color}">${esc((lead.name.trim()[0] || "?").toUpperCase())}</span><small>${esc(first(lead.name))} leads</small><b>${money(leadV, { round: true })}</b>` : `<small>${total ? "All even" : "No spends"}</small>`}</div></div>`;
@@ -954,6 +957,7 @@ function renderMonth() {
     <div class="pbar"><i style="background:${S.me.color};width:${total ? Math.max(share, 2) : 0}%"></i>${pp > 0 ? `<i style="background:${S.p.color};width:${100 - share}%"></i>` : ""}</div>
     <div class="duo">${ring}<div class="dp">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<div class="pi"><span class="avc" style="background:${u.color}">${esc((u.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(u.name))} <em style="color:${u.color}">${total ? pc : 0}%</em></small><b>${money(v, { round: true })}</b></div></div>`).join("")}</div></div>
   </button>
+  ${refTot > 0 ? `<div class="xl" style="padding-bottom:0">includes ${money(refTot, { round: true })} in refunds, already taken off</div>` : ""}
   ${xferTot ? `<button class="xl" data-act="transfers">${money(xferTot, { round: true })} in transfers &amp; investments, not counted <i>›</i></button>` : ""}
   ${hints.map(h => `<button class="gcard ${h.warn ? "warn" : ""}" data-act="${h.a}"><span class="gic" style="color:${h.warn ? "#FFB340" : h.col || "#8B7CFF"};background:${h.warn ? "#FFB34022" : (h.col || "#8B7CFF") + "26"}">${svgIc(h.ic || "card", 26)}</span><div class="gtx"><span>${h.t}</span><b>${h.v}</b></div><span class="chev">›</span></button>`).join("")}
   ${inv}
@@ -997,7 +1001,7 @@ function shareBar(e) {
 }
 function rowHtml(e, withDate) {
   const who = multiPeople() ? esc(first(person(e.paid).name)) : "", parts = [withDate ? shortDate(e.ts) : "", who, e.cat === "xfer" ? "Not counted" : CAT[e.cat].n].filter(Boolean);
-  return `<button class="li ${e.cat === "xfer" ? "mute" : ""}" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div><div class="t2">${parts.join(" · ")}</div></div><div class="amt">${money(e.amt)}</div></button>`;
+  return `<button class="li ${e.cat === "xfer" ? "mute" : ""}" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div><div class="t2">${parts.join(" · ")}</div></div><div class="amt ${e.amt < 0 ? "rf" : ""}">${money(e.amt, { sign: true })}</div></button>`;
 }
 
 /* =========================================================
@@ -1077,6 +1081,7 @@ function renderYou() {
     <div class="row">${av("me", "lg")}<input class="inp" id="nm-me" value="${esc(S.me.name)}" maxlength="18" aria-label="Your name" style="min-height:46px"></div>${sw("me")}
     <div class="row" style="margin-top:18px">${av("p", "lg")}<input class="inp" id="nm-p" value="${esc(S.p.name)}" maxlength="18" aria-label="Partner's name" style="min-height:46px"></div>${sw("p")}
   </div>
+  ${Object.keys(S.bal || {}).length ? `<div class="sec"><h2>Bank balances</h2></div><div class="card">${Object.values(S.bal).sort((a, b) => b.ts - a.ts).slice(0, 6).map(b => `<div class="row"><div style="flex:1;min-width:0"><b style="font-size:16px">${esc(b.bank)}${b.tail ? " ••" + esc(b.tail) : ""}</b><div class="muted" style="font-size:13px">From a bank text · ${ago(b.ts)}</div></div><b style="font-size:17px">${money(b.v, { round: true })}</b></div>`).join("")}</div>` : ""}
   <div class="sec"><h2>Sync & agent</h2></div>
   ${syncOn() ? `<div class="card">
     <div class="row"><span class="ib" style="background:#1FA97122;width:40px;height:40px;font-size:20px">☁️</span><div style="flex:1;min-width:0"><b style="font-size:16px">${S.sync.partner ? "Synced with " + esc(first(S.p.name)) : "Waiting for your partner"}</b><div class="muted" style="font-size:13px;margin-top:2px"><i class="syncdot ${U.sync === "ok" || !U.sync ? "" : U.sync === "syncing" ? "busy" : "off"}"></i><span class="syncLbl">${syncLabel()}</span></div></div></div>
@@ -1313,7 +1318,7 @@ async function autoImport() {
   }
   autoBusy = true;
   try {
-    const res = await scanSince(S.smsLast), seen = new Set(S.seen); let c = [];
+    const res = await scanSince(S.smsLast), seen = new Set(S.seen); let c = []; noteBalances(res.msgs);
     (res.msgs || []).forEach(m => { const p = parseSms(m); if (p && !seen.has(p.sid)) c.push(p); });
     c = dedupeCands(c).filter(x => !S.exp.some(e => e.amt === x.amt && Math.abs(e.ts - x.ts) < 15 * 60e3 && (e.src === "sms" || canonMerchant(e.title) === canonMerchant(x.title))));
     const added = c.map(x => touch({ id: uid(), amt: x.amt, title: x.title, cat: x.cat, paid: "me", sm: 50, ts: x.ts, src: "sms" }));
@@ -1360,7 +1365,7 @@ const refresh = () => show(U.tab, true);
 let F = null;
 function openForm(e) {
   const t = e || {};
-  F = { id: t.id || null, amt: t.amt ? String(t.amt) : "", title: t.title || "", cat: t.cat || "food", catAuto: !t.cat, paid: t.paid || "me", note: t.note || "", date: dkey(t.ts || Date.now()), src: t.src || "manual", ts: t.ts };
+  F = { id: t.id || null, amt: t.amt ? String(Math.abs(t.amt)) : "", title: t.title || "", cat: t.cat || "food", catAuto: !t.cat, paid: t.paid || "me", note: t.note || "", date: dkey(t.ts || Date.now()), src: t.src || "manual", ts: t.ts };
   openSheet(F.id ? "Edit expense" : "New expense", formHtml(), mountForm, () => { F = null; });
   setTimeout(() => { const a = $("#f-amt"); a && !F.id && a.focus(); }, 380);
 }
@@ -1395,7 +1400,7 @@ function saveForm() {
   const x = formExp(); if (!(x.amt > 0) || !F.title.trim()) { hap(3); return; }
   const d = new Date(F.date + "T12:00:00"), now = new Date(); let ts = d.getTime();
   if (F.date === dkey(now.getTime())) ts = now.getTime(); else if (F.id && F.ts && dkey(F.ts) === F.date) ts = F.ts;
-  const rec = { id: F.id || uid(), amt: r2(x.amt), title: F.title.trim(), cat: F.cat, paid: F.paid, sm: 50, ts, src: F.src, note: F.note.trim() };
+  const rec = { id: F.id || uid(), amt: F.cat === "refund" ? -r2(x.amt) : r2(x.amt), title: F.title.trim(), cat: F.cat, paid: F.paid, sm: 50, ts, src: F.src, note: F.note.trim() };
   const editing = !!F.id; touch(rec); if (editing) untomb(rec.id);
   if (editing) { const i = S.exp.findIndex(e => e.id === F.id); S.exp[i] = Object.assign(S.exp[i], rec); } else S.exp.push(rec);
   save(); closeSheet(); hap(2);
@@ -1437,15 +1442,28 @@ const DEBIT_RE = /\b(debited|debit|dr|spent|paid|purchase[d]?|withdrawn|withdraw
 const CREDIT_RE = /\b(credited (?:to|in|into|with)? ?(?:your|ur|a\/c|acct|account|card)|received|refund(?:ed)?|reversed|cashback (?:of|credited)|deposited|salary)\b/i;
 const HARD_NOISE_RE = /\b(otp|one[- ]time|verification code|passcode|cvv|pin\b|win\b|lucky|unsuccessful|failed|declined|insufficient|requested money|has requested|autopay (?:set|mandate)|will be debited|to be debited|will be auto|scheduled)\b/i;
 const SOFT_NOISE_RE = /\b(is due|due on|due date|minimum amount due|statement|pre-?approved|apply now|offer|click|http|www\.|t&c)\b/i;
+function noteBalances(msgs) {
+  S.bal = S.bal || {};
+  (msgs || []).forEach(m => {
+    const b = String(m.b || "").replace(/\s+/g, " "), x = b.match(/\b(?:avl\.?|avail(?:able)?)\s*bal(?:ance)?\.?\s*(?:is|:|-)?\s*(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)/i);
+    if (!x || /\b(card|credit)\b/i.test(b) && /\b(limit|lmt)\b/i.test(b)) return;
+    const t = b.match(/\b(?:a\/c|acct?|account|ac)\s*(?:no\.?|number)?\s*(?:x+|\*+|ending)?\s*(\d{3,4})\b/i), bank = (String(m.a || "").split("-").pop() || "").replace(/(?:bk|bnk|bank|sms|t|s)$/i, "").toUpperCase() || "Bank", key = bank + "|" + (t ? t[1] : "");
+    const v = parseFloat(x[1].replace(/,/g, "")); if (!(v >= 0) || v > 1e9) return;
+    if (!S.bal[key] || S.bal[key].ts <= m.d) S.bal[key] = { v, ts: m.d, bank, tail: t ? t[1] : "" };
+  });
+}
 function titleCase(s) { return s.toLowerCase().replace(/\b([a-z])/g, c => c.toUpperCase()).replace(/\bPvt\b|\bLtd\b/g, "").trim(); }
 function parseSms(m) {
   const body = String(m.b || "").replace(/\s+/g, " ").trim(); if (!body || body.length > 1200) return null;
   if (HARD_NOISE_RE.test(body)) return null;
   if (SOFT_NOISE_RE.test(body) && !/\b(debited|spent)\b/i.test(body)) return null;
+  const refund = /\b(refund(?:ed)?|reversal|reversed)\b/i.test(body) && !/\b(will be|to be|initiated|request(?:ed)?|eligible|policy)\b/i.test(body);
   const hasDebit = DEBIT_RE.test(body), hasCredit = CREDIT_RE.test(body);
-  if (!hasDebit) return null;
-  if (hasCredit && !/\b(debited|spent|sent|paid)\b/i.test(body)) return null;
-  if (/\bcredited\b/i.test(body) && !/\bdebited\b/i.test(body) && !/\b(spent|sent|paid|purchase)\b/i.test(body)) return null;
+  if (!refund) {
+    if (!hasDebit) return null;
+    if (hasCredit && !/\b(debited|spent|sent|paid)\b/i.test(body)) return null;
+    if (/\bcredited\b/i.test(body) && !/\bdebited\b/i.test(body) && !/\b(spent|sent|paid|purchase)\b/i.test(body)) return null;
+  }
   let amt = 0, mm; AMT_RE.lastIndex = 0; const found = [];
   while ((mm = AMT_RE.exec(body))) {
     const before = body.slice(Math.max(0, mm.index - 30), mm.index).toLowerCase(), after = body.slice(mm.index + mm[0].length, mm.index + mm[0].length + 20).toLowerCase();
@@ -1464,6 +1482,7 @@ function parseSms(m) {
   if (/^[\d\s]*$/.test(merch) || merch.length < 2 || /^(rs|inr|usd|eur|gbp)\.?$/i.test(merch)) merch = (/atm|cash|wdl/i.test(body) ? "ATM withdrawal" : /upi/i.test(body) ? "UPI payment" : "Card payment");
   merch = canonMerchant(merch.replace(/[_]+/g, " ").replace(/\s+(approved|declined|successful|completed)\b.*$/i, "")).slice(0, 28);
   const xfer = XFER_RE.test(body) && !/\b(emi|insurance|premium|lic)\b/i.test(body) || /\b(sip|mutual fund)\b/i.test(body), bill = !xfer && BILL_RE.test(body);
+  if (refund) return { amt: -amt, title: merch === "Card payment" || merch === "UPI payment" ? "Refund" : merch, cat: "refund", xfer: false, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)) };
   return { amt, title: merch, cat: xfer ? "xfer" : bill ? "bill" : /atm withdrawal/i.test(merch) ? "other" : catOf(merch), xfer, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)) };
 }
 function dedupeCands(c) {
@@ -1498,7 +1517,7 @@ function sampleInbox() {
   }
   out.push({ id: id++, a: "AX-SALARY", b: "Your a/c XX4821 is credited with Rs 85,000.00 on salary. Avl Bal Rs 1,32,000", d: Date.now() - 3 * DAY });
   out.push({ id: id++, a: "VM-HDFCBK", b: "123456 is your OTP for txn of Rs 2,400 at Amazon. Do not share.", d: Date.now() - 2 * DAY });
-  out.push({ id: id++, a: "VM-HDFCBK", b: "Rs 12,500 refunded to your card XX3307 by Myntra", d: Date.now() - 5 * DAY });
+  out.push({ id: id++, a: "VM-HDFCBK", b: "Rs 1,250 refunded to your card XX3307 by Myntra", d: Date.now() - 5 * DAY });
   return { scanned: 410, msgs: out, sample: true };
 }
 function readSms(sample, days) {
@@ -1578,7 +1597,7 @@ async function runScan(sample, days) {
   if (!sample && !granted) { OB.step = 2; renderOb(); smsBlockedSheet(); return; }
   const prog = $("#sc-p"), steps = ["Reading your inbox…", "Spotting payments…", "Matching merchants…", "Sorting into categories…"];
   let tick = 0; const iv = setInterval(() => { tick++; const h = $("#sc-h"); if (h) { h.textContent = steps[Math.min(steps.length - 1, Math.floor(tick / 2))]; } if (prog) prog.style.width = Math.min(92, tick * 11) + "%"; }, 600);
-  const res = await readSms(sample, days);
+  const res = await readSms(sample, days); if (!sample) { noteBalances(res.msgs); persist(); }
   const seen = new Set(S.seen), c = [], bodies = new Set(); let inr = 0, usd = 0, eur = 0, gbp = 0;
   for (const m of (res.msgs || [])) {
     const p = parseSms(m); if (!p || bodies.has(p.sid)) continue; bodies.add(p.sid);
