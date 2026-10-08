@@ -117,19 +117,22 @@ public class MainActivity extends Activity {
         super.onResume();
         foreground = true;
         if (web != null) web.evaluateJavascript("window.__resume && window.__resume()", null);
-        if (smsObserver == null && hasSms()) {
-            try {
-                smsObserver = new ContentObserver(ui) {
-                    @Override
-                    public void onChange(boolean selfChange) {
-                        ui.removeCallbacks(smsPing);
-                        ui.postDelayed(smsPing, 1500); // debounce bursts; the SMS provider fires several times per message
-                    }
-                };
-                getContentResolver().registerContentObserver(Uri.parse("content://sms"), true, smsObserver);
-            } catch (Throwable ignored) {
-                smsObserver = null;
-            }
+        ensureSmsObserver();
+    }
+
+    private void ensureSmsObserver() {
+        if (smsObserver != null || !hasSms()) return;
+        try {
+            smsObserver = new ContentObserver(ui) {
+                @Override
+                public void onChange(boolean selfChange) {
+                    ui.removeCallbacks(smsPing);
+                    ui.postDelayed(smsPing, 1500); // debounce bursts; the SMS provider fires several times per message
+                }
+            };
+            getContentResolver().registerContentObserver(Uri.parse("content://sms"), true, smsObserver);
+        } catch (Throwable ignored) {
+            smsObserver = null;
         }
     }
 
@@ -194,6 +197,7 @@ public class MainActivity extends Activity {
     public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
         if (code == REQ_SMS) {
             boolean ok = res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED;
+            if (ok) ensureSmsObserver(); // listen for new texts right away, not only after a restart
             js("window.__onPerm && window.__onPerm(" + ok + ")");
         }
     }

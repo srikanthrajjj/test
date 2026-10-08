@@ -1281,7 +1281,10 @@ let autoBusy = false;
 async function autoImport() {
   if (!SMS_INBOX || !N || !N.scanSmsSince || !S.onboarded || S.auto === false || autoBusy) return;
   try { if (!N.hasSmsPermission()) return; } catch (e) { return; }
-  if (!S.smsLast) { S.smsLast = Date.now(); persist(); return; }
+  if (!S.smsLast) {
+    if (S.smsPending) { S.smsPending = false; persist(); rescanNow(); return; } // permission was granted after being blocked: load history once
+    S.smsLast = Date.now(); persist(); return;
+  }
   autoBusy = true;
   try {
     const res = await scanSince(S.smsLast), seen = new Set(S.seen); let c = [];
@@ -1530,7 +1533,9 @@ function renderOb() {
 function rvRow(c) {
   return `<div class="rv ${c.on ? "on" : ""}" data-act="ob-tog" data-arg="${c.sid}" role="checkbox" aria-checked="${c.on}" tabindex="0"><span class="ck">✓</span>${ico(c.cat, c.title)}<div class="mid"><div class="t1">${esc(c.title)}</div><div class="t2">${new Date(c.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${c.paid === "p" ? " · " + esc(first(S.p.name)) : ""}${c.cat === "xfer" ? ` <span class="flag">Transfer</span>` : c.big ? ` <span class="flag">Large — real spending?</span>` : ""}</div></div><div class="amt">${money(c.amt)}</div></div>`;
 }
+function rescanNow() { OB = { step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false, 365); }
 function smsBlockedSheet() {
+  S.smsPending = true; persist();
   openSheet("Allow SMS access", `<p class="muted" style="margin:2px 2px 14px;line-height:1.45">Android blocks SMS access for apps installed from a file until you allow it once. Nest reads bank texts only on your phone to fill in your spending.</p>
     <ol style="margin:0 2px 16px 20px;line-height:1.7;font-size:15px"><li>Tap <b>Open app settings</b></li><li>Tap <b>⋮</b> (top right) → <b>Allow restricted settings</b></li><li>Go to <b>Permissions → SMS → Allow</b></li><li>Come back to Nest and tap <b>Scan again</b></li></ol>
     <button class="btn prime block" data-act="app-settings">Open app settings</button>
