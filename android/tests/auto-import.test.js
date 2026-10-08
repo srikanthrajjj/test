@@ -4,7 +4,7 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
 (async()=>{ const b=await chromium.launch();
  const mk=async(withSms)=>{ const ctx=await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,locale:'en-IN'}); const p=await ctx.newPage(); p.errs=[]; p.on('pageerror',e=>p.errs.push(e.message));
   await p.addInitScript(([u,w])=>{ window.__fast=1; try{localStorage.setItem('nest.url',u)}catch(e){}
-    if(w){ window.__inbox=[]; window.Native={ hasSmsPermission:()=>true, requestSms(){setTimeout(()=>window.__onPerm&&window.__onPerm(true),10)},
+    if(w){ window.__inbox=[]; window.Native={ hasSmsPermission:()=>true, hasNotifAccess:()=>true, takeNotifs(){const q=window.__notifs||[];window.__notifs=[];return JSON.stringify(q)}, requestSms(){setTimeout(()=>window.__onPerm&&window.__onPerm(true),10)},
       scanSms(days){ const since=Date.now()-days*864e5; setTimeout(()=>window.__onSms(JSON.stringify({scanned:window.__inbox.length,msgs:window.__inbox.filter(m=>m.d>since)})),20)},
       scanSmsSince(s){ const t=+s; setTimeout(()=>window.__onSms(JSON.stringify({scanned:window.__inbox.length,msgs:window.__inbox.filter(m=>m.d>t)})),20)},
       loadState(){return localStorage.getItem('nest.native')||''}, saveState(j){localStorage.setItem('nest.native',j)}, haptic(){}, setBars(){}, isNight(){return false}, consumeInvite(){return ''}, consumeShared(){return ''}, share(){}, copy(){}, shareWhatsApp(){} }; } },[SERVER,withSms]);
@@ -55,6 +55,22 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  ok(await A.evaluate(()=>Object.values(S.bal||{}).some(b=>b.v===52300.5&&b.tail==='4821')),'bank balance is read from the text');
  await A.evaluate(()=>syncNow()); await B.evaluate(()=>syncNow()); await B.waitForTimeout(1200);
  ok(await B.evaluate(()=>S.exp.some(e=>e.cat==='refund'&&e.amt===-799)),'refund syncs to the partner as a refund');
+ // UPI app notification: new payment added; a matching bank SMS later is not double-counted; generic bank title gets the app's name
+ const nBefore=await A.evaluate(()=>S.exp.length);
+ await A.evaluate(()=>{ const t=Date.now()+20000; window.__notifs=[{id:'n1',a:'APP:com.google.android.apps.nbu.paisa.user',b:'Payment successful. You paid ₹349.00 to Third Wave Coffee',d:t}]; window.__notifChanged(); }); await A.waitForTimeout(600);
+ ok(await A.evaluate(()=>S.exp.some(e=>e.src==='app'&&e.amt===349&&/third wave/i.test(e.title))),'a Google Pay notification becomes an expense');
+ await A.evaluate(()=>{ window.__inbox.push({id:400,a:'VM-HDFCBK',b:'Rs.349.00 debited from A/c XX4821 via UPI Ref 77',d:Date.now()+25000}); window.__smsChanged(); }); await A.waitForTimeout(1500);
+ ok(await A.evaluate(b=>S.exp.length===b+1,nBefore),'the bank SMS for the same payment is not counted twice');
+ await A.evaluate(()=>{ window.__inbox.push({id:401,a:'VM-HDFCBK',b:'Rs.787.00 debited from A/c XX4821 via UPI Ref 78',d:Date.now()+40000}); window.__smsChanged(); }); await A.waitForTimeout(1500);
+ await A.evaluate(()=>{ window.__notifs=[{id:'n2',a:'APP:com.phonepe.app',b:'Paid ₹787 to Blinkit Commerce',d:Date.now()+41000}]; window.__notifChanged(); }); await A.waitForTimeout(600);
+ ok(await A.evaluate(()=>S.exp.filter(e=>e.amt===787).length===1 && S.exp.some(e=>e.amt===787&&e.title==='Blinkit')),'a vague bank entry is renamed from the app notification ("Blinkit")');
+ // deep scan: an old message from 3 months ago that was never imported gets added; deleted ones stay deleted
+ await A.evaluate(()=>{ const old=Date.now()-95*864e5; window.__inbox.push({id:500,a:'VM-HDFCBK',b:'Rs.2,222.00 spent on Card XX1 at DECATHLON on old date',d:old}); window.__inbox.push({id:501,a:'VM-HDFCBK',b:'Rs.3,333.00 spent on Card XX1 at CROMA on old date',d:old+1e6}); });
+ await A.evaluate(()=>{ const n=Date.now()-95*864e5+1e6; S.exp.push({id:'gone1',amt:3333,title:'Croma',cat:'shop',paid:'me',sm:50,ts:n,src:'sms',u:Date.now()}); deleteExp('gone1'); closeSheet(); });
+ await A.evaluate(()=>deepScan(false)); await A.waitForTimeout(1500);
+ ok(await A.evaluate(()=>S.exp.some(e=>e.amt===2222&&e.title==='Decathlon')),'deep scan finds a missed payment from an earlier month');
+ ok(await A.evaluate(()=>!S.exp.some(e=>e.amt===3333)),'deep scan does not bring back a deleted expense');
+ await A.evaluate(()=>closeSheet());
  // UI: grouping + no dots + guide
  await A.evaluate(()=>{ const n=Date.now(); for(const a of [210,180,330]) S.exp.push({id:uid(),amt:a,title:'swiggy@axb',cat:'food',paid:'me',sm:50,ts:n-3600e3*a/100,src:'sms',u:n}); S.exp.push({id:uid(),amt:480000,title:'Sandeep Kumar',cat:'other',paid:'me',sm:50,ts:n-7200e3,src:'sms',u:n}); U.month=monthStart(new Date()); U.week=null; show('month'); }); await A.waitForTimeout(800);
  const ui=await A.evaluate(()=>({dots:document.querySelectorAll('.pd, .dot2').length, swiggyRows:[...document.querySelectorAll('#tl .li .t1')].filter(e=>/swiggy/i.test(e.innerText)).length, group:/\d payments/.test(document.querySelector('#tl').innerText), guide:!!document.querySelector('.gcard.warn')}));

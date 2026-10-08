@@ -518,6 +518,7 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 #sheet .grp{background:none;border-radius:0;box-shadow:none;overflow:visible;margin-top:10px}#sheet .kv{padding:12px 2px;border-bottom:1px solid var(--line);background:none}#sheet .kv:last-child{border-bottom:0}
 #sheet .list{background:none;border-radius:0}#sheet .list .li{padding:12px 2px;border-bottom:1px solid var(--line)}
 .amt.rf{color:var(--ok)}
+.rawm{margin:4px 2px 6px;padding:12px 14px;border-left:2px solid var(--line);font-size:13.5px;line-height:1.5;color:var(--sub);user-select:text;-webkit-user-select:text;word-break:break-word}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -589,7 +590,9 @@ function load() {
   let raw = "";
   try { raw = (N && N.loadState && N.loadState()) || localStorage.getItem("nest.v1") || ""; } catch (e) { }
   if (raw) { try { S = Object.assign(blank(), JSON.parse(raw)); } catch (e) { } }
+  if ((S.v || 1) < 3) { S.exp.forEach(e => { if (e.src === "sms" || e.src === "app") { const t = canonMerchant(e.title); if (t !== e.title) { e.title = t; if (e.cat === "other") e.cat = catOf(t); e.u = Date.now(); } } }); }
   if ((S.v || 1) < 2) { S.exp.forEach(e => { if (e.src === "sms") { e.title = canonMerchant(e.title); if (e.cat === "other") e.cat = catOf(e.title); } }); S.v = 2; }
+  if (S.v < 3) S.v = 3;
 }
 function save() { persist(); queueSync(); }
 function persist() {
@@ -670,8 +673,8 @@ function applyRemote(res, initial) {
       continue;
     }
     const list = c.kind === "exp" ? S.exp : S.set, i = list.findIndex(x => x.id === c.id);
-    if (c.del) { if (i >= 0 && (list[i].u || 0) < c.u) { list.splice(i, 1); changed = true; } continue; }
-    if (i >= 0) { if ((list[i].u || 0) >= c.u) continue; const nw = fromWire(c.kind, c.data, c.id, c.u); if (c.kind === "exp" && Math.abs(nw.amt - list[i].amt) > 0.004 && !initial) edited.push([list[i], nw]); list[i] = nw; changed = true; continue; }
+    if (c.del) { if (i >= 0 && (list[i].u || 0) < c.u) { if (c.kind === "exp") goneAdd(list[i]); list.splice(i, 1); changed = true; } continue; }
+    if (i >= 0) { if ((list[i].u || 0) >= c.u) continue; const nw = fromWire(c.kind, c.data, c.id, c.u); if (c.kind === "exp" && Math.abs(nw.amt - list[i].amt) > 0.004 && !initial) edited.push([list[i], nw]); if (list[i].raw && !nw.raw) nw.raw = list[i].raw; list[i] = nw; changed = true; continue; }
     const tb = (S.tomb || []).find(t => t.id === c.id); if (tb && tb.u >= c.u) continue;
     const rec = fromWire(c.kind, c.data, c.id, c.u); list.push(rec); changed = true;
     if (!initial) { if (c.kind === "exp") added.push(rec); else sets++; }
@@ -707,8 +710,8 @@ async function syncNow() {
 }
 /* refresh on every open / resume (native onResume + visibility), and every 15 s while open */
 let lastResume = 0;
-window.__resume = () => { if (Date.now() - lastResume < 800) return; lastResume = Date.now(); syncNow(); autoImport(); checkClipInvite(); };
-setInterval(() => { if (document.visibilityState === "visible") { if (syncOn()) syncNow(); autoImport(); } }, 15000);
+window.__resume = () => { if (Date.now() - lastResume < 800) return; lastResume = Date.now(); syncNow(); autoImport(); importNotifs(); checkClipInvite(); };
+setInterval(() => { if (document.visibilityState === "visible") { if (syncOn()) syncNow(); autoImport(); importNotifs(); } }, 15000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") window.__resume(); });
 addEventListener("focus", () => window.__resume());
 /* pull to refresh */
@@ -788,10 +791,19 @@ const BRANDS = [["swiggy", /swiggy|instamart/i], ["zomato", /zomato/i], ["netfli
 const brandOf = t => { const x = String(t || ""); for (const [k, re] of BRANDS) if (re && re.test(x) && window.LOGOS && LOGOS[k]) return k; return null; };
 const BRAND_NAME = { bookmyshow: "BookMyShow", phonepe: "PhonePe", googlepay: "Google Pay", bigbasket: "BigBasket", ubereats: "Uber Eats", applemusic: "Apple Music", googleplay: "Google Play", playstation: "PlayStation", icloud: "iCloud", paypal: "PayPal", kfc: "KFC", ikea: "IKEA", hbomax: "HBO Max", airindia: "Air India", bookingdotcom: "Booking.com", mcdonalds: "McDonald's", burgerking: "Burger King", doordash: "DoorDash", youtube: "YouTube", qatarairways: "Qatar Airways", easyjet: "easyJet", justeat: "Just Eat", airbnb: "Airbnb", paytm: "Paytm", zomato: "Zomato", swiggy: "Swiggy" };
 const brandName = k => BRAND_NAME[k] || k.charAt(0).toUpperCase() + k.slice(1);
-const ALIASES = [["Swiggy Instamart", /instamart/i], ["Prime Video", /prime video/i], ["Amazon", /amazon|amzn/i], ["Flipkart", /flipkart/i], ["Myntra", /myntra/i], ["Zepto", /zepto/i], ["Blinkit", /blinkit/i], ["Ola", /\bola(cabs)?\b/i], ["Rapido", /rapido/i],
+const ALIASES = [["Swiggy Instamart", /instamart/i], ["Prime Video", /prime video/i], ["Amazon", /amazon|amzn|\basspl\b|amazon ?seller|\bapay\b|amazon ?pay/i],
+  ["Swiggy", /\bswiggy\b|bundl techn/i], ["Zomato", /zomato|eternal (?:ltd|limited)/i], ["Blinkit", /blink ?commerce|grofers/i], ["Zepto", /kiranakart|geddit/i], ["BigBasket", /bigbasket|innovative retail|supermarket grocery/i],
+  ["Ola", /ani techn/i], ["Rapido", /roppen/i], ["Uber", /\buber\b/i], ["BookMyShow", /bookmyshow|bigtree ent/i], ["Nykaa", /fsn e-?com/i], ["Croma", /\bcroma\b|infiniti retail/i], ["Lenskart", /lenskart/i],
+  ["Domino's", /domino|jubilant food/i], ["McDonald's", /mcdonald|hardcastle|westlife|connaught plaza/i], ["KFC", /\bkfc\b|devyani|sapphire foods/i], ["Starbucks", /starbucks/i], ["IndiGo", /\bindigo\b|interglobe/i],
+  ["Akasa Air", /akasa|snv aviation/i], ["Air India", /air ?india/i], ["Urban Company", /urban ?company|urbanclap/i], ["Tata 1mg", /\b1mg\b/i], ["PharmEasy", /pharmeasy|api holdings/i], ["Licious", /licious|delightful gourmet/i],
+  ["Country Delight", /country delight/i], ["Jio", /\bjio\b|reliance jio/i], ["Airtel", /airtel|bharti hexacom/i], ["Tata Play", /tata ?play|tata ?sky/i], ["Google Play", /google ?play|google india digital/i],
+  ["Apple", /apple ?media|apple services|itunes|apple\.com/i], ["Ixigo", /ixigo|le travenues/i], ["Cleartrip", /cleartrip/i], ["redBus", /redbus/i], ["PVR INOX", /\bpvr\b|\binox\b/i], ["Paytm", /one ?97|\bpaytm\b/i],
+  ["PhonePe", /phonepe/i], ["Reliance Smart", /reliance (?:retail|smart|fresh)/i], ["Big Bazaar", /big ?bazaar/i], ["Spencer's", /spencer/i], ["More", /more retail/i], ["Shell", /\bshell\b/i], ["Indian Oil", /indian ?oil|\biocl\b/i], ["HP Petrol", /\bhpcl\b|hindustan petro/i], ["Bharat Petroleum", /\bbpcl\b|bharat petro/i], ["Flipkart", /flipkart/i], ["Myntra", /myntra/i], ["Zepto", /zepto/i], ["Blinkit", /blinkit/i], ["Ola", /\bola(cabs)?\b/i], ["Rapido", /rapido/i],
   ["MakeMyTrip", /make ?my ?trip|\bmmt\b/i], ["Nykaa", /nykaa/i], ["Meesho", /meesho/i], ["Ajio", /\bajio\b/i], ["DMart", /d-?mart|avenue supermarts/i], ["CRED", /\bcred\b/i], ["BESCOM", /bescom/i], ["Tata Power", /tata power/i], ["Cult.fit", /cult\.?fit/i], ["Apollo Pharmacy", /apollo/i], ["Decathlon", /decathlon/i], ["IRCTC", /irctc/i]];
 function canonMerchant(raw) {
   raw = String(raw || "").replace(/^(?:(?:rsp|payu|pyu|razorpay|rzp|billdesk|bd|ccav|ccavenue|cashfree|cf|ppsl|ind|ecom|pos|upi|mob|ib|www|pg|ccbill)\s*[*\-_:\/]+\s*)+/i, "").replace(/\b(?:rsp|payu|pyu|rzp)\*/ig, "");
+  if (/^(?:paytmqr|bharatpe|q\d{5,}|gpay-?\d|upiqr|ezetap|mab\.|qr\d)/i.test(raw.trim())) return "Local store (QR)";
+  if (/^\+?\d{10,12}$/.test(raw.trim())) return "UPI to a person";
   if (/^upi payment$/i.test(raw)) return "UPI payment"; if (/^atm withdrawal$/i.test(raw)) return "ATM withdrawal"; if (/^card payment$/i.test(raw)) return "Card payment";
   let t = String(raw || "").replace(/\.(stores?|com|in|co)\b/ig, " ").replace(/_+/g, " ").replace(/\s+/g, " ").trim();
   for (const [n, re] of ALIASES) if (re.test(t)) return n;
@@ -960,6 +972,7 @@ function renderMonth() {
   ${refTot > 0 ? `<div class="xl" style="padding-bottom:0">includes ${money(refTot, { round: true })} in refunds, already taken off</div>` : ""}
   ${xferTot ? `<button class="xl" data-act="transfers">${money(xferTot, { round: true })} in transfers &amp; investments, not counted <i>›</i></button>` : ""}
   ${hints.map(h => `<button class="gcard ${h.warn ? "warn" : ""}" data-act="${h.a}"><span class="gic" style="color:${h.warn ? "#FFB340" : h.col || "#8B7CFF"};background:${h.warn ? "#FFB34022" : (h.col || "#8B7CFF") + "26"}">${svgIc(h.ic || "card", 26)}</span><div class="gtx"><span>${h.t}</span><b>${h.v}</b></div><span class="chev">›</span></button>`).join("")}
+  ${N && N.hasNotifAccess && !notifOn() && S.exp.length && !(S.notifHide && Date.now() - S.notifHide < 7 * 864e5) ? `<div class="gcard inv"><span class="gic" style="color:#3DDC97;background:#3DDC9726">${svgIc("spark", 26)}</span><div class="gtx"><span>Catch GPay, PhonePe &amp; Paytm payments</span><button class="lk" data-act="notif-access">Allow notification access</button></div><button class="xb" data-act="notif-hide" aria-label="Dismiss">✕</button></div>` : ""}
   ${inv}
   ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
   <div class="tl" id="tl">${tl}</div>
@@ -1001,7 +1014,7 @@ function shareBar(e) {
 }
 function rowHtml(e, withDate) {
   const who = multiPeople() ? esc(first(person(e.paid).name)) : "", parts = [withDate ? shortDate(e.ts) : "", who, e.cat === "xfer" ? "Not counted" : CAT[e.cat].n].filter(Boolean);
-  return `<button class="li ${e.cat === "xfer" ? "mute" : ""}" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div><div class="t2">${parts.join(" · ")}</div></div><div class="amt ${e.amt < 0 ? "rf" : ""}">${money(e.amt, { sign: true })}</div></button>`;
+  return `<button class="li ${e.cat === "xfer" ? "mute" : ""}" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div><div class="t2">${parts.join(" · ")}</div></div><div class="amt ${e.amt < 0 ? "rf" : ""}">${money(e.amt)}</div></button>`;
 }
 
 /* =========================================================
@@ -1099,6 +1112,7 @@ function renderYou() {
   <div class="sec"><h2>Import & data</h2></div>
   <div class="list set">
     ${SMS_INBOX && window.Native ? `<div class="li"><div class="mid"><div class="t1">Add new payments automatically</div><div class="t2">Bank texts are added as they arrive</div></div><button class="sw2 ${S.auto !== false ? "on" : ""}" role="switch" aria-checked="${S.auto !== false}" data-act="auto-toggle" aria-label="Add new payments automatically"><i></i></button></div>` : ""}
+    ${N && N.hasNotifAccess ? `<button class="li" data-act="notif-access"><span class="ib" style="background:#3DDC9722">🔔</span><div class="mid"><div class="t1">Payment app notifications</div><div class="t2">${notifOn() ? "On · GPay, PhonePe, Paytm and bank apps" : "Off · tap to catch UPI app payments"}</div></div><span class="muted">›</span></button>` : ""}
     ${SMS_INBOX ? `<button class="li" data-act="rescan"><span class="ib" style="background:#5B5BD622">💬</span><div class="mid"><div class="t1">Scan entire inbox</div><div class="t2">Find every purchase, bill and transfer</div></div><span class="muted">›</span></button>` : ""}
     <button class="li" data-act="paste"><span class="ib" style="background:#5B5BD622">📋</span><div class="mid"><div class="t1">Paste or share bank texts</div><div class="t2">Turn payment messages into expenses</div></div><span class="muted">›</span></button>
     <button class="li" data-act="sample"><span class="ib" style="background:#F5A52422">✨</span><div class="mid"><div class="t1">Load sample month</div><div class="t2">See Nest with realistic data</div></div><span class="muted">›</span></button>
@@ -1320,14 +1334,68 @@ async function autoImport() {
   try {
     const res = await scanSince(S.smsLast), seen = new Set(S.seen); let c = []; noteBalances(res.msgs);
     (res.msgs || []).forEach(m => { const p = parseSms(m); if (p && !seen.has(p.sid)) c.push(p); });
-    c = dedupeCands(c).filter(x => !S.exp.some(e => e.amt === x.amt && Math.abs(e.ts - x.ts) < 15 * 60e3 && (e.src === "sms" || canonMerchant(e.title) === canonMerchant(x.title))));
-    const added = c.map(x => touch({ id: uid(), amt: x.amt, title: x.title, cat: x.cat, paid: "me", sm: 50, ts: x.ts, src: "sms" }));
+    c = dedupeCands(c).filter(x => !wasGone(x) && !S.exp.some(e => e.amt === x.amt && Math.abs(e.ts - x.ts) < 15 * 60e3 && (e.src === "sms" || e.src === "app" || canonMerchant(e.title) === canonMerchant(x.title))));
+    const added = c.map(x => touch({ id: uid(), amt: x.amt, title: x.title, cat: x.cat, paid: "me", sm: 50, ts: x.ts, src: "sms", raw: x.raw }));
     (res.msgs || []).forEach(m => { const p = parseSms(m); if (p) S.seen.push(p.sid); });
     S.smsLast = Math.max(S.smsLast, ...(res.msgs || []).map(m => m.d));
     if (added.length) { added.forEach(e => S.exp.push(e)); save(); hap(2); refresh(); toast(`${added.length} payment${added.length > 1 ? "s" : ""} added from SMS`, () => { added.forEach(e => removeRec("exp", e.id)); save(); refresh(); toast("Removed"); }); } else persist();
   } catch (e) { } finally { autoBusy = false; }
 }
 window.__smsChanged = () => autoImport();
+
+/* ---------- payment-app notifications (GPay, PhonePe, Paytm, bank apps) ---------- */
+const GENERIC_T = /^(upi payment|card payment|upi to a person|local store \(qr\)|[a-z]{2,6})$/i;
+let notifBusy = false;
+function importNotifs() {
+  if (!N || !N.takeNotifs || notifBusy || !S.onboarded) return; notifBusy = true;
+  try {
+    let q = []; try { q = JSON.parse(N.takeNotifs() || "[]"); } catch (e) { }
+    const seen = new Set(S.seen), added = []; let renamed = 0;
+    q.forEach(m => {
+      const p = parseSms(m); if (!p || seen.has("n" + m.id)) return; S.seen.push("n" + m.id);
+      const ex = S.exp.filter(e => Math.abs(Math.abs(e.amt) - Math.abs(p.amt)) < .01 && Math.abs(e.ts - p.ts) < 20 * 60e3).sort((x, y) => (GENERIC_T.test(y.title) - GENERIC_T.test(x.title)) || Math.abs(x.ts - p.ts) - Math.abs(y.ts - p.ts))[0];
+      if (ex) { if (GENERIC_T.test(ex.title) && !GENERIC_T.test(p.title)) { ex.title = p.title; if (ex.cat === "other") ex.cat = p.cat; ex.raw = ex.raw || p.raw; touch(ex); renamed++; } return; }
+      if (wasGone(p)) return;
+      const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: p.cat, paid: "me", sm: 50, ts: p.ts, src: "app", raw: p.raw });
+      S.exp.push(rec); added.push(rec);
+    });
+    if (added.length || renamed) { save(); refresh(); if (added.length) { hap(2); toast(`${added.length} payment${added.length > 1 ? "s" : ""} added from ${/paisa/.test(q[0] && q[0].a) ? "Google Pay" : /phonepe/.test(q[0] && q[0].a) ? "PhonePe" : /paytm/.test(q[0] && q[0].a) ? "Paytm" : "a payment app"}`); } } else if (q.length) persist();
+  } finally { notifBusy = false; }
+}
+window.__notifChanged = () => importNotifs();
+const notifOn = () => { try { return !!(N && N.hasNotifAccess && N.hasNotifAccess()); } catch (e) { return false; } };
+
+/* ---------- deep scan: the whole inbox, every month, no review needed ---------- */
+let deepBusy = false;
+async function deepScan(manual) {
+  if (!SMS_INBOX || !N || !N.scanSms || deepBusy) return;
+  try { if (!N.hasSmsPermission()) { if (manual) smsBlockedSheet(); return; } } catch (e) { return; }
+  deepBusy = true; if (manual) toast("Reading every message in your inbox…");
+  try {
+    const res = await readSms(false, 3650); noteBalances(res.msgs);
+    let c = [], fixed = 0; const bodies = new Set();
+    (res.msgs || []).forEach(m => { const p = parseSms(m); if (!p || bodies.has(p.sid)) return; bodies.add(p.sid); c.push(p); });
+    c = dedupeCands(c);
+    const lim = bigLimit(), added = [];
+    c.forEach(p => {
+      const ex = S.exp.find(e => Math.abs(e.amt - p.amt) < .01 && Math.abs(e.ts - p.ts) < 20 * 60e3);
+      if (ex) { if (!ex.raw) ex.raw = p.raw; if (ex.src === "sms" && ex.cat === "xfer" && p.cat === "bill") { ex.cat = "bill"; touch(ex); fixed++; } if (GENERIC_T.test(ex.title) && !GENERIC_T.test(p.title)) { ex.title = p.title; touch(ex); fixed++; } return; }
+      if (wasGone(p)) return;
+      const big = p.amt >= lim && p.cat !== "xfer" && p.cat !== "bill";
+      const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: big ? "xfer" : p.cat, paid: "me", sm: 50, ts: p.ts, src: "sms", raw: p.raw, note: big ? "Large payment — tap Count it if this was spending" : "" });
+      S.exp.push(rec); S.seen.push(p.sid); added.push(rec);
+    });
+    S.smsLast = Math.max(S.smsLast || 0, ...(res.msgs || []).map(m => m.d)); S.deep = Date.now();
+    if (added.length || fixed) save(); else persist(); refresh();
+    if (manual || added.length) deepReport(added, fixed, res.scanned || 0);
+  } catch (e) { if (manual) toast("Couldn't read the inbox. Try again."); } finally { deepBusy = false; }
+}
+function deepReport(added, fixed, scanned) {
+  const by = {}; added.filter(counted).forEach(e => { const k = monthStart(new Date(e.ts)).getTime(); (by[k] = by[k] || { n: 0, t: 0 }); by[k].n++; by[k].t += e.amt; });
+  const rows = Object.entries(by).sort((a, b) => b[0] - a[0]).slice(0, 12).map(([k, v]) => `<button class="li" data-act="month-go" data-arg="${k}"><div class="mid"><div class="t1">${monthLabel(new Date(+k))}</div><div class="t2">${v.n} payment${v.n > 1 ? "s" : ""} added</div></div><div class="amt">${money(v.t, { round: true })}</div></button>`).join("");
+  const nx = added.filter(e => !counted(e)).length;
+  openSheet("Inbox scanned", `<p class="muted" style="margin:2px 2px 12px;line-height:1.45">Checked ${scanned.toLocaleString()} messages. ${added.length ? `Added <b>${added.length}</b> payments that were missing` : "Nothing was missing"}${fixed ? `, and fixed ${fixed} existing ones` : ""}.${nx ? ` ${nx} large payments or transfers were kept aside as not counted — review them under transfers.` : ""}</p>${rows ? `<div class="list">${rows}</div>` : ""}`);
+}
 function markScanned() { if (!OB.sample && OB.scanMax) S.smsLast = Math.max(S.smsLast || 0, OB.scanMax); }
 
 /* ---------- tab routing ---------- */
@@ -1421,6 +1489,7 @@ function openDetail(id) {
   <div class="dh">${ico(e.cat, e.title).replace('class="ico', 'class="ico big')}<div class="dt">${esc(e.title)}</div><div class="da">${money(e.amt)}</div>
     <div class="ds">${multiPeople() ? esc(first(person(e.paid).name)) + " · " : ""}${m.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}, ${m.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true })}</div></div>
   <div class="grp">${row("Spent by", `<span style="color:${person(e.paid).color}">${esc(person(e.paid).name)}</span>`)}${row("Category", CAT[e.cat].n)}${row("Date", m.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}${row("Source", src)}${e.note ? row("Note", esc(e.note)) : ""}</div>
+  ${e.raw ? `<div class="lab">${e.src === "app" ? "Payment app notification" : "Bank message"}</div><div class="rawm">${esc(e.raw)}</div>` : ""}
   ${shareBar(e)}${placeChart(e)}
   <div class="lab">In context</div>
   <div class="grp">${row("Share of " + m.toLocaleDateString("en-GB", { month: "long" }), `${mTot ? Math.round(e.amt / mTot * 100) : 0}%`)}${row("That week", `${money(wkTot, { round: true })} total · this is ${wkTot ? Math.round(e.amt / wkTot * 100) : 0}%`)}${same.length > 1 ? row("At " + esc(e.title), `${here.length}× this month · ${money(here.reduce((a, x) => a + x.amt, 0), { round: true })}`) + row("Usual amount here", money(avg, { round: true })) : row("At " + esc(e.title), "First time")}</div>
@@ -1428,7 +1497,7 @@ function openDetail(id) {
   <div class="acts2"><button class="tx" data-act="edit" data-arg="${e.id}">Edit</button><button class="tx" data-act="toggle-xfer" data-arg="${e.id}">${e.cat === "xfer" ? "Count it" : "Not spending"}</button><button class="tx red" data-act="del" data-arg="${e.id}">Delete</button></div>`);
 }
 function deleteExp(id) {
-  const i = S.exp.findIndex(e => e.id === id); if (i < 0) return; const [rec] = S.exp.splice(i, 1); tomb("exp", rec.id); save(); closeSheet(); hap(1); refresh();
+  const i = S.exp.findIndex(e => e.id === id); if (i < 0) return; const [rec] = S.exp.splice(i, 1); tomb("exp", rec.id); goneAdd(rec); save(); closeSheet(); hap(1); refresh();
   toast(`Deleted “${rec.title}”`, () => { restoreRec("exp", rec); save(); refresh(); toast("Restored"); });
 }
 
@@ -1442,6 +1511,8 @@ const DEBIT_RE = /\b(debited|debit|dr|spent|paid|purchase[d]?|withdrawn|withdraw
 const CREDIT_RE = /\b(credited (?:to|in|into|with)? ?(?:your|ur|a\/c|acct|account|card)|received|refund(?:ed)?|reversed|cashback (?:of|credited)|deposited|salary)\b/i;
 const HARD_NOISE_RE = /\b(otp|one[- ]time|verification code|passcode|cvv|pin\b|win\b|lucky|unsuccessful|failed|declined|insufficient|requested money|has requested|autopay (?:set|mandate)|will be debited|to be debited|will be auto|scheduled)\b/i;
 const SOFT_NOISE_RE = /\b(is due|due on|due date|minimum amount due|statement|pre-?approved|apply now|offer|click|http|www\.|t&c)\b/i;
+function goneAdd(r) { S.gone = (S.gone || []).concat([[r.amt, r.ts]]).slice(-3000); }
+const wasGone = p => (S.gone || []).some(([a, t]) => Math.abs(a - p.amt) < .01 && Math.abs(t - p.ts) < 20 * 60e3);
 function noteBalances(msgs) {
   S.bal = S.bal || {};
   (msgs || []).forEach(m => {
@@ -1478,12 +1549,14 @@ function parseSms(m) {
   const named = body.match(/\b(?:at|to|towards|for|trf to|info:?)\s+(?!a\/c|account|your|card|vpa|upi|bank|ref|the\b|(?:rs|inr|usd|eur|gbp)\b|\d|dispute|details|more\b|any\b|assist|quer|report)([A-Za-z0-9][A-Za-z0-9 &'._*-]{1,32}?)(?=\s+(?:on|via|ref|using|from|upi|avl|bal|txn|a\/c|acct|card|is|has|if|not|call|dated|through|\d{1,2}[-/.]\d{1,2})|[.,;(]|$)/i);
   const upiSlash = body.match(/UPI\/(?:DR|CR|P2[AM])?\/?\d{4,}\/([^\/]{2,30})\//i), afterDate = body.match(/\b\d{1,2}[-\/ ]?(?:[A-Za-z]{3}|\d{1,2})[-\/ ]?\d{2,4}(?:[: ]\d{2}:\d{2}(?::\d{2})?)?\s+(?:on|at)\s+([A-Za-z][A-Za-z0-9 &'.-]{1,28}?)(?=[.;,]|\s+(?:avl|bal|ref|upi)|\s*$)/i), beforeCredited = body.match(/[;,]\s*([A-Za-z][A-Za-z0-9 .&'-]{2,28}?)\s+credited/i);
   if (upiSlash) merch = upiSlash[1]; else if (beforeCredited) merch = beforeCredited[1]; else if (named) merch = named[1]; else if (afterDate) merch = afterDate[1]; else if (vpa) merch = (vpa[1] || vpa[0]).split("@")[0];
+  if (/^(?:paytmqr|bharatpe|q\d{5,}|gpay-?\d|upiqr|ezetap|mab\.)/i.test(merch)) merch = "Local store (QR)";
+  else if (/^\+?\d{10,12}$/.test(merch.trim())) merch = "UPI to a person";
   merch = merch.replace(/[*_.\-]+$/g, "").replace(/\d{5,}/g, "").replace(/^(?:upi|pos|ecom|pur|imps|neft)[\s*_-]+/i, "").trim();
   if (/^[\d\s]*$/.test(merch) || merch.length < 2 || /^(rs|inr|usd|eur|gbp)\.?$/i.test(merch)) merch = (/atm|cash|wdl/i.test(body) ? "ATM withdrawal" : /upi/i.test(body) ? "UPI payment" : "Card payment");
   merch = canonMerchant(merch.replace(/[_]+/g, " ").replace(/\s+(approved|declined|successful|completed)\b.*$/i, "")).slice(0, 28);
   const xfer = XFER_RE.test(body) && !/\b(emi|insurance|premium|lic)\b/i.test(body) || /\b(sip|mutual fund)\b/i.test(body), bill = !xfer && BILL_RE.test(body);
-  if (refund) return { amt: -amt, title: merch === "Card payment" || merch === "UPI payment" ? "Refund" : merch, cat: "refund", xfer: false, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)) };
-  return { amt, title: merch, cat: xfer ? "xfer" : bill ? "bill" : /atm withdrawal/i.test(merch) ? "other" : catOf(merch), xfer, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)) };
+  if (refund) return { amt: -amt, title: merch === "Card payment" || merch === "UPI payment" ? "Refund" : merch, cat: "refund", xfer: false, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)), raw: body.slice(0, 240), via: String(m.a || "") };
+  return { amt, title: merch, cat: xfer ? "xfer" : bill ? "bill" : /atm withdrawal/i.test(merch) ? "other" : catOf(merch), xfer, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)), raw: body.slice(0, 240), via: String(m.a || "") };
 }
 function dedupeCands(c) {
   const out = []; const generic = t => /^(upi payment|card payment|atm withdrawal)$/i.test(t);
@@ -1614,7 +1687,7 @@ async function runScan(sample, days) {
 }
 function finishOb(add) {
   if (add) {
-    OB.cands.filter(c => c.on).forEach(c => { S.exp.push({ id: uid(), amt: c.amt, title: c.title, cat: c.cat, paid: c.paid || "me", sm: c.sm, ts: c.ts, src: "sms", u: Date.now() }); S.seen.push(c.sid); });
+    OB.cands.filter(c => c.on).forEach(c => { S.exp.push({ id: uid(), amt: c.amt, title: c.title, cat: c.cat, paid: c.paid || "me", sm: c.sm, ts: c.ts, src: "sms", raw: c.raw, u: Date.now() }); S.seen.push(c.sid); });
   }
   markScanned(); S.onboarded = true; smartMonth(); save(); if (queuedShare) { const q = queuedShare; queuedShare = ""; setTimeout(() => handleShared(q), 900); } const n = add ? OB.cands.filter(c => c.on).length : 0;
   $("#ob").classList.remove("on"); setTimeout(() => { $("#ob").innerHTML = ""; }, 500);
@@ -1667,7 +1740,10 @@ const A = {
   "app-settings": () => { try { N.openAppSettings(); } catch (e) { toast("Open Settings → Apps → Nest → Permissions"); } },
   smsretry: () => { closeSheet(); OB.step = 3; if (OB.from !== "settings") OB.from = "ob"; runScan(false, OB.from === "settings" ? 365 : undefined); },
   transfers: () => openTransfers(),
-  rescan: () => { S.onboarded = true; OB = { full: true, step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false, 3650); },
+  rescan: () => deepScan(true),
+  "notif-access": () => { try { N.openNotifAccess(); } catch (e) { } },
+  "notif-hide": () => { S.notifHide = Date.now(); persist(); refresh(); },
+  rescanOld: () => { S.onboarded = true; OB = { full: true, step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false, 3650); },
   sample: () => { OB = { step: 3, cands: [], scanned: 0, detected: "", sample: true, from: "settings" }; runScan(true); },
   export: () => {
     const rows = [["Date", "Merchant", "Category", "Amount", "Spent by", "Note"]].concat([...S.exp].sort((a, b) => a.ts - b.ts).map(e => [dkey(e.ts), e.title, CAT[e.cat].n, e.amt, person(e.paid).name, e.note || ""]));
@@ -1710,7 +1786,8 @@ function boot() {
     if (S.onboarded) { applyTheme(); show("month"); done(); }
     else { OB.step = 0; renderOb(); done(); }
     ready = true; if (queuedInvite) { const q = queuedInvite; queuedInvite = null; handleInvite(q.code, q.server); } else window.__invite();
-    window.__shared(); setTimeout(autoImport, 2500); setTimeout(checkClipInvite, 1200);
+    window.__shared(); setTimeout(autoImport, 2500); setTimeout(importNotifs, 2000);
+    if (S.onboarded && (S.pv || 0) < 3) { S.pv = 3; persist(); setTimeout(() => deepScan(false), 4000); } setTimeout(checkClipInvite, 1200);
   }, window.__fast ? 50 : 2300);
 }
 boot();

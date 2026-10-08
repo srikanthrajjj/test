@@ -49,6 +49,17 @@
             android:exported="false"
             android:grantUriPermissions="true" />
 
+        <!-- reads payment notifications from UPI / bank apps (user grants "Notification access") -->
+        <service
+            android:name=".PayNotifService"
+            android:exported="true"
+            android:label="Nest payment capture"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <!-- sideload build only (stripped from the Play variant): notifies when a payment text arrives -->
         <receiver
             android:name=".SmsReceiver"

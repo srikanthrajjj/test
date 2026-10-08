@@ -35,6 +35,13 @@ const T=[
 ["Recharge of Rs 299 successful for 9876543210 on Jio. Paid via UPI.",299,null],
 ["Rs 8,200 debited from a/c XX1234 for LIC premium on 07-10-26",8200,null],
 ["Rs 1,500.00 transferred from A/c XX1234 to Ramesh via UPI on 07-10-26 Ref 99",1500,null],
+// UPI app notifications + aggregator names
+["Payment successful. You paid ₹1,189.00 to ASSPL",1189,"Amazon"],
+["PhonePe. Paid ₹250 to Blinkit Commerce Pvt Ltd",250,"Blinkit"],
+["Paytm. Paid Rs.120 to Roppen Transportation Services",120,"Rapido"],
+["Rs.450.00 debited from A/c XX1234 to VPA paytmqr28100505010@paytm UPI Ref 1",450,"Local store (QR)"],
+["Rs.640.00 debited from A/c XX1234 for UPI/DR/412345678901/BUNDL TECHNOLOGIES/YESB/swiggy",640,"Swiggy"],
+["Google Pay. ₹500 received from Rahul",0,null],
 // should skip
 ["Your OTP for Rs 2,400 txn at Amazon is 123456. Do not share.",0,null],
 ["Rs 15,000 credited to your a/c XX1234 on 02-10-26 by UPI from rahul@ybl",0,null],

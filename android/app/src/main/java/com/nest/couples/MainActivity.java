@@ -54,6 +54,7 @@ public class MainActivity extends Activity {
     private String pendingInvite = "";
     private String pendingShare = "";
     static volatile boolean foreground = false;
+    static volatile MainActivity live;
     private ContentObserver smsObserver;
     private final Runnable smsPing = new Runnable() {
         @Override
@@ -66,6 +67,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        live = this;
         web = new WebView(this);
         web.setBackgroundColor(INK);
         root = new FrameLayout(this);
@@ -206,6 +208,18 @@ public class MainActivity extends Activity {
         int m = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         return m == Configuration.UI_MODE_NIGHT_YES;
     }
+
+    void notifPing() {
+        ui.removeCallbacks(notifRun);
+        ui.postDelayed(notifRun, 800);
+    }
+
+    private final Runnable notifRun = new Runnable() {
+        @Override
+        public void run() {
+            js("window.__notifChanged && window.__notifChanged()");
+        }
+    };
 
     private void js(final String code) {
         runOnUiThread(new Runnable() {
@@ -406,6 +420,35 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean isNight() {
             return MainActivity.this.isNight();
+        }
+
+        @JavascriptInterface
+        public boolean hasNotifAccess() {
+            try {
+                String s = android.provider.Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+                return s != null && s.contains(getPackageName());
+            } catch (Throwable e) {
+                return false;
+            }
+        }
+
+        @JavascriptInterface
+        public void openNotifAccess() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Intent i = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                    } catch (Exception e) { }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public String takeNotifs() {
+            return PayNotifService.take(MainActivity.this);
         }
 
         @JavascriptInterface
