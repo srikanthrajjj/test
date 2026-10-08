@@ -512,6 +512,11 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 #ptr{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:50%;transform:translate(-50%,-30px);width:34px;height:34px;border-radius:50%;background:var(--card2);display:grid;place-items:center;opacity:0;z-index:25;pointer-events:none;transition:opacity .2s}
 #ptr i{width:16px;height:16px;border-radius:50%;border:2px solid var(--sub);border-top-color:transparent;display:block;transition:transform .2s}#ptr.go i{border-color:var(--accent);border-top-color:transparent;transform:rotate(180deg)}
 #ptr.spin i{border-color:var(--accent);border-top-color:transparent;animation:ptrs .7s linear infinite}@keyframes ptrs{to{transform:rotate(360deg)}}
+.xl{display:block;width:100%;text-align:left;padding:12px 2px 2px;font-size:13.5px;color:var(--sub)}.xl i{font-style:normal;color:var(--faint);margin-left:4px}
+.sbar{margin:16px 2px 4px}.sb{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--card2)}.sb i{display:block;height:100%}.sl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--sub);margin-top:8px}.sl b{font-size:9px;vertical-align:1px}
+.pchart{width:100%;height:auto;margin:6px 0 4px;display:block;overflow:visible}
+#sheet .grp{background:none;border-radius:0;box-shadow:none;overflow:visible;margin-top:10px}#sheet .kv{padding:12px 2px;border-bottom:1px solid var(--line);background:none}#sheet .kv:last-child{border-bottom:0}
+#sheet .list{background:none;border-radius:0}#sheet .list .li{padding:12px 2px;border-bottom:1px solid var(--line)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -564,6 +569,7 @@ const CATS = [
   { id: "care", n: "Health", e: "💊", c: "#FF6B6B", re: /pharm|apollo|medplus|1mg|netmeds|hospital|clinic|doctor|diagnostic|lab|gym|cult\.?fit|dental|health/i },
   { id: "subs", n: "Subscriptions", e: "🔁", c: "#7A7CF5", re: /netflix|spotify|prime video|hotstar|disney|youtube|apple|google play|icloud|jiocinema|sonyliv|zee5|audible|subscription|openai|chatgpt|notion/i },
   { id: "gift", n: "Gifts", e: "🎁", c: "#F78FB3", re: /gift|ferns|igp|florist|flower|jewel|tanishq|caratlane/i },
+  { id: "bill", n: "Bills & EMI", e: "🧾", c: "#FFB340", re: /emi|loan|insurance|premium|\blic\b|electric|bescom|tneb|postpaid|broadband|dth|tata play|recharge|bbps|water bill|maintenance/i },
   { id: "other", n: "Other", e: "✨", c: "#98A2B3", re: /^$/ },
   { id: "xfer", n: "Transfers (not counted)", e: "↔", c: "#8E8E93", re: /^\b$/ }
 ];
@@ -815,8 +821,8 @@ const IC = {
   spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
   warn: '<path d="M12 4 3 19h18L12 4zM12 10v4M12 16.5v.5"/>'
 };
-const IC_COL = { card: "#8B7CFF", store: "#4C8DFF", cart: "#FF9F43", fork: "#FF8A4C", car: "#4C9AFF", bag: "#B06BFF", home: "#FFC247", ticket: "#FF5C8A", plane: "#28C3D9", heart: "#FF6B6B", repeat: "#7A7CF5", gift: "#F78FB3", swap: "#8E94A8", user: "#FF7AA8", people: "#6E8BFF", spark: "#8B7CFF", warn: "#FFB340", cred: "#3DDC97" };
-const CAT_IC = { food: "fork", groc: "cart", move: "car", shop: "bag", home: "home", fun: "ticket", trip: "plane", care: "heart", subs: "repeat", gift: "gift", other: "card", xfer: "swap" };
+const IC_COL = { bill: "#FFB340", card: "#8B7CFF", store: "#4C8DFF", cart: "#FF9F43", fork: "#FF8A4C", car: "#4C9AFF", bag: "#B06BFF", home: "#FFC247", ticket: "#FF5C8A", plane: "#28C3D9", heart: "#FF6B6B", repeat: "#7A7CF5", gift: "#F78FB3", swap: "#8E94A8", user: "#FF7AA8", people: "#6E8BFF", spark: "#8B7CFF", warn: "#FFB340", cred: "#3DDC97" };
+const CAT_IC = { bill: "repeat", food: "fork", groc: "cart", move: "car", shop: "bag", home: "home", fun: "ticket", trip: "plane", care: "heart", subs: "repeat", gift: "gift", other: "card", xfer: "swap" };
 function iconKey(c, title) {
   const t = String(title || "");
   if (/\bcred\b/i.test(t)) return "cred";
@@ -927,6 +933,7 @@ function renderMonth() {
   const inv = invHidden ? "" : !syncOn() && S.exp.length ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Track together with ${esc(first(S.p.name))}</span><button class="lk" data-act="quick-invite">Invite on WhatsApp</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : syncOn() && !S.sync.partner ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Waiting for ${esc(first(S.p.name))}</span><button class="lk" data-act="show-invite">Share invite again</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : "";
   const hints = guideHints(m, cExp, total, isNow);
   const share = total ? Math.round(me / total * 100) : 0;
+  const xferTot = mExp.filter(e => !counted(e)).reduce((a, e) => a + e.amt, 0);
   const C = 2 * Math.PI * 44, gap = total && me && pp ? 6 : 0, la = Math.max(0, C * me / (total || 1) - gap), lb = Math.max(0, C * pp / (total || 1) - gap);
   const lead = me === pp ? null : me > pp ? S.me : S.p, leadV = Math.abs(me - pp);
   const ring = `<div class="ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" class="rt"/>${total ? `<circle cx="50" cy="50" r="44" class="ra" style="stroke:${S.me.color};stroke-dasharray:${la} ${C}"/><circle cx="50" cy="50" r="44" class="ra" style="stroke:${S.p.color};stroke-dasharray:${lb} ${C};stroke-dashoffset:${-(la + gap)}"/>` : ""}</svg><div class="rc">${lead ? `<span class="avc" style="background:${lead.color}">${esc((lead.name.trim()[0] || "?").toUpperCase())}</span><small>${esc(first(lead.name))} leads</small><b>${money(leadV, { round: true })}</b>` : `<small>${total ? "All even" : "No spends"}</small>`}</div></div>`;
@@ -947,6 +954,7 @@ function renderMonth() {
     <div class="pbar"><i style="background:${S.me.color};width:${total ? Math.max(share, 2) : 0}%"></i>${pp > 0 ? `<i style="background:${S.p.color};width:${100 - share}%"></i>` : ""}</div>
     <div class="duo">${ring}<div class="dp">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<div class="pi"><span class="avc" style="background:${u.color}">${esc((u.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(u.name))} <em style="color:${u.color}">${total ? pc : 0}%</em></small><b>${money(v, { round: true })}</b></div></div>`).join("")}</div></div>
   </button>
+  ${xferTot ? `<button class="xl" data-act="transfers">${money(xferTot, { round: true })} in transfers &amp; investments, not counted <i>›</i></button>` : ""}
   ${hints.map(h => `<button class="gcard ${h.warn ? "warn" : ""}" data-act="${h.a}"><span class="gic" style="color:${h.warn ? "#FFB340" : h.col || "#8B7CFF"};background:${h.warn ? "#FFB34022" : (h.col || "#8B7CFF") + "26"}">${svgIc(h.ic || "card", 26)}</span><div class="gtx"><span>${h.t}</span><b>${h.v}</b></div><span class="chev">›</span></button>`).join("")}
   ${inv}
   ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
@@ -968,6 +976,24 @@ function openGroup(id) {
   openSheet("", `<div class="dh">${ico(items[0].cat, title).replace('class="ico', 'class="ico big')}<div class="dt">${esc(title)}</div><div class="da">${money(g.t)}</div><div class="ds">${items.length} payments${g.x ? " · not counted" : ""}</div></div>
     <div class="list">${items.map(e => rowHtml(e, true)).join("")}</div>
     ${dup ? `<div class="hint" style="margin-top:12px">Two of these have the same amount on the same day — delete one if it's a duplicate.</div>` : ""}`);
+}
+function openTransfers() {
+  const m = U.month, items = S.exp.filter(e => inMonth(e.ts, m) && !counted(e)).sort((a, b) => b.ts - a.ts);
+  openSheet("Transfers &amp; investments", `<p class="muted" style="margin:2px 2px 12px;line-height:1.45">Money you moved (NEFT/IMPS, SIPs, card-bill payments). Not counted as spending. Open one and tap <b>Count it</b> if it was a real expense.</p><div class="list">${items.map(e => rowHtml(e, true)).join("") || '<div class="empty">None this month</div>'}</div>`);
+}
+function placeChart(e) {
+  const key = t => String(t).trim().toLowerCase(), now = new Date(e.ts), mths = [];
+  for (let i = 5; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); mths.push({ d, v: S.exp.filter(x => key(x.title) === key(e.title) && inMonth(x.ts, d) && counted(x)).reduce((a, x) => a + x.amt, 0) }); }
+  const mx = Math.max(...mths.map(x => x.v), 1), col = CAT[e.cat] ? CAT[e.cat].c : "#8B7CFF", W = 300, H = 76, bw = 30, gap = (W - bw * 6) / 5;
+  if (mths.filter(x => x.v > 0).length < 2) return "";
+  const bars = mths.map((x, i) => { const h = Math.max(x.v ? 4 : 1.5, x.v / mx * 52), on = i === 5; return `<g><rect x="${i * (bw + gap)}" y="${58 - h}" width="${bw}" height="${h}" rx="6" fill="${on ? col : "var(--card2)"}" ${on ? "" : `stroke="${col}55"`} stroke-width="1"/><text x="${i * (bw + gap) + bw / 2}" y="${H - 2}" text-anchor="middle" font-size="10" fill="var(--sub)">${x.d.toLocaleDateString("en-GB", { month: "short" })}</text>${x.v ? `<text x="${i * (bw + gap) + bw / 2}" y="${52 - h}" text-anchor="middle" font-size="9.5" font-weight="600" fill="var(--ink)">${x.v >= 1000 ? Math.round(x.v / 100) / 10 + "k" : Math.round(x.v)}</text>` : ""}</g>`; }).join("");
+  return `<div class="lab">At ${esc(e.title)} · last 6 months</div><svg class="pchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly spend at ${esc(e.title)}">${bars}</svg>`;
+}
+function shareBar(e) {
+  const m = new Date(e.ts), mTot = S.exp.filter(x => inMonth(x.ts, m) && counted(x)).reduce((a, x) => a + x.amt, 0), catTot = S.exp.filter(x => inMonth(x.ts, m) && x.cat === e.cat).reduce((a, x) => a + x.amt, 0);
+  if (!mTot || !counted(e)) return "";
+  const col = CAT[e.cat].c, p1 = e.amt / mTot * 100, p2 = Math.max(0, catTot - e.amt) / mTot * 100;
+  return `<div class="sbar"><div class="sb"><i style="width:${Math.max(p1, 1.5)}%;background:${col}"></i><i style="width:${p2}%;background:${col}40"></i></div><div class="sl"><span><b style="color:${col}">●</b> This payment ${Math.round(p1)}%</span><span>Rest of ${CAT[e.cat].n} ${Math.round(p2)}%</span></div></div>`;
 }
 function rowHtml(e, withDate) {
   const who = multiPeople() ? esc(first(person(e.paid).name)) : "", parts = [withDate ? shortDate(e.ts) : "", who, e.cat === "xfer" ? "Not counted" : CAT[e.cat].n].filter(Boolean);
@@ -1068,7 +1094,7 @@ function renderYou() {
   <div class="sec"><h2>Import & data</h2></div>
   <div class="list set">
     ${SMS_INBOX && window.Native ? `<div class="li"><div class="mid"><div class="t1">Add new payments automatically</div><div class="t2">Bank texts are added as they arrive</div></div><button class="sw2 ${S.auto !== false ? "on" : ""}" role="switch" aria-checked="${S.auto !== false}" data-act="auto-toggle" aria-label="Add new payments automatically"><i></i></button></div>` : ""}
-    ${SMS_INBOX ? `<button class="li" data-act="rescan"><span class="ib" style="background:#5B5BD622">💬</span><div class="mid"><div class="t1">Scan older messages</div><div class="t2">Look back up to a year</div></div><span class="muted">›</span></button>` : ""}
+    ${SMS_INBOX ? `<button class="li" data-act="rescan"><span class="ib" style="background:#5B5BD622">💬</span><div class="mid"><div class="t1">Scan entire inbox</div><div class="t2">Find every purchase, bill and transfer</div></div><span class="muted">›</span></button>` : ""}
     <button class="li" data-act="paste"><span class="ib" style="background:#5B5BD622">📋</span><div class="mid"><div class="t1">Paste or share bank texts</div><div class="t2">Turn payment messages into expenses</div></div><span class="muted">›</span></button>
     <button class="li" data-act="sample"><span class="ib" style="background:#F5A52422">✨</span><div class="mid"><div class="t1">Load sample month</div><div class="t2">See Nest with realistic data</div></div><span class="muted">›</span></button>
     <button class="li" data-act="export"><span class="ib" style="background:#12A59422">⬆️</span><div class="mid"><div class="t1">Export as CSV</div><div class="t2">Share ${S.exp.length} expenses</div></div><span class="muted">›</span></button>
@@ -1390,6 +1416,7 @@ function openDetail(id) {
   <div class="dh">${ico(e.cat, e.title).replace('class="ico', 'class="ico big')}<div class="dt">${esc(e.title)}</div><div class="da">${money(e.amt)}</div>
     <div class="ds">${multiPeople() ? esc(first(person(e.paid).name)) + " · " : ""}${m.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}, ${m.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true })}</div></div>
   <div class="grp">${row("Spent by", `<span style="color:${person(e.paid).color}">${esc(person(e.paid).name)}</span>`)}${row("Category", CAT[e.cat].n)}${row("Date", m.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}${row("Source", src)}${e.note ? row("Note", esc(e.note)) : ""}</div>
+  ${shareBar(e)}${placeChart(e)}
   <div class="lab">In context</div>
   <div class="grp">${row("Share of " + m.toLocaleDateString("en-GB", { month: "long" }), `${mTot ? Math.round(e.amt / mTot * 100) : 0}%`)}${row("That week", `${money(wkTot, { round: true })} total · this is ${wkTot ? Math.round(e.amt / wkTot * 100) : 0}%`)}${same.length > 1 ? row("At " + esc(e.title), `${here.length}× this month · ${money(here.reduce((a, x) => a + x.amt, 0), { round: true })}`) + row("Usual amount here", money(avg, { round: true })) : row("At " + esc(e.title), "First time")}</div>
   ${others.length ? `<div class="lab">Recent at ${esc(e.title)}</div><div class="list">${others.slice(0, 4).map(rowHtml).join("")}</div>` : ""}
@@ -1404,14 +1431,17 @@ function deleteExp(id) {
    SMS — parse bank / UPI debit messages entirely on-device
    ========================================================= */
 const AMT_RE = /(?:rs\.?|inr|₹|usd|\$|eur|€|gbp|£)\s*([\d,]+(?:\.\d{1,2})?)/gi;
-const XFER_RE = /\b(neft|imps|rtgs|self[- ]transfer|own account|fund transfer|credit card (?:bill|payment|pymt)|cc (?:bill|payment)|loan|emi|nach|ach\b|ecs|sip|mutual fund|zerodha|groww|upstox|kuvera|smallcase|insurance|lic\b|ppf|nps|fixed deposit|fd\b|demat|investment)\b/i;
-const DEBIT_RE = /\b(debited|debit|spent|paid|purchase[d]?|withdrawn|sent|charged|deducted|payment of|txn of|transaction of|used for|pos|upi)\b/i;
+const XFER_RE = /\b(neft|imps|rtgs|self[- ]transfer|own account|fund transfer|credit card (?:bill|payment|pymt)|cc (?:bill|payment)|sip|mutual fund|zerodha|groww|upstox|kuvera|smallcase|ppf|nps|fixed deposit|fd\b|demat|investment)\b/i;
+const BILL_RE = /\b(emi|loan|insurance|premium|lic\b|bill ?(?:payment|paid|pay|desk)|bbps|electricity|postpaid|broadband|dth|recharge(?:d)?|piped gas|water bill|maintenance|nach|ecs|auto-?debit|auto-?pay|e-?mandate|mandate)\b/i;
+const DEBIT_RE = /\b(debited|debit|dr|spent|paid|purchase[d]?|withdrawn|withdrawal|sent|charged|deducted|payment of|txn of|transaction of|used for|pos|upi|transferred|remitted|recharge(?:d)?|emi|premium|nach|auto-?debit|bill ?(?:payment|paid)|payment (?:successful|made|done)|successfully paid)\b/i;
 const CREDIT_RE = /\b(credited (?:to|in|into|with)? ?(?:your|ur|a\/c|acct|account|card)|received|refund(?:ed)?|reversed|cashback (?:of|credited)|deposited|salary)\b/i;
-const NOISE_RE = /\b(otp|one[- ]time|verification code|passcode|cvv|pin\b|is due|due on|due date|minimum amount due|statement|pre-?approved|apply now|offer|loan|click|http|www\.|t&c|win\b|lucky|unsuccessful|failed|declined|insufficient|requested money|has requested|autopay (?:set|mandate)|will be debited|to be debited)\b/i;
+const HARD_NOISE_RE = /\b(otp|one[- ]time|verification code|passcode|cvv|pin\b|win\b|lucky|unsuccessful|failed|declined|insufficient|requested money|has requested|autopay (?:set|mandate)|will be debited|to be debited|will be auto|scheduled)\b/i;
+const SOFT_NOISE_RE = /\b(is due|due on|due date|minimum amount due|statement|pre-?approved|apply now|offer|click|http|www\.|t&c)\b/i;
 function titleCase(s) { return s.toLowerCase().replace(/\b([a-z])/g, c => c.toUpperCase()).replace(/\bPvt\b|\bLtd\b/g, "").trim(); }
 function parseSms(m) {
-  const body = String(m.b || "").replace(/\s+/g, " ").trim(); if (!body || body.length > 700) return null;
-  if (NOISE_RE.test(body)) return null;
+  const body = String(m.b || "").replace(/\s+/g, " ").trim(); if (!body || body.length > 1200) return null;
+  if (HARD_NOISE_RE.test(body)) return null;
+  if (SOFT_NOISE_RE.test(body) && !/\b(debited|spent)\b/i.test(body)) return null;
   const hasDebit = DEBIT_RE.test(body), hasCredit = CREDIT_RE.test(body);
   if (!hasDebit) return null;
   if (hasCredit && !/\b(debited|spent|sent|paid)\b/i.test(body)) return null;
@@ -1433,13 +1463,13 @@ function parseSms(m) {
   merch = merch.replace(/[*_.\-]+$/g, "").replace(/\d{5,}/g, "").replace(/^(?:upi|pos|ecom|pur|imps|neft)[\s*_-]+/i, "").trim();
   if (/^[\d\s]*$/.test(merch) || merch.length < 2 || /^(rs|inr|usd|eur|gbp)\.?$/i.test(merch)) merch = (/atm|cash|wdl/i.test(body) ? "ATM withdrawal" : /upi/i.test(body) ? "UPI payment" : "Card payment");
   merch = canonMerchant(merch.replace(/[_]+/g, " ").replace(/\s+(approved|declined|successful|completed)\b.*$/i, "")).slice(0, 28);
-  const xfer = XFER_RE.test(body);
-  return { amt, title: merch, cat: xfer ? "xfer" : /atm withdrawal/i.test(merch) ? "other" : catOf(merch), xfer, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)) };
+  const xfer = XFER_RE.test(body) && !/\b(emi|insurance|premium|lic)\b/i.test(body) || /\b(sip|mutual fund)\b/i.test(body), bill = !xfer && BILL_RE.test(body);
+  return { amt, title: merch, cat: xfer ? "xfer" : bill ? "bill" : /atm withdrawal/i.test(merch) ? "other" : catOf(merch), xfer, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)) };
 }
 function dedupeCands(c) {
   const out = []; const generic = t => /^(upi payment|card payment|atm withdrawal)$/i.test(t);
   [...c].sort((a, b) => a.ts - b.ts).forEach(x => {
-    const d = out.find(y => y.amt === x.amt && (Math.abs(y.ts - x.ts) < 15 * 60e3 || (!generic(x.title) && canonMerchant(y.title) === canonMerchant(x.title) && Math.abs(y.ts - x.ts) < 24 * 3600e3)));
+    const d = out.find(y => y.amt === x.amt && (Math.abs(y.ts - x.ts) < 15 * 60e3 || (!generic(x.title) && canonMerchant(y.title) === canonMerchant(x.title) && Math.abs(y.ts - x.ts) < 3 * 3600e3)));
     if (!d) out.push(x); else if (generic(d.title) && !generic(x.title)) out[out.indexOf(d)] = x;
   });
   return out.sort((a, b) => b.ts - a.ts);
@@ -1533,7 +1563,7 @@ function renderOb() {
 function rvRow(c) {
   return `<div class="rv ${c.on ? "on" : ""}" data-act="ob-tog" data-arg="${c.sid}" role="checkbox" aria-checked="${c.on}" tabindex="0"><span class="ck">✓</span>${ico(c.cat, c.title)}<div class="mid"><div class="t1">${esc(c.title)}</div><div class="t2">${new Date(c.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${c.paid === "p" ? " · " + esc(first(S.p.name)) : ""}${c.cat === "xfer" ? ` <span class="flag">Transfer</span>` : c.big ? ` <span class="flag">Large — real spending?</span>` : ""}</div></div><div class="amt">${money(c.amt)}</div></div>`;
 }
-function rescanNow() { OB = { step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false, 365); }
+function rescanNow() { OB = { full: true, step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false, 3650); }
 function smsBlockedSheet() {
   S.smsPending = true; persist();
   openSheet("Allow SMS access", `<p class="muted" style="margin:2px 2px 14px;line-height:1.45">Android blocks SMS access for apps installed from a file until you allow it once. Nest reads bank texts only on your phone to fill in your spending.</p>
@@ -1551,11 +1581,13 @@ async function runScan(sample, days) {
   const res = await readSms(sample, days);
   const seen = new Set(S.seen), c = [], bodies = new Set(); let inr = 0, usd = 0, eur = 0, gbp = 0;
   for (const m of (res.msgs || [])) {
-    const p = parseSms(m); if (!p || seen.has(p.sid) || bodies.has(p.sid)) continue; bodies.add(p.sid);
+    const p = parseSms(m); if (!p || bodies.has(p.sid)) continue; bodies.add(p.sid);
+    if (OB.full) { const ex = S.exp.find(e => Math.abs(e.amt - p.amt) < .01 && Math.abs(e.ts - p.ts) < 20 * 60e3); if (ex) { if (ex.src === "sms" && ex.cat === "xfer" && p.cat === "bill") { ex.cat = "bill"; touch(ex); OB.fixed = (OB.fixed || 0) + 1; } continue; } } else if (seen.has(p.sid)) continue;
     const b = m.b; if (/₹|rs\.?\s?\d|inr/i.test(b)) inr++; else if (/\$|usd/i.test(b)) usd++; else if (/€|eur/i.test(b)) eur++; else if (/£|gbp/i.test(b)) gbp++;
     c.push(Object.assign(p, { on: true, sm: 50, paid: sample && parseInt(hash(p.sid), 36) % 100 < 38 ? "p" : "me" }));
   }
-  OB.scanMax = Math.max(0, ...(res.msgs || []).map(m => m.d)); OB.cands = flagCands(dedupeCands(c)); OB.cands.forEach(x => { if (x.big || x.cat === "xfer") x.on = false; });
+  OB.scanMax = Math.max(0, ...(res.msgs || []).map(m => m.d)); if (OB.fixed) { save(); const nfx = OB.fixed; OB.fixed = 0; setTimeout(() => toast(`${nfx} EMI / bill payment${nfx > 1 ? "s" : ""} re-classified as spending`), 1800); }
+  OB.cands = flagCands(dedupeCands(c)); OB.cands.forEach(x => { if (x.big || x.cat === "xfer") x.on = false; });
   const best = [["INR", inr], ["USD", usd], ["EUR", eur], ["GBP", gbp]].sort((a, b) => b[1] - a[1])[0]; OB.detected = best[1] > 0 && best[0] !== S.cur ? best[0] : ""; if (OB.detected) S.cur = OB.detected;
   const wait = Math.max(0, 3200 - (Date.now() - t0)); const total = res.scanned || (res.msgs || []).length;
   const ni = $("#sc-n"), nf = $("#sc-f"); countUp(ni, total, Math.max(600, wait), v => Math.round(v).toLocaleString()); countUp(nf, OB.cands.length, Math.max(600, wait), v => Math.round(v));
@@ -1615,7 +1647,8 @@ const A = {
   color: a => { const [k, c] = a.split("|"); person(k).color = c; if (k === "me") S.mu = Date.now(); save(); show("you", true); hap(1); },
   "app-settings": () => { try { N.openAppSettings(); } catch (e) { toast("Open Settings → Apps → Nest → Permissions"); } },
   smsretry: () => { closeSheet(); OB.step = 3; if (OB.from !== "settings") OB.from = "ob"; runScan(false, OB.from === "settings" ? 365 : undefined); },
-  rescan: () => { S.onboarded = true; OB = { step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false, 365); },
+  transfers: () => openTransfers(),
+  rescan: () => { S.onboarded = true; OB = { full: true, step: 3, cands: [], scanned: 0, detected: "", sample: false, from: "settings" }; applyTheme(false); runScan(false, 3650); },
   sample: () => { OB = { step: 3, cands: [], scanned: 0, detected: "", sample: true, from: "settings" }; runScan(true); },
   export: () => {
     const rows = [["Date", "Merchant", "Category", "Amount", "Spent by", "Note"]].concat([...S.exp].sort((a, b) => a.ts - b.ts).map(e => [dkey(e.ts), e.title, CAT[e.cat].n, e.amt, person(e.paid).name, e.note || ""]));

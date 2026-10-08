@@ -28,6 +28,13 @@ const T=[
 ["Rs 5,000.00 debited from A/c XX1234 towards GROWW SIP mandate on 05-07-26",5000,null],
 ["Rs 24,500 debited towards CRED credit card bill payment on 15-07-26",24500,null],
 ["Payment of Rs 4,52,775 received in your credit card XX1234. Thank you",0,null],
+// bills / EMI / dr-style (must be captured)
+["Rs.12,450.00 debited from A/c XX1234 on 05-10-26 towards HDFC LOAN EMI. Ref 55",12450,null],
+["Dr. Rs 999.00 A/c XX1234 Airtel postpaid bill payment 06-10-26",999,null],
+["INR 2,100 withdrawal at ATM on 06-10-26 Avl bal INR 9,000",2100,null],
+["Recharge of Rs 299 successful for 9876543210 on Jio. Paid via UPI.",299,null],
+["Rs 8,200 debited from a/c XX1234 for LIC premium on 07-10-26",8200,null],
+["Rs 1,500.00 transferred from A/c XX1234 to Ramesh via UPI on 07-10-26 Ref 99",1500,null],
 // should skip
 ["Your OTP for Rs 2,400 txn at Amazon is 123456. Do not share.",0,null],
 ["Rs 15,000 credited to your a/c XX1234 on 02-10-26 by UPI from rahul@ybl",0,null],

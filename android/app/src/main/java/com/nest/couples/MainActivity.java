@@ -484,7 +484,8 @@ public class MainActivity extends Activity {
     }
 
     private static final String[] HINTS = {
-            "debit", "spent", "paid", "sent", "purchase", "withdraw", "txn", "upi", "charged", "deducted", "payment"
+            "debit", "spent", "paid", "sent", "purchase", "withdraw", "txn", "upi", "charged", "deducted", "payment",
+            "dr.", "dr ", "emi", "bill", "recharge", "premium", "transfer", "remit", "mandate", "nach", "auto-debit", "autopay"
     };
 
     private String readInbox(int days) throws Exception {
@@ -500,10 +501,10 @@ public class MainActivity extends Activity {
                 "date > ?", new String[]{String.valueOf(since)}, "date DESC");
         if (c != null) {
             try {
-                while (c.moveToNext() && scanned < 5000) {
+                while (c.moveToNext()) {
                     scanned++;
                     String body = c.getString(2);
-                    if (body == null || body.length() > 700) continue;
+                    if (body == null || body.length() > 1200) continue;
                     String low = body.toLowerCase();
                     boolean hit = false;
                     for (int i = 0; i < HINTS.length; i++) {
