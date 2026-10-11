@@ -17,6 +17,14 @@ public class ApkProvider extends ContentProvider {
         return new File(new File(getContext().getCacheDir(), "share"), "Nest.apk");
     }
 
+    private boolean img(Uri uri) {
+        return uri != null && uri.getPath() != null && uri.getPath().endsWith(".png");
+    }
+
+    private File fileFor(Uri uri) {
+        return img(uri) ? new File(new File(getContext().getCacheDir(), "share"), "nest-month.png") : file();
+    }
+
     @Override
     public boolean onCreate() {
         return true;
@@ -24,19 +32,19 @@ public class ApkProvider extends ContentProvider {
 
     @Override
     public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
-        return ParcelFileDescriptor.open(file(), ParcelFileDescriptor.MODE_READ_ONLY);
+        return ParcelFileDescriptor.open(fileFor(uri), ParcelFileDescriptor.MODE_READ_ONLY);
     }
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] args, String sort) {
         MatrixCursor c = new MatrixCursor(new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE});
-        c.addRow(new Object[]{"Nest.apk", file().length()});
+        c.addRow(new Object[]{img(uri) ? "nest-month.png" : "Nest.apk", fileFor(uri).length()});
         return c;
     }
 
     @Override
     public String getType(Uri uri) {
-        return "application/vnd.android.package-archive";
+        return img(uri) ? "image/png" : "application/vnd.android.package-archive";
     }
 
     @Override

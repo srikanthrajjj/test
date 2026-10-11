@@ -519,6 +519,15 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 #sheet .list{background:none;border-radius:0}#sheet .list .li{padding:12px 2px;border-bottom:1px solid var(--line)}
 .amt.rf{color:var(--ok)}
 .rawm{margin:4px 2px 6px;padding:12px 14px;border-left:2px solid var(--line);font-size:13.5px;line-height:1.5;color:var(--sub);user-select:text;-webkit-user-select:text;word-break:break-word}
+.tr.one{grid-template-columns:minmax(0,1fr) auto}
+.trust{margin:14px 2px 0}.tsrc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--sub)}.tsrc b{color:var(--ink)}
+.tq{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:14px}.tq span{flex:1 1 100%;color:var(--ink);font-weight:600}.tq button{padding:8px 14px;border-radius:99px;background:var(--card2);font-size:14px;font-weight:600}.tq button:first-of-type{background:var(--accent);color:#fff}
+.tok{margin-top:10px;font-size:13.5px;color:var(--ok);font-weight:600}
+.whoseg{margin:16px 0 0}.whoseg button i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.tn-m.sbs{display:flex;gap:12px}.tn-m.sbs i{font-style:normal;font-weight:600}
+.lims .li{padding:8px 2px}.lims .inp{width:120px;min-height:40px;text-align:right}
+.tgl{width:46px;height:28px;border-radius:99px;background:var(--card2);position:relative;flex:none;transition:background .2s}.tgl i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}.tgl.on{background:var(--ok)}.tgl.on i{left:21px}
+#lock{position:fixed;inset:0;z-index:999;background:var(--bg);display:grid;place-items:center}.lk2{text-align:center;display:grid;gap:14px;justify-items:center}.lki{font-size:44px}.lk2 b{font-size:20px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -540,8 +549,8 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
     <circle class="c2" cx="84" cy="66" r="34" fill="#FF6B8A" fill-opacity=".78"/>
   </svg>
   <h1>Nest</h1>
-  <p>Money, together.</p>
-  <div class="made">For two</div>
+  <p>Your money, already sorted.</p>
+  <div class="made">Solo or together</div>
 </div>
 
 <script>
@@ -710,7 +719,13 @@ async function syncNow() {
   return okSync;
 }
 /* refresh on every open / resume (native onResume + visibility), and every 15 s while open */
-let lastResume = 0;
+let lastResume = 0, hiddenAt = 0, lockPending = false;
+function showLock() { if (!S.lock || $("#lock")) return; const d = document.createElement("div"); d.id = "lock"; d.innerHTML = `<div class="lk2"><div class="lki">🔒</div><b>Nest is locked</b><button class="btn prime" data-act="unlock">Unlock</button></div>`; document.body.appendChild(d); try { N.authenticate(); } catch (e) { d.remove(); } }
+window.__unlock = ok => {
+  if (lockPending) { lockPending = false; if (ok) { S.lock = true; persist(); refresh(); toast("App lock on"); } return; }
+  if (ok) { const d = $("#lock"); d && d.remove(); }
+};
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") hiddenAt = Date.now(); else if (S.lock && hiddenAt && Date.now() - hiddenAt > 30000) showLock(); });
 window.__resume = () => { if (Date.now() - lastResume < 800) return; lastResume = Date.now(); syncNow(); autoImport(); importNotifs(); checkClipInvite(); };
 setInterval(() => { if (document.visibilityState === "visible") { if (syncOn()) syncNow(); autoImport(); importNotifs(); } }, 15000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") window.__resume(); });
@@ -920,6 +935,7 @@ function groupRow(g) {
 function guideHints(m, cExp, total, isNow) {
   const out = [], L = largeOf(m), mn = m.toLocaleDateString("en-GB", { month: "long" });
   if (L.big.length && L.share >= 0.3) out.push({ t: `${L.big.length} large payment${L.big.length > 1 ? "s" : ""}`, v: `${Math.round(L.share * 100)}% of ${mn} — real spending?`, a: "large", warn: 1, ic: "warn" });
+  if (S.limits) { const over = Object.entries(S.limits).map(([c, l]) => [c, l, cExp.filter(e => e.cat === c).reduce((a, e) => a + e.amt, 0)]).filter(([c, l, v]) => l > 0 && v >= l * 0.8).sort((a, b) => b[2] / b[1] - a[2] / a[1])[0]; if (over && CAT[over[0]]) out.push({ t: `${CAT[over[0]].n}: ${money(over[2], { round: true })} of ${money(over[1], { round: true })}`, v: over[2] >= over[1] ? `Over your limit by ${money(over[2] - over[1], { round: true })}` : `${Math.round(over[2] / over[1] * 100)}% used — ${money(over[1] - over[2], { round: true })} left`, a: "breakdown", warn: over[2] >= over[1] ? 1 : 0, ic: CAT_IC[over[0]], col: IC_COL[CAT_IC[over[0]]] }); }
   if (isNow && new Date().getDate() >= new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate() - 2) out.push({ t: "Month ends soon", v: "See who spent what", a: "breakdown", ic: "spark" });
   if (total > 0 && !out.length && cExp.length > 4) {
     const g = {}; cExp.forEach(e => { const k = merchKey(e.title); g[k] = g[k] || { n: canonMerchant(e.title), t: 0, c: e.cat }; g[k].t += e.amt; });
@@ -935,15 +951,16 @@ function renderMonth() {
   const mExp = S.exp.filter(e => inMonth(e.ts, m)), cExp = mExp.filter(counted), total = cExp.reduce((a, e) => a + e.amt, 0);
   const me = spentBy(cExp, "me"), pp = total - me, mStart = m.getTime(), lastD = new Date(m.getFullYear(), m.getMonth() + 1, 0), mon = m.toLocaleDateString("en-GB", { month: "short" });
   const weeks = []; for (let w = wkStart(mStart); w <= lastD.getTime(); w += 7 * DAY) { const a0 = Math.max(w, mStart), b0 = Math.min(w + 6 * DAY, lastD.getTime()); weeks.push({ w, d0: new Date(a0).getDate(), label: a0 === b0 ? "" + new Date(a0).getDate() : new Date(a0).getDate() + "–" + new Date(b0).getDate(), cur: isNow && wkStart(Date.now()) === w }); }
+  if (solo()) U.who = "all"; const who = U.who || "all"; const mExpAll = mExp;
   GRP = {}; let tl = "";
   weeks.slice().reverse().forEach(w => {
     if (U.week != null && U.week !== w.w) return;
-    const wExp = mExp.filter(e => wkStart(e.ts) === w.w); if (!wExp.length) return;
+    const wAll = mExpAll.filter(e => wkStart(e.ts) === w.w), wExp = who === "all" ? wAll : wAll.filter(e => e.paid === who); if (!wExp.length) return;
     const gs = {}; wExp.forEach(e => { const k = merchKey(e.title) + (counted(e) ? "" : "|x"); const g = gs[k] = gs[k] || { items: [], t: 0, me: 0, p: 0, x: !counted(e) }; g.items.push(e); g.t += e.amt; g[e.paid] += e.amt; });
     const list = Object.values(gs).sort((a, b) => (a.x - b.x) || b.t - a.t); list.forEach((g, i) => { g.id = w.w + "_" + i; GRP[g.id] = g; });
     const wt = wExp.filter(counted).reduce((a, e) => a + e.amt, 0), shown = list.slice(0, 5), more = list.slice(5);
     tl += `<div class="tn ${w.cur ? "today" : ""}"><span class="dot"><b>${w.d0}</b><small>${mon.toUpperCase()}</small></span><i class="rdot"></i>
-      <div class="tn-h"><span>${w.cur ? "This week" : w.label + " " + mon}</span><span class="tn-m">${money(wt, { round: true })}</span></div>
+      <div class="tn-h"><span>${w.cur ? "This week" : w.label + " " + mon}</span>${!solo() && who === "all" ? (() => { const a = wAll.filter(e => e.paid === "me" && counted(e)).reduce((x, e) => x + e.amt, 0), b = wt - a; return `<span class="tn-m sbs"><i style="color:${S.me.color}">${money(a, { round: true })}</i><i style="color:${S.p.color}">${money(b, { round: true })}</i></span>`; })() : `<span class="tn-m">${money(wt, { round: true })}</span>`}</div>
       <div class="list">${shown.map(groupRow).join("")}${more.length ? `<div class="morerows" id="mr-${w.w}">${more.map(groupRow).join("")}</div><button class="li moreb" id="mb-${w.w}" data-act="wk-more" data-arg="${w.w}">Show ${more.length} more</button>` : ""}</div></div>`;
   });
   const invHidden = S.invHide && Date.now() - S.invHide < 864e5;
@@ -977,6 +994,7 @@ function renderMonth() {
   ${hints.map(h => `<button class="gcard ${h.warn ? "warn" : ""}" data-act="${h.a}"><span class="gic" style="color:${h.warn ? "#FFB340" : h.col || "#8B7CFF"};background:${h.warn ? "#FFB34022" : (h.col || "#8B7CFF") + "26"}">${svgIc(h.ic || "card", 26)}</span><div class="gtx"><span>${h.t}</span><b>${h.v}</b></div><span class="chev">›</span></button>`).join("")}
   ${N && N.hasNotifAccess && !notifOn() && S.exp.length && !(S.notifHide && Date.now() - S.notifHide < 7 * 864e5) ? `<div class="gcard inv"><span class="gic" style="color:#3DDC97;background:#3DDC9726">${svgIc("spark", 26)}</span><div class="gtx"><span>Catch GPay, PhonePe &amp; Paytm payments</span><button class="lk" data-act="notif-access">Allow notification access</button></div><button class="xb" data-act="notif-hide" aria-label="Dismiss">✕</button></div>` : ""}
   ${inv}
+  ${!solo() && mExp.length ? `<div class="whoseg seg"><button class="${(U.who || "all") === "all" ? "on" : ""}" data-act="who" data-arg="all">Both</button><button class="${U.who === "me" ? "on" : ""}" data-act="who" data-arg="me"><i style="background:${S.me.color}"></i>${esc(first(S.me.name))}</button><button class="${U.who === "p" ? "on" : ""}" data-act="who" data-arg="p"><i style="background:${S.p.color}"></i>${esc(first(S.p.name))}</button></div>` : ""}
   ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
   <div class="tl" id="tl">${tl}</div>
   ${!mExp.length ? `<div class="empty"><b>${isNow ? "A fresh month" : "Nothing here"}</b>${isNow ? "Tap + to add your first expense." : "No expenses in " + monthLabel(m) + "."}</div>` : ""}`;
@@ -1003,6 +1021,38 @@ function duoOn() {
     <input class="inp" id="duo-name" maxlength="18" placeholder="Partner's name" autocomplete="off" style="min-height:48px">
     <button class="btn prime block" data-act="duo-save" style="margin-top:14px">Turn on Together</button>`);
   setTimeout(() => { const i = $("#duo-name"); i && i.focus(); }, 350);
+}
+function openLimits() {
+  const L = S.limits || {}, cats = CATS.filter(c => !["xfer", "refund", "other"].includes(c.id));
+  openSheet("Monthly limits", `<p class="muted" style="margin:2px 2px 12px;line-height:1.45">Optional. Nest nudges you gently at 80% — no alarms.</p>
+    <div class="list lims">${cats.map(c => `<div class="li"><span class="ico gl" style="background:${c.c}24;color:${c.c}">${svgIc(CAT_IC[c.id] || "card")}</span><div class="mid"><div class="t1">${c.n}</div></div><input class="inp lim" inputmode="numeric" data-cat="${c.id}" placeholder="No limit" value="${L[c.id] || ""}"></div>`).join("")}</div>
+    <button class="btn prime block" data-act="limits-save" style="margin-top:14px">Save limits</button>`);
+}
+function openMissing() {
+  openSheet("Let's find what's missing", `<p class="muted" style="margin:2px 2px 12px;line-height:1.45">Most gaps are payments that never sent a bank SMS — usually UPI apps or cards from another bank.</p>
+    <div class="list">
+      ${N && N.hasNotifAccess && !notifOn() ? `<button class="li" data-act="notif-access"><span class="ib" style="background:#3DDC9722">🔔</span><div class="mid"><div class="t1">Catch GPay, PhonePe &amp; Paytm</div><div class="t2">Allow notification access</div></div><span class="muted">›</span></button>` : ""}
+      ${SMS_INBOX ? `<button class="li" data-act="rescan"><span class="ib" style="background:#5B5BD622">💬</span><div class="mid"><div class="t1">Scan entire inbox again</div><div class="t2">Every message, every month</div></div><span class="muted">›</span></button>` : ""}
+      <button class="li" data-act="paste"><span class="ib" style="background:#F5A52422">📋</span><div class="mid"><div class="t1">Paste a bank text</div><div class="t2">From another bank or an email</div></div><span class="muted">›</span></button>
+      <button class="li" data-act="add"><span class="ib" style="background:#F0508B22">＋</span><div class="mid"><div class="t1">Add it by hand</div><div class="t2">Cash or anything else</div></div><span class="muted">›</span></button>
+    </div>`);
+}
+async function shareStory() {
+  const m = U.month, R = monthReport(m), T = R.T, f = x => money(x, { round: true });
+  if (!N || !N.shareImage) return shareText("Nest — " + monthLabel(m), reportText(m));
+  const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
+  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, "#141B33"); bg.addColorStop(1, "#060912"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const F = (w, sz) => `${w} ${sz}px Inter, system-ui, sans-serif`;
+  g.fillStyle = "#8C94A8"; g.font = F(600, 40); g.fillText(monthLabel(m).toUpperCase(), 90, 150);
+  g.fillStyle = "#F5F7FB"; g.font = F(800, 150); g.fillText(f(T.t), 84, 320);
+  g.fillStyle = "#8C94A8"; g.font = F(500, 40); g.fillText(solo() ? `spent across ${R.n} payments` : `spent together · ${first(S.me.name)} ${f(T.me)} · ${first(S.p.name)} ${f(T.p)}`, 90, 390);
+  const top = R.catList.slice(0, 5), mx = Math.max(...top.map(c => c.t), 1); let y = 500;
+  top.forEach(c => { g.fillStyle = "#F5F7FB"; g.font = F(600, 44); g.fillText(CAT[c.id].n, 90, y); g.fillStyle = "#8C94A8"; g.font = F(600, 44); const t = f(c.t); g.fillText(t, W - 90 - g.measureText(t).width, y);
+    g.fillStyle = "rgba(255,255,255,.08)"; g.beginPath(); g.roundRect(90, y + 24, W - 180, 22, 11); g.fill(); g.fillStyle = CAT[c.id].c; g.beginPath(); g.roundRect(90, y + 24, Math.max(22, (W - 180) * c.t / mx), 22, 11); g.fill(); y += 128; });
+  const pm = new Date(m.getFullYear(), m.getMonth() - 1, 1), prev = S.exp.filter(e => inMonth(e.ts, pm) && counted(e)).reduce((a, e) => a + e.amt, 0);
+  if (prev > 0) { const d = Math.round((T.t - prev) / prev * 100); g.fillStyle = d <= 0 ? "#3DDC97" : "#FFB340"; g.font = F(700, 46); g.fillText(`${Math.abs(d)}% ${d <= 0 ? "less" : "more"} than ${pm.toLocaleDateString("en-GB", { month: "long" })}`, 90, H - 190); }
+  g.fillStyle = "#4C8DFF"; g.font = F(800, 52); g.fillText("Nest", 90, H - 90); g.fillStyle = "#8C94A8"; g.font = F(500, 34); g.fillText("Your money, already sorted.", 230, H - 92);
+  try { N.shareImage(cv.toDataURL("image/png").split(",")[1], `My ${monthLabel(m)} on Nest`); } catch (e) { shareText("Nest — " + monthLabel(m), reportText(m)); }
 }
 function openTransfers() {
   const m = U.month, items = S.exp.filter(e => inMonth(e.ts, m) && !counted(e)).sort((a, b) => b.ts - a.ts);
@@ -1061,11 +1111,12 @@ function monthReport(m) {
   const pk = Object.entries(days).sort((a, b) => b[1] - a[1])[0]; if (pk && Object.keys(days).length > 3) pat.push(`Busiest day: <b>${new Date(pk[0] + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}</b> · ${money(pk[1], { round: true })}.`);
   const we = mo.filter(e => [0, 6].includes(new Date(e.ts).getDay())).reduce((a, e) => a + e.amt, 0); if (T.t && mo.length > 8) pat.push(`<b>${Math.round(we / T.t * 100)}%</b> of spending happened on weekends.`);
   const both = catList.filter(c => c.me >= c.t * 0.25 && c.p >= c.t * 0.25 && c.t >= T.t * 0.04).slice(0, 3).map(c => CAT[c.id].n), solo = catList.filter(c => c.id !== "other" && c.t >= T.t * 0.05 && (c.me >= c.t * 0.9 || c.p >= c.t * 0.9)).slice(0, 3).map(c => `${CAT[c.id].n} (${nn(person(c.me >= c.p ? "me" : "p").name)})`);
-  if (both.length) pat.push(`You both spend on: <b>${both.join(", ")}</b>.`); if (solo.length) pat.push(`Mostly one person: <b>${solo.join(", ")}</b>.`);
+  if (!(S.mode === "solo" && !syncOn()) && both.length) pat.push(`You both spend on: <b>${both.join(", ")}</b>.`); if (!(S.mode === "solo" && !syncOn()) && solo.length) pat.push(`Mostly one person: <b>${solo.join(", ")}</b>.`);
   return { T, catList, keep, tail, pat: pat.slice(0, 6), pt, n: mo.length };
 }
 function reportText(m) {
   const R = monthReport(m), f = x => money(x, { round: true }), nm = [first(S.me.name), first(S.p.name)];
+  if (solo()) { let o = `${monthLabel(m)} — ${f(R.T.t)} spent\n\nBy category\n`; R.catList.forEach(c => { o += `${CAT[c.id].n}: ${f(c.t)}\n`; }); o += `\nTop places\n` + R.keep.map(g => `${g.name} ×${g.n}: ${f(g.t)}`).join("\n"); return o; }
   let t = `${monthLabel(m)} — ${f(R.T.t)} together\n${nm[0]} ${f(R.T.me)} · ${nm[1]} ${f(R.T.p)}\n\nBy category (${nm[0]} / ${nm[1]} / total)\n`;
   R.catList.forEach(c => { t += `${CAT[c.id].n}: ${f(c.me)} / ${f(c.p)} / ${f(c.t)}\n`; });
   t += `\nTop places\n` + R.keep.map(g => `${g.name} ×${g.n}: ${f(g.me)} / ${f(g.p)} / ${f(g.t)}`).join("\n");
@@ -1074,24 +1125,30 @@ function reportText(m) {
 }
 const num = v => (v > 0 ? money(v, { round: true }) : "–");
 function trow(name, sub, me, p, t, cls = "", attrs = "") {
+  if (solo()) return `<${attrs ? "button" : "div"} class="tr one ${cls}" ${attrs}><div class="tn1"><span>${name}</span>${sub ? `<small>${sub}</small>` : ""}</div><div class="tt">${num(t)}</div></${attrs ? "button" : "div"}>`;
   const hi = me === p ? "" : me > p ? 1 : 2;
   return `<${attrs ? "button" : "div"} class="tr ${cls}" ${attrs}><div class="tn1"><span>${name}</span>${sub ? `<small>${sub}</small>` : ""}</div><div class="${hi === 1 ? "hi" : ""}">${num(me)}</div><div class="${hi === 2 ? "hi" : ""}">${num(p)}</div><div class="tt">${num(t)}</div></${attrs ? "button" : "div"}>`;
 }
 function renderSummary() {
   const m = U.month, R = monthReport(m), T = R.T, a = esc(first(S.me.name)), b = esc(first(S.p.name));
   if (!T.t) return `<div class="empty"><b>No spending</b>Nothing recorded for ${monthLabel(m)}.</div>`;
-  const head = `<div class="tr thead"><div></div><div style="color:${S.me.color}">${a}</div><div style="color:${S.p.color}">${b}</div><div>Total</div></div>`;
+  const head = solo() ? "" : `<div class="tr thead"><div></div><div style="color:${S.me.color}">${a}</div><div style="color:${S.p.color}">${b}</div><div>Total</div></div>`;
+  const src = { sms: 0, app: 0, you: 0 }; S.exp.filter(e => inMonth(e.ts, m)).forEach(e => { src[e.src === "sms" ? "sms" : e.src === "app" ? "app" : "you"]++; });
+  const mk = monthStart(m).getTime(), okd = S.okM && S.okM[mk];
+  const trust = `<div class="trust"><div class="tsrc"><span><b>${src.sms}</b> from bank texts</span><span><b>${src.app}</b> from payment apps</span><span><b>${src.you}</b> added by you</span></div>
+    ${okd ? `<div class="tok">✓ You confirmed this month looks right</div>` : `<div class="tq"><span>Does ${money(T.t, { round: true })} look right?</span><button data-act="month-ok" data-arg="${mk}">Yes</button><button data-act="month-missing">Something's missing</button></div>`}</div>`;
   return `
   <div class="dh" style="padding-bottom:4px"><div class="ds" style="margin:0">${monthLabel(m)}</div><div class="da">${money(T.t, { round: true })}</div>
-    <div class="bar2" style="margin:12px 0 0"><i style="background:${S.me.color};flex-grow:${T.me}"></i><i style="background:${S.p.color};flex-grow:${T.p}"></i></div></div>
-  <div class="lab">Who spent on what</div>
-  <div class="grp tbl">${head}${R.catList.map(c => trow(CAT[c.id].n, c.n + " expense" + (c.n > 1 ? "s" : ""), c.me, c.p, c.t, "tcat", `data-act="exp-cat" data-arg="${c.id}"`) + `<div class="subs" id="sub-${c.id}">${c.list.slice(0, 7).map(g => trow(esc(g.name), g.n > 1 ? "×" + g.n : "", g.me, g.p, g.t, "tsub")).join("")}${c.list.length > 7 ? trow(`${c.list.length - 7} smaller`, "", c.list.slice(7).reduce((x, g) => x + g.me, 0), c.list.slice(7).reduce((x, g) => x + g.p, 0), c.list.slice(7).reduce((x, g) => x + g.t, 0), "tsub") : ""}</div>`).join("")}
+    ${solo() ? "" : `<div class="bar2" style="margin:12px 0 0"><i style="background:${S.me.color};flex-grow:${T.me}"></i><i style="background:${S.p.color};flex-grow:${T.p}"></i></div>`}</div>
+  ${trust}
+  <div class="lab">${solo() ? "Where it went" : "Who spent on what"}</div>
+  <div class="grp tbl">${head}${R.catList.map(c => trow(CAT[c.id].n, c.n + " expense" + (c.n > 1 ? "s" : "") + (S.limits && S.limits[c.id] ? ` · ${Math.round(c.t / S.limits[c.id] * 100)}% of ${money(S.limits[c.id], { round: true })}` : ""), c.me, c.p, c.t, "tcat", `data-act="exp-cat" data-arg="${c.id}"`) + `<div class="subs" id="sub-${c.id}">${c.list.slice(0, 7).map(g => trow(esc(g.name), g.n > 1 ? "×" + g.n : "", g.me, g.p, g.t, "tsub")).join("")}${c.list.length > 7 ? trow(`${c.list.length - 7} smaller`, "", c.list.slice(7).reduce((x, g) => x + g.me, 0), c.list.slice(7).reduce((x, g) => x + g.p, 0), c.list.slice(7).reduce((x, g) => x + g.t, 0), "tsub") : ""}</div>`).join("")}
     ${trow("Total", "", T.me, T.p, T.t, "tfoot")}</div>
   <div class="hint" style="text-align:left;margin:6px 16px 0">Tap a category to see its places.</div>
   <div class="lab">Top places</div>
   <div class="grp tbl">${head}${R.keep.map(g => trow(esc(g.name), `${CAT[g.cat].n}${g.n > 1 ? " · ×" + g.n : ""}`, g.me, g.p, g.t)).join("")}${R.tail.cnt ? trow(`${R.tail.cnt} smaller places`, "", R.tail.me, R.tail.p, R.tail.t) : ""}</div>
   ${R.pat.length ? `<div class="lab">Worth noticing</div><div class="grp">${R.pat.map(x => `<div class="pt">${x}</div>`).join("")}</div>` : ""}
-  <div class="acts2"><button class="tx" data-act="share-report">Share this month</button></div>`;
+  <div class="acts2"><button class="tx" data-act="limits">Monthly limits</button><button class="tx" data-act="share-report">Share this month</button></div>`;
 }
 function openBreakdown() { openSheet("Month summary", `<div id="bd">${renderSummary()}</div>`, b => animateIn(b)); }
 
@@ -1114,8 +1171,14 @@ function renderYou() {
     <div class="muted" style="font-size:13px;margin:14px 2px 0;line-height:1.45">${S.sync.agent === false ? "🤖 The AI agent isn't enabled on your server yet." : "🤖 Nest agent is on — it reads your synced expenses to answer questions."}</div>
     ${S.sync.partner ? "" : `<button class="btn soft block" data-act="show-invite" style="margin-top:10px">Show invite code</button>`}
     <div class="row" style="margin-top:14px"><button class="btn soft" style="flex:1" data-act="sync-now">Sync now</button><button class="btn danger" style="flex:1" data-act="disconnect">Disconnect</button></div></div>`
+  : solo() ? `<div class="card"><div class="row"><span class="ib" style="background:#F0508B22;width:40px;height:40px;font-size:20px">💞</span><div style="flex:1"><b style="font-size:16px">Add your partner</b><div class="muted" style="font-size:13px;margin-top:2px">Optional. See both your spends side by side, synced live.</div></div></div><button class="btn prime block" style="margin-top:14px" data-act="duo-on">Turn on Together</button></div>`
   : `<div class="card"><div class="row"><span class="ib" style="background:#5B5BD622;width:40px;height:40px;font-size:20px">💌</span><div style="flex:1"><b style="font-size:16px">Track together</b><div class="muted" style="font-size:13px;margin-top:2px">Invite ${esc(first(S.p.name))} — one tap, nothing to set up.</div></div></div>
     <button class="btn wa block" style="margin-top:14px" data-act="quick-invite">Invite on WhatsApp</button><button class="link" data-act="pair-join" style="display:block;margin:12px auto 0">I have a code</button></div>`}
+  <div class="sec"><h2>Privacy & reminders</h2></div>
+  <div class="list set">
+    ${N && N.lockAvailable && N.lockAvailable() ? `<button class="li" data-act="lock-toggle"><span class="ib" style="background:#5B5BD622">🔒</span><div class="mid"><div class="t1">App lock</div><div class="t2">Fingerprint, face or screen lock</div></div><span class="tgl ${S.lock ? "on" : ""}"><i></i></span></button>` : ""}
+    ${N && N.setWeekly ? `<button class="li" data-act="weekly-toggle"><span class="ib" style="background:#F5A52422">🗓</span><div class="mid"><div class="t1">Sunday summary</div><div class="t2">Your week in 10 seconds, Sundays at 9 pm</div></div><span class="tgl ${S.weeklyOff ? "" : "on"}"><i></i></span></button>` : ""}
+  </div>
   <div class="sec"><h2>Preferences</h2></div>
   <div class="card"><div class="lab">Currency</div>
     <div class="seg">${Object.keys(CUR).map(k => `<button class="${S.cur === k ? "on" : ""}" data-act="cur" data-arg="${k}">${CUR[k].sym} ${k}</button>`).join("")}</div>
@@ -1237,14 +1300,14 @@ function openNudge() {
 const aiOk = () => syncOn() && S.sync.agent !== false;
 let CH = { msgs: [], busy: false };
 const md = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
-const SUGG = () => ["Where did we spend most this month?", `What did ${first(S.p.name)} spend this week?`, "Which places do we visit most?", `Log ${CUR[S.cur].sym}500 groceries I paid`];
+const SUGG = () => solo() ? ["Where did I spend most this month?", "How does this month compare to last?", "Which places do I visit most?", `Log ${CUR[S.cur].sym}500 groceries`] : ["Where did we spend most this month?", `What did ${first(S.p.name)} spend this week?`, "Which places do we visit most?", `Log ${CUR[S.cur].sym}500 groceries I paid`];
 function openChat() {
   const c = $("#chat"); c.setAttribute("aria-hidden", "false");
   c.innerHTML = `<header><button class="x" data-act="chat-close" aria-label="Close">✕</button><span class="av2">✦</span><div><b>Nest</b><small>Your money agent · ${aiOk() ? "online" : "needs sync"}</small></div></header>
   <div id="msgs" aria-live="polite"></div>
   <form class="composer" id="cform"><input id="chat-in" placeholder="Ask about your spending…" autocomplete="off" aria-label="Message"><button type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>`;
   requestAnimationFrame(() => c.classList.add("on")); hap(0);
-  if (!CH.msgs.length) CH.msgs.push({ role: "assistant", content: `Hi ${first(S.me.name)}! I can see how you two are doing — balance, trends, who paid what. Ask me anything, or tell me to log something.`, local: true, sugg: true });
+  if (!CH.msgs.length) CH.msgs.push({ role: "assistant", content: `Hi ${first(S.me.name)}! ${solo() ? "I can see your spending — trends, places, categories." : "I can see how you two are doing — trends, places, who spent what."} Ask me anything, or tell me to log something.`, local: true, sugg: true });
   renderChat();
   $("#cform").onsubmit = ev => { ev.preventDefault(); const i = $("#chat-in"), t = i.value.trim(); if (t) { i.value = ""; sendChat(t); } };
 }
@@ -1646,9 +1709,9 @@ function renderOb() {
   if (s === 0) h = obShell(0, `
     <div class="orb" aria-hidden="true"><i class="a"></i><i class="b"></i></div>
     <h1 class="ob-h">Money is easier<br>when it's shared.</h1>
-    <p class="ob-p">Nest keeps a calm, always-current picture of what you two spend — together, in one timeline.</p>
+    <p class="ob-p">Nest builds your spending history from bank texts and payment apps — no typing. <b>Your SMS never leaves your phone.</b></p>
     <div class="stagger" style="margin-top:16px">
-      <div class="feat"><span class="ico" style="background:#5B5BD622">⚖️</span><div><b>One shared month</b><span>See what you two spend, week by week.</span></div></div>
+      <div class="feat"><span class="ico" style="background:#5B5BD622">📅</span><div><b>One calm month</b><span>Week by week, grouped by place. Add your partner any time.</span></div></div>
       <div class="feat" style="animation-delay:.1s"><span class="ico" style="background:#F0508B22">💬</span><div><b>Starts itself</b><span>Reads bank texts on-device to pre-fill your history.</span></div></div>
       <div class="feat" style="animation-delay:.2s"><span class="ico" style="background:#12A59422">🔒</span><div><b>Private by design</b><span>No account. Data stays on your phone unless you sync with your partner.</span></div></div></div>`,
     `<button class="btn prime block" data-act="ob-next">Get started</button><button class="link" data-act="ob-join" style="align-self:center">Have an invite code? Join your partner</button>`);
@@ -1723,7 +1786,7 @@ function finishOb(add) {
   markScanned(); S.onboarded = true; smartMonth(); save(); if (queuedShare) { const q = queuedShare; queuedShare = ""; setTimeout(() => handleShared(q), 900); } const n = add ? OB.cands.filter(c => c.on).length : 0;
   $("#ob").classList.remove("on"); setTimeout(() => { $("#ob").innerHTML = ""; }, 500);
   applyTheme(); show("month"); hap(2);
-  if (n) { setTimeout(() => toast(`${n} expenses added — your balance is ready`), 700); if (!syncOn()) setTimeout(openNudge, 2200); }
+  if (n) { setTimeout(() => toast(`${n} expenses added — your balance is ready`), 700); if (!syncOn() && !solo()) setTimeout(openNudge, 2200); }
 }
 
 /* =========================================================
@@ -1748,7 +1811,15 @@ const A = {
   "lg-no": a => { const e = S.exp.find(x => x.id === a); if (e) { e.cat = "xfer"; touch(e); save(); openLarge(true); refresh(); } },
   "auto-toggle": () => { S.auto = S.auto === false; persist(); show("you", true); toast(S.auto ? "New payments will be added automatically" : "Automatic adding is off"); },
   "exp-cat": a => { const el = $("#sub-" + a); if (el) { el.classList.toggle("on"); hap(1); } },
-  "share-report": () => shareText("Nest — " + monthLabel(U.month), reportText(U.month)),
+  "share-report": () => shareStory(),
+  limits: () => openLimits(),
+  "limits-save": () => { const L = {}; $$(".lim").forEach(i => { const v = parseFloat(i.value.replace(/[^\d.]/g, "")); if (v > 0) L[i.dataset.cat] = v; }); S.limits = L; persist(); closeSheet(); hap(2); refresh(); toast(Object.keys(L).length ? "Limits saved" : "Limits cleared"); },
+  "month-ok": a => { S.okM = S.okM || {}; S.okM[a] = Date.now(); persist(); hap(2); const b = $("#bd"); if (b) b.innerHTML = renderSummary(); toast("Thanks — marked as right"); },
+  "month-missing": () => openMissing(),
+  who: a => { U.who = a; hap(0); refresh(); },
+  "lock-toggle": () => { if (S.lock) { S.lock = false; persist(); refresh(); toast("App lock off"); return; } lockPending = true; try { N.authenticate(); } catch (e) { } },
+  "weekly-toggle": () => { S.weeklyOff = !S.weeklyOff; persist(); try { N.setWeekly(!S.weeklyOff); } catch (e) { } refresh(); toast(S.weeklyOff ? "Sunday summary off" : "Sunday summary on — every Sunday at 9 pm"); },
+  unlock: () => { try { N.authenticate(); } catch (e) { } },
   "quick-invite": () => quickInvite(true), "quick-qr": () => quickInvite(false), "wa-send": () => sendWhatsApp(), "show-invite": () => openInvite(false),
   "copy-code": () => { const c = S.sync && S.sync.code; if (!c) return; if (N && N.copy) N.copy(c); else { try { navigator.clipboard.writeText(c); } catch (e) { } } toast("Code copied"); },
 
@@ -1816,7 +1887,7 @@ function smartMonth() {
   if (a < 4 && b > a * 3) { U.month = prev; U.insMonth = prev; }
 }
 function boot() {
-  load(); smartMonth(); if (syncOn()) setTimeout(syncNow, 1200); applyTheme(true);
+  load(); if (S.lock) showLock(); try { N && N.setWeekly && N.setWeekly(!S.weeklyOff); } catch (e) { } smartMonth(); if (syncOn()) setTimeout(syncNow, 1200); applyTheme(true);
   const done = () => { const sp = $("#splash"); sp.classList.add("out"); setTimeout(() => sp.remove(), 700); };
   setTimeout(() => {
     if (S.onboarded) { applyTheme(); show("month"); done(); }

@@ -4,7 +4,7 @@ const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.addInitScript(() => { window.__fast = 1; });
+  await p.addInitScript(() => { window.__fast = 1; window.__img = 0; window.__auth = 0; window.Native = { hasSmsPermission: () => false, requestSms() { setTimeout(() => window.__onPerm(false), 5); }, loadState() { return localStorage.getItem('ns') || ''; }, saveState(j) { localStorage.setItem('ns', j); }, haptic() {}, setBars() {}, isNight() { return false; }, consumeInvite() { return ''; }, consumeShared() { return ''; }, share() {}, copy() {}, shareImage(b) { window.__img = b.length; }, lockAvailable: () => true, authenticate() { window.__auth++; setTimeout(() => window.__unlock(window.__authOk !== false), 10); }, setWeekly(on) { window.__weekly = on; } }; });
   await p.goto('file://' + __dirname + '/../app/src/main/assets/www/index.html'); await p.waitForTimeout(400);
   await p.click('[data-act=ob-next]');
   ok(await p.$('#ob-p') === null, 'new users start with "Just me" (no partner field)');
@@ -17,7 +17,30 @@ const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
   await p.click('[data-act=duo-on]'); await p.waitForTimeout(400); await p.fill('#duo-name', 'Gunjan'); await p.click('[data-act=duo-save]'); await p.waitForTimeout(500);
   const duo = await p.evaluate(() => ({ mode: S.mode, name: S.p.name, lbl: document.querySelector('.h2t small').innerText, avs: document.querySelectorAll('.pr2 .avc').length }));
   ok(duo.mode === 'duo' && duo.name === 'Gunjan' && duo.lbl === 'Spent together' && duo.avs === 2, 'turning on Together adds the partner everywhere');
-  await p.evaluate(() => { S.mode = 'solo'; show('month'); });
+  // duo: side-by-side week split + who filter
+  await p.evaluate(() => { S.exp.slice(0, 6).forEach((e, i) => { if (i % 2) e.paid = 'p'; }); show('month'); }); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => !!document.querySelector('.tn-m.sbs') && document.querySelectorAll('.whoseg button').length === 3), 'Together shows each person side by side per week, with a Both / Sri / Gunjan filter');
+  await p.click('.whoseg [data-arg=p]'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => [...document.querySelectorAll('#tl .li[data-act]')].length > 0 && S.exp.filter(e => e.paid === 'p').length > 0), 'filtering to the partner shows only their spends');
+  await p.evaluate(() => { U.who = 'all'; S.mode = 'solo'; show('month'); });
+  // solo summary: one column, trust line
+  await p.evaluate(() => openBreakdown()); await p.waitForTimeout(500);
+  const sm = await p.evaluate(() => ({ one: document.querySelectorAll('#bd .tr.one').length, head: !!document.querySelector('#bd .thead'), trust: !!document.querySelector('.tq'), lab: document.querySelector('#bd .lab').innerText }));
+  ok(sm.one > 0 && !sm.head && /where it went/i.test(sm.lab), 'solo month summary has no empty partner column');
+  ok(sm.trust, 'month summary asks "does this look right?" with sources');
+  await p.click('[data-act=month-ok]'); await p.waitForTimeout(300); ok(await p.evaluate(() => !!document.querySelector('.tok')), 'confirming the month is remembered');
+  await p.click('[data-act=share-report]'); await p.waitForTimeout(800); ok(await p.evaluate(() => window.__img > 10000), 'share creates a month story image');
+  await p.evaluate(() => closeSheet()); await p.waitForTimeout(300);
+  // limits -> hint
+  await p.evaluate(() => { const c = S.exp.filter(e => inMonth(e.ts, U.month) && counted(e)).reduce((a, e) => (a[e.cat] = (a[e.cat] || 0) + e.amt, a), {}); const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0]; S.limits = { [top[0]]: Math.round(top[1] * 1.1) }; show('month'); });
+  ok(await p.evaluate(() => /of/.test(document.querySelector('.gcard') ? document.querySelector('.gcard').innerText : '') && /left|Over/.test(document.querySelector('.gcard').innerText)), 'a category near its limit shows a gentle nudge');
+  // app lock
+  await p.evaluate(() => show('you')); await p.waitForTimeout(300); await p.click('[data-act=lock-toggle]'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => S.lock === true), 'app lock turns on after confirming fingerprint');
+  await p.evaluate(() => { window.__authOk = false; showLock(); }); await p.waitForTimeout(200); ok(await p.evaluate(() => !!document.querySelector('#lock')), 'locked screen stays when unlock fails');
+  await p.evaluate(() => { window.__authOk = true; }); await p.click('#lock [data-act=unlock]'); await p.waitForTimeout(200); ok(await p.evaluate(() => !document.querySelector('#lock')), 'unlock removes the lock screen');
+  ok(await p.evaluate(() => window.__weekly === true), 'Sunday summary is scheduled by default');
+  await p.evaluate(() => show('month'));
   // learn names
   const n = await p.evaluate(() => {
     const t = Date.now(); const mk = (id, a, d) => ({ id: 'x' + id, a: 'VM-HDFCBK', b: `Rs.${a}.00 debited from A/c XX4821 to VPA abcxyzmart@okaxis (UPI Ref ${id})`, d: t - d * 864e5 });

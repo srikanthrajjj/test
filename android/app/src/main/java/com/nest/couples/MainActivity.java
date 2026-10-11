@@ -209,6 +209,44 @@ public class MainActivity extends Activity {
         return m == Configuration.UI_MODE_NIGHT_YES;
     }
 
+    private static final int REQ_AUTH = 31;
+
+    @SuppressWarnings("deprecation")
+    private void startAuth() {
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                android.hardware.biometrics.BiometricPrompt.Builder b = new android.hardware.biometrics.BiometricPrompt.Builder(this)
+                        .setTitle("Unlock Nest").setSubtitle("Use your fingerprint, face or screen lock");
+                if (Build.VERSION.SDK_INT >= 30) b.setAllowedAuthenticators(android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_WEAK | android.hardware.biometrics.BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+                else b.setDeviceCredentialAllowed(true);
+                b.build().authenticate(new android.os.CancellationSignal(), getMainExecutor(), new android.hardware.biometrics.BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(android.hardware.biometrics.BiometricPrompt.AuthenticationResult r) {
+                        js("window.__unlock && window.__unlock(true)");
+                    }
+
+                    @Override
+                    public void onAuthenticationError(int code, CharSequence msg) {
+                        js("window.__unlock && window.__unlock(false)");
+                    }
+                });
+                return;
+            }
+            android.app.KeyguardManager km = (android.app.KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            Intent i = km == null ? null : km.createConfirmDeviceCredentialIntent("Unlock Nest", "Confirm it's you");
+            if (i == null) { js("window.__unlock && window.__unlock(true)"); return; }
+            startActivityForResult(i, REQ_AUTH);
+        } catch (Throwable e) {
+            js("window.__unlock && window.__unlock(true)");
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int code, int result, Intent data) {
+        super.onActivityResult(code, result, data);
+        if (code == REQ_AUTH) js("window.__unlock && window.__unlock(" + (result == RESULT_OK) + ")");
+    }
+
     void notifPing() {
         ui.removeCallbacks(notifRun);
         ui.postDelayed(notifRun, 800);
@@ -420,6 +458,56 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean isNight() {
             return MainActivity.this.isNight();
+        }
+
+        @JavascriptInterface
+        public void setWeekly(final boolean on) {
+            if (on) WeeklyReceiver.schedule(MainActivity.this); else WeeklyReceiver.cancel(MainActivity.this);
+        }
+
+        /** Month story card: PNG (base64) from the page -> share sheet / WhatsApp. */
+        @JavascriptInterface
+        public void shareImage(final String b64, final String text) {
+            ui.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        File dir = new File(getCacheDir(), "share");
+                        dir.mkdirs();
+                        OutputStream os = new FileOutputStream(new File(dir, "nest-month.png"));
+                        os.write(android.util.Base64.decode(b64, android.util.Base64.DEFAULT));
+                        os.close();
+                        Uri uri = Uri.parse("content://com.nest.couples.apk/nest-month.png?t=" + System.currentTimeMillis());
+                        Intent i = new Intent(Intent.ACTION_SEND);
+                        i.setType("image/png");
+                        i.putExtra(Intent.EXTRA_STREAM, uri);
+                        i.putExtra(Intent.EXTRA_TEXT, text);
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(i, "Share your month"));
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public boolean lockAvailable() {
+            try {
+                android.app.KeyguardManager km = (android.app.KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+                return km != null && km.isDeviceSecure();
+            } catch (Throwable e) {
+                return false;
+            }
+        }
+
+        @JavascriptInterface
+        public void authenticate() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    startAuth();
+                }
+            });
         }
 
         @JavascriptInterface
