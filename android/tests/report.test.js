@@ -2,7 +2,7 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const assert=require('node:assert/strict');
 (async()=>{ const b=await chromium.launch(); const p=await (await b.newContext({viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true,locale:'en-IN'})).newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
  await p.addInitScript(()=>{window.__fast=1}); await p.goto('file:///home/user/test/android/app/src/main/assets/www/index.html'); await p.waitForTimeout(500);
- await p.click('[data-act=ob-next]'); await p.fill('#ob-me','Arjun'); await p.fill('#ob-p','Meera'); await p.click('[data-act=ob-names]'); await p.click('[data-act=ob-skip]'); await p.waitForTimeout(600);
+ await p.click('[data-act=ob-next]'); await p.fill('#ob-me','Arjun'); await p.click('[data-act=ob-mode][data-arg=duo]'); await p.fill('#ob-p','Meera'); await p.click('[data-act=ob-names]'); await p.click('[data-act=ob-skip]'); await p.waitForTimeout(600);
  const res=await p.evaluate(()=>{
    const now=new Date(), mk=(d,h=12)=>new Date(now.getFullYear(),now.getMonth(),d,h).getTime(), pm=(d)=>new Date(now.getFullYear(),now.getMonth()-1,d,12).getTime();
    const add=(amt,title,paid,ts)=>S.exp.push({id:uid(),amt,title,cat:catOf(title),paid,sm:50,ts,src:'sms',u:Date.now()});

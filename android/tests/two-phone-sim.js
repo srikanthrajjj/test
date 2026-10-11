@@ -16,7 +16,7 @@ const canon = p => p.evaluate(()=>{ const M=S.sync?S.sync.member:'a'; const A=x=
   const spentA=S.exp.filter(e=>A(e.paid)==='a').reduce((a,e)=>a+e.amt,0); return {exp,set:[],netA:spentA,cur:S.cur,names:[S.me.name,S.p.name]}; });
 async function converge(A,B,msg){ for(let i=0;i<4;i++){ await A.evaluate(()=>syncNow()); await B.evaluate(()=>syncNow()); await A.waitForTimeout(500);} const a=await canon(A), b=await canon(B);
   ok(JSON.stringify(a.exp)===JSON.stringify(b.exp)&&JSON.stringify(a.set)===JSON.stringify(b.set)&&Math.abs(a.netA-b.netA)<0.01, `${msg}: both phones agree (${a.exp.length} expenses, net ${a.netA})`); return a; }
-async function onboardEmpty(p,me,pt){ await p.click('[data-act=ob-next]'); await p.fill('#ob-me',me); await p.fill('#ob-p',pt); await p.click('[data-act=ob-names]'); await p.click('[data-act=ob-skip]'); await p.waitForTimeout(700); }
+async function onboardEmpty(p,me,pt){ await p.click('[data-act=ob-next]'); await p.fill('#ob-me',me); await p.click('[data-act=ob-mode][data-arg=duo]'); await p.fill('#ob-p',pt); await p.click('[data-act=ob-names]'); await p.click('[data-act=ob-skip]'); await p.waitForTimeout(700); }
 async function addUI(p,amt,title,{paid,split}={}){ await p.click('#fab'); await p.waitForTimeout(450); await p.fill('#f-amt',String(amt)); await p.fill('#f-title',title);
   if(paid) await p.click(`[data-act=f-paid][data-arg=${paid}]`); await p.click('[data-act=f-save]'); await p.waitForTimeout(700); }
 async function inviteAndJoin(A,B,bName){

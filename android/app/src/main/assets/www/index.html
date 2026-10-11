@@ -593,6 +593,7 @@ function load() {
   if ((S.v || 1) < 3) { S.exp.forEach(e => { if (e.src === "sms" || e.src === "app") { const t = canonMerchant(e.title); if (t !== e.title) { e.title = t; if (e.cat === "other") e.cat = catOf(t); e.u = Date.now(); } } }); }
   if ((S.v || 1) < 2) { S.exp.forEach(e => { if (e.src === "sms") { e.title = canonMerchant(e.title); if (e.cat === "other") e.cat = catOf(e.title); } }); S.v = 2; }
   if (S.v < 3) S.v = 3;
+  if (!S.mode) S.mode = S.onboarded ? "duo" : "solo";
 }
 function save() { persist(); queueSync(); }
 function persist() {
@@ -674,7 +675,7 @@ function applyRemote(res, initial) {
     }
     const list = c.kind === "exp" ? S.exp : S.set, i = list.findIndex(x => x.id === c.id);
     if (c.del) { if (i >= 0 && (list[i].u || 0) < c.u) { if (c.kind === "exp") goneAdd(list[i]); list.splice(i, 1); changed = true; } continue; }
-    if (i >= 0) { if ((list[i].u || 0) >= c.u) continue; const nw = fromWire(c.kind, c.data, c.id, c.u); if (c.kind === "exp" && Math.abs(nw.amt - list[i].amt) > 0.004 && !initial) edited.push([list[i], nw]); if (list[i].raw && !nw.raw) nw.raw = list[i].raw; list[i] = nw; changed = true; continue; }
+    if (i >= 0) { if ((list[i].u || 0) >= c.u) continue; const nw = fromWire(c.kind, c.data, c.id, c.u); if (c.kind === "exp" && Math.abs(nw.amt - list[i].amt) > 0.004 && !initial) edited.push([list[i], nw]); if (list[i].raw && !nw.raw) { nw.raw = list[i].raw; nw.mk = list[i].mk; } list[i] = nw; changed = true; continue; }
     const tb = (S.tomb || []).find(t => t.id === c.id); if (tb && tb.u >= c.u) continue;
     const rec = fromWire(c.kind, c.data, c.id, c.u); list.push(rec); changed = true;
     if (!initial) { if (c.kind === "exp") added.push(rec); else sets++; }
@@ -900,7 +901,8 @@ function greet() { const h = new Date().getHours(); return h < 5 ? "Late night" 
 const wkStart = ts => { const d = new Date(startOfDay(ts)); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
 const spentBy = (list, k) => list.filter(e => e.paid === k).reduce((a, e) => a + e.amt, 0);
 let GRP = {};
-const multiPeople = () => (S.exp.some(e => e.paid === "p") && S.exp.some(e => e.paid === "me")) || syncOn();
+const solo = () => S.mode === "solo" && !syncOn();
+const multiPeople = () => !solo() && ((S.exp.some(e => e.paid === "p") && S.exp.some(e => e.paid === "me")) || syncOn());
 const shortDate = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 function largeOf(m) {
   const mo = S.exp.filter(e => inMonth(e.ts, m) && counted(e)), tot = mo.reduce((a, e) => a + e.amt, 0), lim = Math.max(20000, 6 * median(mo.map(e => e.amt)));
@@ -945,7 +947,8 @@ function renderMonth() {
       <div class="list">${shown.map(groupRow).join("")}${more.length ? `<div class="morerows" id="mr-${w.w}">${more.map(groupRow).join("")}</div><button class="li moreb" id="mb-${w.w}" data-act="wk-more" data-arg="${w.w}">Show ${more.length} more</button>` : ""}</div></div>`;
   });
   const invHidden = S.invHide && Date.now() - S.invHide < 864e5;
-  const inv = invHidden ? "" : !syncOn() && S.exp.length ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Track together with ${esc(first(S.p.name))}</span><button class="lk" data-act="quick-invite">Invite on WhatsApp</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : syncOn() && !S.sync.partner ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Waiting for ${esc(first(S.p.name))}</span><button class="lk" data-act="show-invite">Share invite again</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : "";
+  const promoHidden = S.promoHide && Date.now() - S.promoHide < 14 * 864e5;
+  const inv = solo() ? (promoHidden || !S.exp.length ? "" : `<div class="gcard inv"><span class="gic" style="color:#F0508B;background:#F0508B26">${svgIc("people", 26)}</span><div class="gtx"><span><b style="display:inline;font-size:11px;letter-spacing:.06em;color:#F0508B;margin-right:6px">NEW</b>Track together with your partner</span><button class="lk" data-act="duo-on">See both spends in one timeline</button></div><button class="xb" data-act="promo-hide" aria-label="Dismiss">✕</button></div>`) : invHidden ? "" : !syncOn() && S.exp.length ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Track together with ${esc(first(S.p.name))}</span><button class="lk" data-act="quick-invite">Invite on WhatsApp</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : syncOn() && !S.sync.partner ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Waiting for ${esc(first(S.p.name))}</span><button class="lk" data-act="show-invite">Share invite again</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : "";
   const hints = guideHints(m, cExp, total, isNow);
   const share = total > 0 ? Math.min(100, Math.max(0, Math.round(me / total * 100))) : 0;
   const xferTot = mExp.filter(e => !counted(e)).reduce((a, e) => a + e.amt, 0), refTot = mExp.filter(e => e.cat === "refund").reduce((a, e) => a - e.amt, 0);
@@ -963,11 +966,11 @@ function renderMonth() {
   const quests = qs.length ? `<div class="quests">${qs.join("")}</div>` : "";
   return `
   <div class="top"><div class="tl1"><button class="nv" data-act="mprev" aria-label="Previous month">‹</button><button class="mt2" data-act="monthpick" aria-label="Choose month">${monthLabel(m)}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><button class="nv" data-act="mnext" ${isNow ? "disabled" : ""} aria-label="Next month">›</button></div>
-    <div class="tr1"><button class="ib2" data-act="chat" aria-label="Ask Nest">${svgIc("spark", 22)}</button><button class="pr2" data-act="tab" data-arg="you" aria-label="Settings"><span class="avc" style="background:${S.me.color}">${esc((S.me.name.trim()[0] || "?").toUpperCase())}</span><span class="avc" style="background:${S.p.color}">${esc((S.p.name.trim()[0] || "?").toUpperCase())}</span></button></div></div>
+    <div class="tr1"><button class="ib2" data-act="chat" aria-label="Ask Nest">${svgIc("spark", 22)}</button><button class="pr2" data-act="tab" data-arg="you" aria-label="Settings"><span class="avc" style="background:${S.me.color}">${esc((S.me.name.trim()[0] || "?").toUpperCase())}</span>${solo() ? "" : `<span class="avc" style="background:${S.p.color}">${esc((S.p.name.trim()[0] || "?").toUpperCase())}</span>`}</button></div></div>
   <button class="hero2" data-act="breakdown" aria-label="Open month summary">
-    <div class="h2t"><div><small>Spent together</small><div class="tot" id="bigbal" data-v="${total}">${money(total, { round: true })}</div></div><span class="ms">Month summary <i>›</i></span></div>
-    <div class="pbar"><i style="background:${S.me.color};width:${total ? Math.max(share, 2) : 0}%"></i>${pp > 0 ? `<i style="background:${S.p.color};width:${100 - share}%"></i>` : ""}</div>
-    <div class="duo">${ring}<div class="dp">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<div class="pi"><span class="avc" style="background:${u.color}">${esc((u.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(u.name))} <em style="color:${u.color}">${total ? pc : 0}%</em></small><b>${money(v, { round: true })}</b></div></div>`).join("")}</div></div>
+    <div class="h2t"><div><small>${solo() ? "Spent this month" : "Spent together"}</small><div class="tot" id="bigbal" data-v="${total}">${money(total, { round: true })}</div></div><span class="ms">Month summary <i>›</i></span></div>
+    ${solo() ? "" : `<div class="pbar"><i style="background:${S.me.color};width:${total ? Math.max(share, 2) : 0}%"></i>${pp > 0 ? `<i style="background:${S.p.color};width:${100 - share}%"></i>` : ""}</div>
+    <div class="duo">${ring}<div class="dp">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<div class="pi"><span class="avc" style="background:${u.color}">${esc((u.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(u.name))} <em style="color:${u.color}">${total ? pc : 0}%</em></small><b>${money(v, { round: true })}</b></div></div>`).join("")}</div></div>`}
   </button>
   ${refTot > 0 ? `<div class="xl" style="padding-bottom:0">includes ${money(refTot, { round: true })} in refunds, already taken off</div>` : ""}
   ${xferTot ? `<button class="xl" data-act="transfers">${money(xferTot, { round: true })} in transfers &amp; investments, not counted <i>›</i></button>` : ""}
@@ -993,6 +996,13 @@ function openGroup(id) {
   openSheet("", `<div class="dh">${ico(items[0].cat, title).replace('class="ico', 'class="ico big')}<div class="dt">${esc(title)}</div><div class="da">${money(g.t)}</div><div class="ds">${items.length} payments${g.x ? " · not counted" : ""}</div></div>
     <div class="list">${items.map(e => rowHtml(e, true)).join("")}</div>
     ${dup ? `<div class="hint" style="margin-top:12px">Two of these have the same amount on the same day — delete one if it's a duplicate.</div>` : ""}`);
+}
+function duoOn() {
+  if (S.p.name && S.p.name !== "Partner") { S.mode = "duo"; save(); hap(2); refresh(); toast("Together mode on"); return; }
+  openSheet("Track together", `<p class="muted" style="margin:2px 2px 14px;line-height:1.45">Add your partner. You'll see what each of you spends in one timeline, and they can join from WhatsApp in one tap.</p>
+    <input class="inp" id="duo-name" maxlength="18" placeholder="Partner's name" autocomplete="off" style="min-height:48px">
+    <button class="btn prime block" data-act="duo-save" style="margin-top:14px">Turn on Together</button>`);
+  setTimeout(() => { const i = $("#duo-name"); i && i.focus(); }, 350);
 }
 function openTransfers() {
   const m = U.month, items = S.exp.filter(e => inMonth(e.ts, m) && !counted(e)).sort((a, b) => b.ts - a.ts);
@@ -1089,10 +1099,12 @@ function renderYou() {
   const tg = (k, l) => `<button class="${S.theme === k ? "on" : ""}" data-act="theme" data-arg="${k}">${l}</button>`;
   const sw = k => `<div class="swatches" data-who="${k}">${SWATCH.map(c => `<button class="sw ${person(k).color === c ? "on" : ""}" style="background:${c}" data-act="color" data-arg="${k}|${c}" aria-label="Colour ${c}"></button>`).join("")}</div>`;
   return `
-  <div class="large"><button class="link" data-act="tab" data-arg="month" style="padding:6px 0">‹ This month</button><h1>You two</h1></div>
+  <div class="large"><button class="link" data-act="tab" data-arg="month" style="padding:6px 0">‹ This month</button><h1>${solo() ? "You" : "You two"}</h1></div>
+  <div class="card"><div class="lab" style="margin-top:0">Tracking</div><div class="seg"><button class="${solo() ? "on" : ""}" data-act="set-mode" data-arg="solo" ${syncOn() ? "disabled" : ""}>Just me</button><button class="${solo() ? "" : "on"}" data-act="set-mode" data-arg="duo">Together</button></div>
+    <div class="muted" style="font-size:13px;margin:10px 2px 0;line-height:1.4">${solo() ? "Add your partner any time — you'll both see one shared timeline, each in your own colour." : syncOn() ? "Synced with your partner. Disconnect sync to switch back to just you." : "Each expense shows who spent it. Invite your partner to sync."}</div></div>
   <div class="card">
     <div class="row">${av("me", "lg")}<input class="inp" id="nm-me" value="${esc(S.me.name)}" maxlength="18" aria-label="Your name" style="min-height:46px"></div>${sw("me")}
-    <div class="row" style="margin-top:18px">${av("p", "lg")}<input class="inp" id="nm-p" value="${esc(S.p.name)}" maxlength="18" aria-label="Partner's name" style="min-height:46px"></div>${sw("p")}
+    ${solo() ? "" : `<div class="row" style="margin-top:18px">${av("p", "lg")}<input class="inp" id="nm-p" value="${esc(S.p.name)}" maxlength="18" aria-label="Partner's name" style="min-height:46px"></div>${sw("p")}`}
   </div>
   ${Object.keys(S.bal || {}).length ? `<div class="sec"><h2>Bank balances</h2></div><div class="card">${Object.values(S.bal).sort((a, b) => b.ts - a.ts).slice(0, 6).map(b => `<div class="row"><div style="flex:1;min-width:0"><b style="font-size:16px">${esc(b.bank)}${b.tail ? " ••" + esc(b.tail) : ""}</b><div class="muted" style="font-size:13px">From a bank text · ${ago(b.ts)}</div></div><b style="font-size:17px">${money(b.v, { round: true })}</b></div>`).join("")}</div>` : ""}
   <div class="sec"><h2>Sync & agent</h2></div>
@@ -1335,7 +1347,7 @@ async function autoImport() {
     const res = await scanSince(S.smsLast), seen = new Set(S.seen); let c = []; noteBalances(res.msgs);
     (res.msgs || []).forEach(m => { const p = parseSms(m); if (p && !seen.has(p.sid)) c.push(p); });
     c = dedupeCands(c).filter(x => !wasGone(x) && !S.exp.some(e => e.amt === x.amt && Math.abs(e.ts - x.ts) < 15 * 60e3 && (e.src === "sms" || e.src === "app" || canonMerchant(e.title) === canonMerchant(x.title))));
-    const added = c.map(x => touch({ id: uid(), amt: x.amt, title: x.title, cat: x.cat, paid: "me", sm: 50, ts: x.ts, src: "sms", raw: x.raw }));
+    const added = c.map(x => touch({ id: uid(), amt: x.amt, title: x.title, cat: x.cat, paid: "me", sm: 50, ts: x.ts, src: "sms", raw: x.raw, mk: x.mk }));
     (res.msgs || []).forEach(m => { const p = parseSms(m); if (p) S.seen.push(p.sid); });
     S.smsLast = Math.max(S.smsLast, ...(res.msgs || []).map(m => m.d));
     if (added.length) { added.forEach(e => S.exp.push(e)); save(); hap(2); refresh(); toast(`${added.length} payment${added.length > 1 ? "s" : ""} added from SMS`, () => { added.forEach(e => removeRec("exp", e.id)); save(); refresh(); toast("Removed"); }); } else persist();
@@ -1356,7 +1368,7 @@ function importNotifs() {
       const ex = S.exp.filter(e => Math.abs(Math.abs(e.amt) - Math.abs(p.amt)) < .01 && Math.abs(e.ts - p.ts) < 20 * 60e3).sort((x, y) => (GENERIC_T.test(y.title) - GENERIC_T.test(x.title)) || Math.abs(x.ts - p.ts) - Math.abs(y.ts - p.ts))[0];
       if (ex) { if (GENERIC_T.test(ex.title) && !GENERIC_T.test(p.title)) { ex.title = p.title; if (ex.cat === "other") ex.cat = p.cat; ex.raw = ex.raw || p.raw; touch(ex); renamed++; } return; }
       if (wasGone(p)) return;
-      const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: p.cat, paid: "me", sm: 50, ts: p.ts, src: "app", raw: p.raw });
+      const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: p.cat, paid: "me", sm: 50, ts: p.ts, src: "app", raw: p.raw, mk: p.mk });
       S.exp.push(rec); added.push(rec);
     });
     if (added.length || renamed) { save(); refresh(); if (added.length) { hap(2); toast(`${added.length} payment${added.length > 1 ? "s" : ""} added from ${/paisa/.test(q[0] && q[0].a) ? "Google Pay" : /phonepe/.test(q[0] && q[0].a) ? "PhonePe" : /paytm/.test(q[0] && q[0].a) ? "Paytm" : "a payment app"}`); } } else if (q.length) persist();
@@ -1382,7 +1394,7 @@ async function deepScan(manual) {
       if (ex) { if (!ex.raw) ex.raw = p.raw; if (ex.src === "sms" && ex.cat === "xfer" && p.cat === "bill") { ex.cat = "bill"; touch(ex); fixed++; } if (GENERIC_T.test(ex.title) && !GENERIC_T.test(p.title)) { ex.title = p.title; touch(ex); fixed++; } return; }
       if (wasGone(p)) return;
       const big = p.amt >= lim && p.cat !== "xfer" && p.cat !== "bill";
-      const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: big ? "xfer" : p.cat, paid: "me", sm: 50, ts: p.ts, src: "sms", raw: p.raw, note: big ? "Large payment — tap Count it if this was spending" : "" });
+      const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: big ? "xfer" : p.cat, paid: "me", sm: 50, ts: p.ts, src: "sms", raw: p.raw, mk: p.mk, note: big ? "Large payment — tap Count it if this was spending" : "" });
       S.exp.push(rec); S.seen.push(p.sid); added.push(rec);
     });
     S.smsLast = Math.max(S.smsLast || 0, ...(res.msgs || []).map(m => m.d)); S.deep = Date.now();
@@ -1442,8 +1454,8 @@ function formHtml() {
   return `
   <div class="amtwrap"><span class="cur">${CUR[S.cur].sym}</span><input id="f-amt" inputmode="decimal" autocomplete="off" placeholder="0" value="${esc(F.amt)}" aria-label="Amount"></div>
   <div class="grp"><input class="fld" id="f-title" placeholder="Merchant or what it was" maxlength="40" value="${esc(F.title)}" autocomplete="off" aria-label="Merchant"><input class="fld" id="f-note" placeholder="Note (optional)" maxlength="120" value="${esc(F.note)}" autocomplete="off" aria-label="Note"></div>
-  <div class="lab">Spent by</div>
-  <div class="seg"><button data-act="f-paid" data-arg="me" class="${F.paid === "me" ? "on" : ""}">${esc(first(S.me.name))}</button><button data-act="f-paid" data-arg="p" class="${F.paid === "p" ? "on" : ""}">${esc(first(S.p.name))}</button></div>
+  ${solo() ? "" : `<div class="lab">Spent by</div>
+  <div class="seg"><button data-act="f-paid" data-arg="me" class="${F.paid === "me" ? "on" : ""}">${esc(first(S.me.name))}</button><button data-act="f-paid" data-arg="p" class="${F.paid === "p" ? "on" : ""}">${esc(first(S.p.name))}</button></div>`}
   <div class="lab">Category</div>
   <div class="chips" style="flex-wrap:wrap;overflow:visible">${CATS.map(c => `<button class="chip sm ${F.cat === c.id ? "on" : ""}" data-act="f-cat" data-arg="${c.id}">${c.n}</button>`).join("")}</div>
   <div class="lab">Date</div><div class="grp"><input class="fld" type="date" id="f-date" value="${F.date}" max="${dkey(Date.now())}" aria-label="Date"></div>
@@ -1470,9 +1482,14 @@ function saveForm() {
   if (F.date === dkey(now.getTime())) ts = now.getTime(); else if (F.id && F.ts && dkey(F.ts) === F.date) ts = F.ts;
   const rec = { id: F.id || uid(), amt: F.cat === "refund" ? -r2(x.amt) : r2(x.amt), title: F.title.trim(), cat: F.cat, paid: F.paid, sm: 50, ts, src: F.src, note: F.note.trim() };
   const editing = !!F.id; touch(rec); if (editing) untomb(rec.id);
-  if (editing) { const i = S.exp.findIndex(e => e.id === F.id); S.exp[i] = Object.assign(S.exp[i], rec); } else S.exp.push(rec);
+  let learnedN = 0;
+  if (editing) {
+    const i = S.exp.findIndex(e => e.id === F.id), old = S.exp[i], renamed = old.title !== rec.title, recat = old.cat !== rec.cat;
+    S.exp[i] = Object.assign(old, rec);
+    if ((renamed || recat) && (old.mk || old.raw)) learnedN = learnName(old, renamed, recat);
+  } else S.exp.push(rec);
   save(); closeSheet(); hap(2);
-  setTimeout(() => { U.month = monthStart(new Date(rec.ts)); U.week = null; refresh(); }, 120);
+  setTimeout(() => { U.month = monthStart(new Date(rec.ts)); U.week = null; refresh(); if (learnedN) toast(`Also fixed ${learnedN} other payment${learnedN > 1 ? "s" : ""} from the same sender — new ones will follow`); }, 120);
   if (!editing && !syncOn() && !S.nudgedAt && S.exp.length === 1) setTimeout(openNudge, 2600);
   toast(editing ? "Saved" : `Added ${money(rec.amt)}`, editing ? null : () => { removeRec("exp", rec.id); save(); refresh(); toast("Removed"); });
 }
@@ -1488,7 +1505,7 @@ function openDetail(id) {
   openSheet("", `
   <div class="dh">${ico(e.cat, e.title).replace('class="ico', 'class="ico big')}<div class="dt">${esc(e.title)}</div><div class="da">${money(e.amt)}</div>
     <div class="ds">${multiPeople() ? esc(first(person(e.paid).name)) + " · " : ""}${m.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}, ${m.toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true })}</div></div>
-  <div class="grp">${row("Spent by", `<span style="color:${person(e.paid).color}">${esc(person(e.paid).name)}</span>`)}${row("Category", CAT[e.cat].n)}${row("Date", m.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}${row("Source", src)}${e.note ? row("Note", esc(e.note)) : ""}</div>
+  <div class="grp">${solo() ? "" : row("Spent by", `<span style="color:${person(e.paid).color}">${esc(person(e.paid).name)}</span>`)}${row("Category", CAT[e.cat].n)}${row("Date", m.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}${row("Source", src)}${e.note ? row("Note", esc(e.note)) : ""}</div>
   ${e.raw ? `<div class="lab">${e.src === "app" ? "Payment app notification" : "Bank message"}</div><div class="rawm">${esc(e.raw)}</div>` : ""}
   ${shareBar(e)}${placeChart(e)}
   <div class="lab">In context</div>
@@ -1511,6 +1528,14 @@ const DEBIT_RE = /\b(debited|debit|dr|spent|paid|purchase[d]?|withdrawn|withdraw
 const CREDIT_RE = /\b(credited (?:to|in|into|with)? ?(?:your|ur|a\/c|acct|account|card)|received|refund(?:ed)?|reversed|cashback (?:of|credited)|deposited|salary)\b/i;
 const HARD_NOISE_RE = /\b(otp|one[- ]time|verification code|passcode|cvv|pin\b|win\b|lucky|unsuccessful|failed|declined|insufficient|requested money|has requested|autopay (?:set|mandate)|will be debited|to be debited|will be auto|scheduled)\b/i;
 const SOFT_NOISE_RE = /\b(is due|due on|due date|minimum amount due|statement|pre-?approved|apply now|offer|click|http|www\.|t&c)\b/i;
+const mkOf = e => e.mk || (e.raw ? ((parseSms({ b: e.raw, d: e.ts, id: 0 }) || {}).mk || "") : "");
+function learnName(e, renamed, recat) {
+  const k = mkOf(e); if (!k || k.length < 3) return 0;
+  S.names = S.names || {}; const cur = S.names[k] || {}; S.names[k] = { t: renamed ? e.title : (cur.t || e.title), c: recat ? e.cat : cur.c };
+  let n = 0;
+  S.exp.forEach(x => { if (x.id === e.id || (x.src !== "sms" && x.src !== "app")) return; if (mkOf(x) !== k) return; x.mk = k; let ch = false; if (renamed && x.title !== e.title) { x.title = e.title; ch = true; } if (recat && x.cat !== e.cat && x.cat !== "xfer" && x.cat !== "refund") { x.cat = e.cat; ch = true; } if (ch) { touch(x); n++; } });
+  return n;
+}
 function goneAdd(r) { S.gone = (S.gone || []).concat([[r.amt, r.ts]]).slice(-3000); }
 const wasGone = p => (S.gone || []).some(([a, t]) => Math.abs(a - p.amt) < .01 && Math.abs(t - p.ts) < 20 * 60e3);
 function noteBalances(msgs) {
@@ -1549,14 +1574,19 @@ function parseSms(m) {
   const named = body.match(/\b(?:at|to|towards|for|trf to|info:?)\s+(?!a\/c|account|your|card|vpa|upi|bank|ref|the\b|(?:rs|inr|usd|eur|gbp)\b|\d|dispute|details|more\b|any\b|assist|quer|report)([A-Za-z0-9][A-Za-z0-9 &'._*-]{1,32}?)(?=\s+(?:on|via|ref|using|from|upi|avl|bal|txn|a\/c|acct|card|is|has|if|not|call|dated|through|\d{1,2}[-/.]\d{1,2})|[.,;(]|$)/i);
   const upiSlash = body.match(/UPI\/(?:DR|CR|P2[AM])?\/?\d{4,}\/([^\/]{2,30})\//i), afterDate = body.match(/\b\d{1,2}[-\/ ]?(?:[A-Za-z]{3}|\d{1,2})[-\/ ]?\d{2,4}(?:[: ]\d{2}:\d{2}(?::\d{2})?)?\s+(?:on|at)\s+([A-Za-z][A-Za-z0-9 &'.-]{1,28}?)(?=[.;,]|\s+(?:avl|bal|ref|upi)|\s*$)/i), beforeCredited = body.match(/[;,]\s*([A-Za-z][A-Za-z0-9 .&'-]{2,28}?)\s+credited/i);
   if (upiSlash) merch = upiSlash[1]; else if (beforeCredited) merch = beforeCredited[1]; else if (named) merch = named[1]; else if (afterDate) merch = afterDate[1]; else if (vpa) merch = (vpa[1] || vpa[0]).split("@")[0];
+  const JUNK = /^(?:dear|your|ur|the|a\/?c|acct|account|card|cards|info|ref|txn|transaction|bank|hdfc|icici|sbi|axis|kotak|yes|idfc|indusind|pnb|bob|federal|rbl|upi|neft|imps|rtgs|ybl|okaxis|okhdfcbank|oksbi|okicici|customer|xx+|x+\d*|\d+|on|via|from|by|mobile|net ?banking|debit|credit|payment|merchant|beneficiary|self)\b/i;
+  if (merch && JUNK.test(merch.trim()) && vpa) merch = (vpa[1] || vpa[0]).split("@")[0];
+  else if (merch && JUNK.test(merch.trim())) merch = "";
+  const mk = (vpa ? (vpa[1] || vpa[0]) : merch).toLowerCase().replace(/[^a-z0-9@.]/g, "").replace(/\d{6,}/g, "").slice(0, 40);
   if (/^(?:paytmqr|bharatpe|q\d{5,}|gpay-?\d|upiqr|ezetap|mab\.)/i.test(merch)) merch = "Local store (QR)";
   else if (/^\+?\d{10,12}$/.test(merch.trim())) merch = "UPI to a person";
   merch = merch.replace(/[*_.\-]+$/g, "").replace(/\d{5,}/g, "").replace(/^(?:upi|pos|ecom|pur|imps|neft)[\s*_-]+/i, "").trim();
   if (/^[\d\s]*$/.test(merch) || merch.length < 2 || /^(rs|inr|usd|eur|gbp)\.?$/i.test(merch)) merch = (/atm|cash|wdl/i.test(body) ? "ATM withdrawal" : /upi/i.test(body) ? "UPI payment" : "Card payment");
   merch = canonMerchant(merch.replace(/[_]+/g, " ").replace(/\s+(approved|declined|successful|completed)\b.*$/i, "")).slice(0, 28);
+  const learnt = mk && S.names && S.names[mk]; if (learnt) merch = learnt.t;
   const xfer = XFER_RE.test(body) && !/\b(emi|insurance|premium|lic)\b/i.test(body) || /\b(sip|mutual fund)\b/i.test(body), bill = !xfer && BILL_RE.test(body);
-  if (refund) return { amt: -amt, title: merch === "Card payment" || merch === "UPI payment" ? "Refund" : merch, cat: "refund", xfer: false, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)), raw: body.slice(0, 240), via: String(m.a || "") };
-  return { amt, title: merch, cat: xfer ? "xfer" : bill ? "bill" : /atm withdrawal/i.test(merch) ? "other" : catOf(merch), xfer, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)), raw: body.slice(0, 240), via: String(m.a || "") };
+  if (refund) return { amt: -amt, title: merch === "Card payment" || merch === "UPI payment" ? "Refund" : merch, cat: "refund", xfer: false, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)), raw: body.slice(0, 240), via: String(m.a || ""), mk };
+  return { amt, title: merch, cat: learnt && learnt.c ? learnt.c : xfer ? "xfer" : bill ? "bill" : /atm withdrawal/i.test(merch) ? "other" : catOf(merch), xfer, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(body + m.d)), raw: body.slice(0, 240), via: String(m.a || ""), mk };
 }
 function dedupeCands(c) {
   const out = []; const generic = t => /^(upi payment|card payment|atm withdrawal)$/i.test(t);
@@ -1623,8 +1653,9 @@ function renderOb() {
       <div class="feat" style="animation-delay:.2s"><span class="ico" style="background:#12A59422">🔒</span><div><b>Private by design</b><span>No account. Data stays on your phone unless you sync with your partner.</span></div></div></div>`,
     `<button class="btn prime block" data-act="ob-next">Get started</button><button class="link" data-act="ob-join" style="align-self:center">Have an invite code? Join your partner</button>`);
   if (s === 1) h = obShell(1, `
-    <h1 class="ob-h">Who's in<br>your Nest?</h1><p class="ob-p">Each of you gets a colour. You'll see it everywhere, so the balance is understood at a glance.</p>
-    ${["me", "p"].map((k, i) => `<div class="pcard"><span class="av lg" id="ob-av-${k}" style="background:${person(k).color}">${esc((person(k).name.trim()[0] || "?").toUpperCase())}</span>
+    <h1 class="ob-h">Who's in<br>your Nest?</h1><p class="ob-p">${S.mode === "solo" ? "Start with just you. You can add your partner any time." : "Each of you gets a colour, so you can see at a glance who spent what."}</p>
+    <div class="seg" style="margin:4px 0 16px"><button class="${S.mode === "solo" ? "on" : ""}" data-act="ob-mode" data-arg="solo">Just me</button><button class="${S.mode === "solo" ? "" : "on"}" data-act="ob-mode" data-arg="duo">With my partner</button></div>
+    ${(S.mode === "solo" ? ["me"] : ["me", "p"]).map((k, i) => `<div class="pcard"><span class="av lg" id="ob-av-${k}" style="background:${person(k).color}">${esc((person(k).name.trim()[0] || "?").toUpperCase())}</span>
       <div style="flex:1;min-width:0"><input class="inp" id="ob-${k}" maxlength="18" placeholder="${i ? "Their name" : "Your name"}" value="${S.onboarded || person(k).name === "You" || person(k).name === "Partner" ? "" : esc(person(k).name)}" autocomplete="off">
       <div class="swatches" style="margin-top:8px">${SWATCH.map(c => `<button class="sw ${person(k).color === c ? "on" : ""}" style="background:${c};width:28px;height:28px" data-act="ob-color" data-arg="${k}|${c}" aria-label="Colour ${c}"></button>`).join("")}</div></div></div>`).join("")}
     <div class="lab" style="margin-top:22px">Currency</div><div class="seg">${Object.keys(CUR).map(k => `<button class="${S.cur === k ? "on" : ""}" data-act="ob-cur" data-arg="${k}">${CUR[k].sym} ${k}</button>`).join("")}</div>`,
@@ -1650,7 +1681,7 @@ function renderOb() {
     </div><div class="foot2">${OB.cands.length ? `<button class="btn prime block" id="ob-add" data-act="ob-add" ${on.length ? "" : "disabled"}>Add ${on.length} expense${on.length === 1 ? "" : "s"}</button>` : `<button class="btn prime block" data-act="ob-sample">Try sample messages</button>`}<button class="link" data-act="ob-skip" style="align-self:center">${OB.cands.length ? "Skip for now" : "Start empty"}</button></div>`;
   }
   ob.innerHTML = h; ob.classList.add("on");
-  if (s === 1) { const chk = () => { $("#ob-go").disabled = !($("#ob-me").value.trim() && $("#ob-p").value.trim()); }; ["me", "p"].forEach(k => { const i = $("#ob-" + k); i.oninput = () => { $("#ob-av-" + k).textContent = (i.value.trim()[0] || "?").toUpperCase(); chk(); }; }); chk(); }
+  if (s === 1) { const chk = () => { const pp = $("#ob-p"); $("#ob-go").disabled = !($("#ob-me").value.trim() && (!pp || pp.value.trim())); }; ["me", "p"].forEach(k => { const i = $("#ob-" + k); if (!i) return; i.oninput = () => { $("#ob-av-" + k).textContent = (i.value.trim()[0] || "?").toUpperCase(); chk(); }; }); chk(); }
 }
 function rvRow(c) {
   return `<div class="rv ${c.on ? "on" : ""}" data-act="ob-tog" data-arg="${c.sid}" role="checkbox" aria-checked="${c.on}" tabindex="0"><span class="ck">✓</span>${ico(c.cat, c.title)}<div class="mid"><div class="t1">${esc(c.title)}</div><div class="t2">${new Date(c.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${c.paid === "p" ? " · " + esc(first(S.p.name)) : ""}${c.cat === "xfer" ? ` <span class="flag">Transfer</span>` : c.big ? ` <span class="flag">Large — real spending?</span>` : ""}</div></div><div class="amt">${money(c.amt)}</div></div>`;
@@ -1687,7 +1718,7 @@ async function runScan(sample, days) {
 }
 function finishOb(add) {
   if (add) {
-    OB.cands.filter(c => c.on).forEach(c => { S.exp.push({ id: uid(), amt: c.amt, title: c.title, cat: c.cat, paid: c.paid || "me", sm: c.sm, ts: c.ts, src: "sms", raw: c.raw, u: Date.now() }); S.seen.push(c.sid); });
+    OB.cands.filter(c => c.on).forEach(c => { S.exp.push({ id: uid(), amt: c.amt, title: c.title, cat: c.cat, paid: c.paid || "me", sm: c.sm, ts: c.ts, src: "sms", raw: c.raw, mk: c.mk, u: Date.now() }); S.seen.push(c.sid); });
   }
   markScanned(); S.onboarded = true; smartMonth(); save(); if (queuedShare) { const q = queuedShare; queuedShare = ""; setTimeout(() => handleShared(q), 900); } const n = add ? OB.cands.filter(c => c.on).length : 0;
   $("#ob").classList.remove("on"); setTimeout(() => { $("#ob").innerHTML = ""; }, 500);
@@ -1740,6 +1771,10 @@ const A = {
   "app-settings": () => { try { N.openAppSettings(); } catch (e) { toast("Open Settings → Apps → Nest → Permissions"); } },
   smsretry: () => { closeSheet(); OB.step = 3; if (OB.from !== "settings") OB.from = "ob"; runScan(false, OB.from === "settings" ? 365 : undefined); },
   transfers: () => openTransfers(),
+  "set-mode": a => { if (a === "duo") return duoOn(); if (syncOn()) return; S.mode = "solo"; persist(); hap(1); refresh(); },
+  "duo-on": () => duoOn(),
+  "promo-hide": () => { S.promoHide = Date.now(); persist(); refresh(); },
+  "duo-save": () => { const v = ($("#duo-name") || {}).value || ""; S.p.name = v.trim() || "Partner"; if (S.me.color === S.p.color) S.p.color = SWATCH.find(c => c !== S.me.color); S.mode = "duo"; save(); closeSheet(); hap(2); refresh(); toast(`Together on — invite ${first(S.p.name)} to sync`); },
   rescan: () => deepScan(true),
   "notif-access": () => { try { N.openNotifAccess(); } catch (e) { } },
   "notif-hide": () => { S.notifHide = Date.now(); persist(); refresh(); },
@@ -1755,7 +1790,8 @@ const A = {
   "ob-next": () => { OB.step++; renderOb(); },
   "ob-color": a => { const [k, c] = a.split("|"); person(k).color = c; $$("#ob .sw").forEach(el => { if (el.dataset.arg.startsWith(k + "|")) el.classList.toggle("on", el.dataset.arg === a); }); $("#ob-av-" + k).style.background = c; hap(1); },
   "ob-cur": a => { S.cur = a; $$('[data-act="ob-cur"]').forEach(el => el.classList.toggle("on", el.dataset.arg === a)); hap(1); },
-  "ob-names": () => { S.me.name = $("#ob-me").value.trim() || "You"; S.p.name = $("#ob-p").value.trim() || "Partner"; if (S.me.color === S.p.color) S.p.color = SWATCH.find(c => c !== S.me.color); save(); OB.step = 2; renderOb(); },
+  "ob-mode": a => { const me = $("#ob-me"); if (me && me.value.trim()) S.me.name = me.value.trim(); const pp = $("#ob-p"); if (pp && pp.value.trim()) S.p.name = pp.value.trim(); S.mode = a; renderOb(); hap(1); },
+  "ob-names": () => { S.me.name = $("#ob-me").value.trim() || "You"; const pp = $("#ob-p"); S.p.name = (pp && pp.value.trim()) || S.p.name || "Partner"; if (S.me.color === S.p.color) S.p.color = SWATCH.find(c => c !== S.me.color); save(); OB.step = 2; renderOb(); },
   "ob-scan": () => runScan(false), "ob-sample": () => runScan(true), "ob-skip": () => { if (OB.from === "settings") { $("#ob").classList.remove("on"); applyTheme(); show("you"); } else finishOb(false); },
   "ob-tog": a => { const c = OB.cands.find(x => x.sid === a); c.on = !c.on; hap(1); const st = $("#ob .stage").scrollTop; renderOb(); $("#ob .stage").scrollTop = st; },
   "ob-add": () => {

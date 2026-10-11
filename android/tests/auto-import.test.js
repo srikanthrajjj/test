@@ -15,7 +15,7 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
    m(20,'Rs.450.00 debited from A/c XX4821 to VPA swiggy@axb (UPI Ref 1)'); m(20,'Rs.450.00 spent on Card XX1 at SWIGGY on 02-07-26. Avl bal Rs 4,52,775'); // same purchase twice
    m(19,'Rs.380 debited a/c XX1234 UPI to Swiggy Ref 2'); m(10,'Rs 640 debited from A/c XX1234 to ZEPTO. Avl Bal Rs 4,52,775.00'); m(9,'Avl Bal Rs 4,52,775.00. Rs 210.00 debited from A/c to Uber India Systems');
    m(8,'Rs 4,50,000 debited via NEFT to SELF A/c XX9988'); m(7,'Rs 5,000.00 debited from A/c XX1234 towards GROWW SIP mandate'); m(6,'Rs 62,000 debited to Sandeep Kumar UPI Ref 9'); m(3,'Your OTP for txn of Rs 2,400 is 123456'); },[now,day]);
- await A.click('[data-act=ob-next]'); await A.fill('#ob-me','Sri'); await A.fill('#ob-p','Gun'); await A.click('[data-act=ob-names]'); await A.click('[data-act=ob-scan]'); await A.waitForSelector('[data-act=ob-add]',{timeout:9000});
+ await A.click('[data-act=ob-next]'); await A.fill('#ob-me','Sri'); await A.click('[data-act=ob-mode][data-arg=duo]'); await A.fill('#ob-p','Gun'); await A.click('[data-act=ob-names]'); await A.click('[data-act=ob-scan]'); await A.waitForSelector('[data-act=ob-add]',{timeout:9000});
  const rv=await A.evaluate(()=>OB.cands.map(c=>[c.title,c.amt,c.cat,c.on,!!c.big]));
  console.log(JSON.stringify(rv));
  ok(rv.filter(r=>r[1]===450).length===1,'bank+card double SMS for the same purchase counted once');
