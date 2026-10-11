@@ -529,6 +529,10 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .tgl{width:46px;height:28px;border-radius:99px;background:var(--card2);position:relative;flex:none;transition:background .2s}.tgl i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}.tgl.on{background:var(--ok)}.tgl.on i{left:21px}
 #lock{position:fixed;inset:0;z-index:999;background:var(--bg);display:grid;place-items:center}.lk2{text-align:center;display:grid;gap:14px;justify-items:center}.lki{font-size:44px}.lk2 b{font-size:20px}
 .gcard.ai .ain{display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#8B7CFF;font-weight:700}.gcard.ai b{font-weight:550;font-size:15px;line-height:1.35}
+.codecard .cc-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.code.sm{font-size:30px;letter-spacing:.18em;margin:2px 0;font-weight:800;cursor:pointer}
+.cc-acts{display:flex;flex-direction:column;gap:8px}.cc-acts .btn{min-height:40px;padding:0 14px;font-size:14px}
+.cc-or{display:flex;align-items:center;gap:10px;margin:16px 0 10px;color:var(--sub);font-size:12px}.cc-or::before,.cc-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.cc-in{display:flex;gap:8px}.cc-in .inp{flex:1;text-transform:uppercase;letter-spacing:.2em;font-size:18px;font-weight:700;min-height:48px}.cc-in .btn{min-height:48px;padding:0 18px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -601,6 +605,7 @@ function load() {
   try { raw = (N && N.loadState && N.loadState()) || localStorage.getItem("nest.v1") || ""; } catch (e) { }
   if (raw) { try { S = Object.assign(blank(), JSON.parse(raw)); } catch (e) { } }
   if ((S.v || 1) < 3) { S.exp.forEach(e => { if (e.src === "sms" || e.src === "app") { const t = canonMerchant(e.title); if (t !== e.title) { e.title = t; if (e.cat === "other") e.cat = catOf(t); e.u = Date.now(); } } }); }
+  if (S.sync && S.sync.go === undefined) S.sync.go = true;
   if ((S.v || 1) < 2) { S.exp.forEach(e => { if (e.src === "sms") { e.title = canonMerchant(e.title); if (e.cat === "other") e.cat = catOf(e.title); } }); S.v = 2; }
   if (S.v < 3) S.v = 3;
   if (!S.mode) S.mode = S.onboarded ? "duo" : "solo";
@@ -645,6 +650,7 @@ function fromWire(kind, d, id, u) {
 }
 function pending() {
   const since = S.sync.pushed || 0, ch = [];
+  if (S.sync.go === false) { if ((S.mu || 0) > since) ch.push({ id: "profile:" + myId(), kind: "profile", u: S.mu, data: { name: S.me.name, color: S.me.color, cur: S.cur } }); return ch; }
   S.exp.forEach(e => { if ((e.u || 0) > since) ch.push({ id: e.id, kind: "exp", u: e.u, data: toWire("exp", e) }); });
   S.set.forEach(x => { if ((x.u || 0) > since) ch.push({ id: x.id, kind: "set", u: x.u, data: toWire("set", x) }); });
   (S.tomb || []).forEach(t => { if (t.u > since) ch.push({ id: t.id, kind: t.kind, u: t.u, del: true }); });
@@ -708,7 +714,8 @@ async function syncNow() {
     const ch = pending(), maxU = Math.max(S.sync.pushed || 0, ...ch.map(c => c.u));
     const firstPull = !S.sync.cursor;
     const res = await api("/v1/sync", { since: S.sync.cursor || 0, changes: ch });
-    S.sync.pushed = maxU; S.sync.cursor = res.cursor; S.sync.partner = !!res.partnerJoined; S.sync.lastOk = Date.now();
+    const wasPartner = S.sync.partner; S.sync.pushed = S.sync.go === false ? Math.min(maxU, S.sync.pushed || 0) || 0 : maxU; S.sync.cursor = res.cursor; S.sync.partner = !!res.partnerJoined; S.sync.lastOk = Date.now();
+    if (res.partnerJoined && S.sync.go === false) setTimeout(() => askStartSync(!wasPartner), 400);
     const changed = applyRemote(res, firstPull);
     if (firstPull && changed) smartMonth();
     if (res.partnerJoined) S.sync.code = null;
@@ -1166,16 +1173,22 @@ function renderYou() {
     ${solo() ? "" : `<div class="row" style="margin-top:18px">${av("p", "lg")}<input class="inp" id="nm-p" value="${esc(S.p.name)}" maxlength="18" aria-label="Partner's name" style="min-height:46px"></div>${sw("p")}`}
   </div>
   ${Object.keys(S.bal || {}).length ? `<div class="sec"><h2>Bank balances</h2></div><div class="card">${Object.values(S.bal).sort((a, b) => b.ts - a.ts).slice(0, 6).map(b => `<div class="row"><div style="flex:1;min-width:0"><b style="font-size:16px">${esc(b.bank)}${b.tail ? " ••" + esc(b.tail) : ""}</b><div class="muted" style="font-size:13px">From a bank text · ${ago(b.ts)}</div></div><b style="font-size:17px">${money(b.v, { round: true })}</b></div>`).join("")}</div>` : ""}
-  <div class="sec"><h2>Sync & agent</h2></div>
-  ${syncOn() ? `<div class="card">
+  <div class="sec"><h2>Sync with your partner</h2></div>
+  ${!syncOn() || !S.sync.partner ? `<div class="card codecard">
+    <div class="cc-row"><div><div class="muted" style="font-size:13px">Your code</div>${syncOn() && S.sync.code ? `<div class="code sm" data-act="copy-code">${esc(S.sync.code)}</div><div class="muted" style="font-size:12.5px">Waiting for your partner to enter it…</div>` : `<button class="btn soft" data-act="get-code" style="margin-top:6px">Get my code</button>`}</div>
+      ${syncOn() && S.sync.code ? `<div class="cc-acts"><button class="btn wa" data-act="wa-send">WhatsApp</button><button class="btn soft" data-act="copy-code">Copy</button></div>` : ""}</div>
+    <div class="cc-or"><span>or</span></div>
+    <div class="muted" style="font-size:13px;margin-bottom:6px">Enter your partner's code</div>
+    <div class="cc-in"><input class="inp" id="code-in" maxlength="7" autocapitalize="characters" autocomplete="off" placeholder="ABC123"><button class="btn prime" id="code-go" data-act="code-join">Connect</button></div>
+    <div class="muted" style="font-size:12.5px;margin-top:10px;line-height:1.4">When you're connected, both phones get a prompt to start syncing. Nothing is shared until you both tap Start.</div></div>` : ""}
+  ${syncOn() && S.sync.partner && S.sync.go === false ? `<div class="card"><b>${esc(first(S.p.name))} is connected</b><div class="muted" style="font-size:13px;margin-top:4px">Your expenses aren't shared yet.</div><button class="btn prime block" data-act="sync-start" style="margin-top:12px">Start syncing both</button></div>` : ""}
+  ${syncOn() && S.sync.partner ? `<div class="card">
     <div class="row"><span class="ib" style="background:#1FA97122;width:40px;height:40px;font-size:20px">☁️</span><div style="flex:1;min-width:0"><b style="font-size:16px">${S.sync.partner ? "Synced with " + esc(first(S.p.name)) : "Waiting for your partner"}</b><div class="muted" style="font-size:13px;margin-top:2px"><i class="syncdot ${U.sync === "ok" || !U.sync ? "" : U.sync === "syncing" ? "busy" : "off"}"></i><span class="syncLbl">${syncLabel()}</span></div></div></div>
     ${S.sync.partner ? "" : `<button class="btn wa block" data-act="wa-send" style="margin-top:12px">Send invite on WhatsApp</button>`}
     <div class="muted" style="font-size:13px;margin:14px 2px 0;line-height:1.45">${S.sync.agent === false ? "🤖 The AI agent isn't enabled on your server yet." : "🤖 Nest agent is on — it reads your synced expenses to answer questions."}</div>
     ${S.sync.partner ? "" : `<button class="btn soft block" data-act="show-invite" style="margin-top:10px">Show invite code</button>`}
     <div class="row" style="margin-top:14px"><button class="btn soft" style="flex:1" data-act="sync-now">Sync now</button><button class="btn danger" style="flex:1" data-act="disconnect">Disconnect</button></div></div>`
-  : solo() ? `<div class="card"><div class="row"><span class="ib" style="background:#F0508B22;width:40px;height:40px;font-size:20px">💞</span><div style="flex:1"><b style="font-size:16px">Add your partner</b><div class="muted" style="font-size:13px;margin-top:2px">Optional. See both your spends side by side, synced live.</div></div></div><button class="btn prime block" style="margin-top:14px" data-act="duo-on">Turn on Together</button></div>`
-  : `<div class="card"><div class="row"><span class="ib" style="background:#5B5BD622;width:40px;height:40px;font-size:20px">💌</span><div style="flex:1"><b style="font-size:16px">Track together</b><div class="muted" style="font-size:13px;margin-top:2px">Invite ${esc(first(S.p.name))} — one tap, nothing to set up.</div></div></div>
-    <button class="btn wa block" style="margin-top:14px" data-act="quick-invite">Invite on WhatsApp</button><button class="link" data-act="pair-join" style="display:block;margin:12px auto 0">I have a code</button></div>`}
+  : ""}
   <div class="sec"><h2>Privacy & reminders</h2></div>
   <div class="list set">
     ${N && N.lockAvailable && N.lockAvailable() ? `<button class="li" data-act="lock-toggle"><span class="ib" style="background:#5B5BD622">🔒</span><div class="mid"><div class="t1">App lock</div><div class="t2">Fingerprint, face or screen lock</div></div><span class="tgl ${S.lock ? "on" : ""}"><i></i></span></button>` : ""}
@@ -1206,10 +1219,33 @@ function renderYou() {
    ========================================================= */
 let ready = false, queuedInvite = null, queuedShare = "";
 const savedUrl = () => { try { return localStorage.getItem("nest.url") || ""; } catch (e) { return ""; } };
+let askOpen = false;
+function askStartSync(fresh) {
+  if (!syncOn() || S.sync.go !== false || askOpen) return;
+  if ($("#sheet").classList.contains("on") || ($("#ob") && $("#ob").classList.contains("on"))) { if (!fresh) return; setTimeout(() => askStartSync(true), 2500); return; }
+  if (!fresh && S.sync.askedAt && Date.now() - S.sync.askedAt < 10 * 60e3) return;
+  askOpen = true; S.sync.askedAt = Date.now(); persist(); hap(2);
+  const p = esc(first(S.p.name)), mine = S.exp.length;
+  openSheet("", `<div class="dh"><div style="font-size:52px">🎉</div><div class="dt">${p} is connected</div><div class="ds" style="line-height:1.45;margin-top:6px">Start syncing to see both your expenses in one timeline. Your ${mine} expense${mine === 1 ? "" : "s"} will be shared with ${p}; your SMS never leave your phone.</div></div>
+    <button class="btn prime block" data-act="sync-start" style="margin-top:18px;min-height:54px">Start syncing both</button>
+    <button class="link" data-act="sync-later" style="display:block;margin:12px auto 0">Not now</button>`, null, () => { askOpen = false; });
+}
+async function joinWithCode(code, name) {
+  code = String(code || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (code.length < 6) throw new Error("The code has 6 characters.");
+  if (syncOn() && S.sync.code === code) throw new Error("That's your own code — send it to your partner.");
+  const url = DEFAULT_SERVER, pk = await api("/v1/pair/peek?code=" + encodeURIComponent(code), null, { base: url, token: "" });
+  if (pk.full) throw new Error("That Nest already has two people.");
+  if (pk.cur && CUR[pk.cur]) S.cur = pk.cur;
+  if (name) S.me.name = name; if (S.me.color === (pk.color || SWATCH[0])) S.me.color = SWATCH.find(c => c !== pk.color);
+  const r = await api("/v1/pair/join", { code, name: S.me.name, color: S.me.color, cur: S.cur }, { base: url, token: "" });
+  S.sync = { url, couple: r.couple, token: r.token, member: r.member, cursor: 0, pushed: 0, code: null, partner: true, lastOk: 0, go: false }; S.mode = "duo";
+  adoptLocal(); S.mu = Date.now(); persist(); await syncNow();
+}
 async function connectCreate(url) {
   const r = await api("/v1/pair/create", { name: S.me.name, color: S.me.color, cur: S.cur }, { base: url, token: "" });
   try { localStorage.setItem("nest.url", url); } catch (e) { }
-  S.sync = { url, couple: r.couple, token: r.token, member: r.member, cursor: 0, pushed: 0, code: r.code, partner: false, lastOk: 0 };
+  S.sync = { url, couple: r.couple, token: r.token, member: r.member, cursor: 0, pushed: 0, code: r.code, partner: false, lastOk: 0, go: false };
   adoptLocal(); persist(); await syncNow();
 }
 function openPair(mode, fromOb, pre) {
@@ -1235,11 +1271,11 @@ function openPair(mode, fromOb, pre) {
         S.me.name = name; if (S.me.color === SWATCH[0] && pk.color === SWATCH[0]) S.me.color = SWATCH[1];
         const r = await api("/v1/pair/join", { code, name, color: S.me.color, cur: S.cur }, { base: url, token: "" });
         try { localStorage.setItem("nest.url", url); } catch (e) { }
-        S.sync = { url, couple: r.couple, token: r.token, member: r.member, cursor: 0, pushed: 0, code: null, partner: true, lastOk: 0 };
+        S.sync = { url, couple: r.couple, token: r.token, member: r.member, cursor: 0, pushed: 0, code: null, partner: true, lastOk: 0, go: false }; S.mode = "duo";
         adoptLocal(); S.mu = Date.now(); persist(); closeSheet(); hap(2);
         await syncNow();
         if (fromOb) { OB.step = 2; renderOb(); } else show(U.tab, true);
-        toast(`Connected to ${first(S.p.name)}'s Nest`);
+        toast(`Connected to ${first(S.p.name)}'s Nest`); setTimeout(() => askStartSync(true), fromOb ? 1500 : 500);
       } catch (e) { go.disabled = false; go.textContent = label; err(e.status === 0 ? "Couldn't reach Nest — check your internet and try again." : e.message); hap(3); }
     };
   });
@@ -1878,6 +1914,10 @@ const A = {
   "weekly-toggle": () => { S.weeklyOff = !S.weeklyOff; persist(); try { N.setWeekly(!S.weeklyOff); } catch (e) { } refresh(); toast(S.weeklyOff ? "Sunday summary off" : "Sunday summary on — every Sunday at 9 pm"); },
   unlock: () => { try { N.authenticate(); } catch (e) { } },
   "quick-invite": () => quickInvite(true), "quick-qr": () => quickInvite(false), "wa-send": () => sendWhatsApp(), "show-invite": () => openInvite(false),
+  "sync-start": () => { S.sync.go = true; S.sync.pushed = 0; adoptLocal(); persist(); closeSheet(); hap(2); toast(`Syncing with ${first(S.p.name)}…`); syncNow().then(() => { refresh(); toast(`You're in sync with ${first(S.p.name)} ✓`); }); },
+  "sync-later": () => { closeSheet(); toast("You can start syncing any time from You → Sync"); },
+  "get-code": async () => { try { toast("Getting your code…"); await connectCreate(DEFAULT_SERVER); S.mode = "duo"; persist(); refresh(); } catch (e) { toast(e.status === 0 ? "No internet — try again when you're online" : e.message); } },
+  "code-join": async () => { const i = $("#code-in"), b = $("#code-go"); if (!i) return; try { b.disabled = true; b.textContent = "Connecting…"; await joinWithCode(i.value, ""); refresh(); setTimeout(() => askStartSync(true), 400); } catch (e) { b.disabled = false; b.textContent = "Connect"; toast(e.status === 404 ? "That code doesn't match any Nest" : e.status === 0 ? "No internet — try again" : e.message); hap(3); } },
   "copy-code": () => { const c = S.sync && S.sync.code; if (!c) return; if (N && N.copy) N.copy(c); else { try { navigator.clipboard.writeText(c); } catch (e) { } } toast("Code copied"); },
 
   paste: () => openPaste(), "paste-go": () => pasteGo(),

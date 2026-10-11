@@ -35,6 +35,11 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  // pair, sync
  await A.evaluate(()=>{ show('month'); }); await A.waitForTimeout(400); const code=await (async()=>{ await A.click('[data-act=quick-invite]'); await A.waitForFunction(()=>S.sync&&S.sync.code,null,{timeout:8000}); return A.evaluate(()=>S.sync.code); })(); await A.click('#sheet .x');
  await B.evaluate(([c,s])=>handleInvite(c,s),[code,SERVER]); await B.waitForSelector('#pr-name',{timeout:8000}); await B.fill('#pr-name','Gun'); await B.click('#pr-go'); await B.waitForTimeout(2500); await B.click('[data-act=ob-skip]'); await B.waitForTimeout(1000);
+ await A.evaluate(()=>syncNow()); await A.waitForTimeout(800);
+ ok(await A.evaluate(()=>/is connected/.test(document.querySelector('#sheet').innerText)),'creator sees "partner is connected — start syncing" pop-up');
+ ok(await B.evaluate(()=>/is connected/.test(document.querySelector('#sheet').innerText)),'joiner sees the start-syncing pop-up');
+ ok(await B.evaluate(()=>S.exp.length===0) && await A.evaluate(()=>S.sync.go===false),'nothing is shared before both tap Start');
+ await A.evaluate(()=>document.querySelector('[data-act=sync-start]').click()); await B.evaluate(()=>{ const b=document.querySelector('[data-act=sync-start]'); b&&b.click(); });
  for(let i=0;i<3;i++){ await A.evaluate(()=>syncNow()); await B.evaluate(()=>syncNow()); await B.waitForTimeout(500); }
  const cnt=await B.evaluate(()=>S.exp.length), cntA=await A.evaluate(()=>S.exp.length); ok(cnt===cntA,'partner receives every imported + auto-added expense ('+cnt+'/'+cntA+')');
  // arrives after sync -> partner gets it live
