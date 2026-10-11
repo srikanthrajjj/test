@@ -604,12 +604,18 @@ button.hd1{text-align:left;background:none}.li.hrow.mute{opacity:.6}
 .tbar .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.tbar .clr{flex:none;min-width:32px;min-height:32px;border-radius:50%;color:var(--sub);font-size:13px}
 .sortb{display:flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:14px;font-weight:550;flex:none}.sortb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .list.sorted{margin-top:10px}
+
+/* pull to refresh */
+#ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 8px);z-index:40;width:40px;height:40px;border-radius:50%;background:var(--card);box-shadow:0 6px 18px rgba(0,0,0,.18);display:grid;place-items:center;transform:translate(-50%,-50px);opacity:0;transition:opacity .2s;pointer-events:none}
+#ptr svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}#ptr.spin svg{animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}
+.hstat{cursor:pointer}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="main"></div>
   <button id="fab" data-act="add" aria-label="Add expense"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></div>
   <nav id="tabs2"><button class="t" data-act="tab" data-arg="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Home</button><button class="t" data-act="tab" data-arg="month"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Activity</button><button class="t ask" data-act="chat" aria-label="Ask Nest"><span><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15l.8 2 2 .7-2 .8-.8 2-.7-2-2-.8 2-.7z"/></svg></span>Ask Nest</button><button class="t" data-act="tab" data-arg="dues"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Dues</button></nav>
 </div>
 <div id="scrim" data-act="close"></div>
@@ -1797,14 +1803,15 @@ function importNotifs() {
     const seen = new Set(S.seen), added = []; let renamed = 0;
     q.forEach(m => {
       if (seen.has("n" + m.id)) return;
-      const p = notifPay(m); if (!p) { notifSkipped(m); return; } S.seen.push("n" + m.id);
+      const sms = /^SMS:/.test(m.a || ""); if (sms) { m = Object.assign({}, m, { a: m.a.slice(4) }); if (ignored(m)) return; noteBalances([m]); }
+      const p = sms ? parseSms(m) : notifPay(m); if (!p) { if (sms) sideSms(m, true); else notifSkipped(m); return; } S.seen.push("n" + m.id);
       const ex = S.exp.filter(e => Math.abs(Math.abs(e.amt) - Math.abs(p.amt)) < .01 && Math.abs(e.ts - p.ts) < 20 * 60e3).sort((x, y) => (GENERIC_T.test(y.title) - GENERIC_T.test(x.title)) || Math.abs(x.ts - p.ts) - Math.abs(y.ts - p.ts))[0];
-      if (ex) { ex.srcs = [...new Set([...(ex.srcs || [ex.src]), "app:" + appName(m.a)])]; if (GENERIC_T.test(ex.title) && !GENERIC_T.test(p.title)) { ex.title = p.title; if (ex.cat === "other") ex.cat = p.cat; ex.raw = ex.raw || p.raw; touch(ex); renamed++; } return; }
+      if (ex) { ex.srcs = [...new Set([...(ex.srcs || [ex.src]), sms ? "sms" : "app:" + appName(m.a)])]; if (GENERIC_T.test(ex.title) && !GENERIC_T.test(p.title)) { ex.title = p.title; if (ex.cat === "other") ex.cat = p.cat; ex.raw = ex.raw || p.raw; touch(ex); renamed++; } return; }
       if (wasGone(p)) return;
-      const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: p.cat, paid: "me", sm: 50, ts: p.ts, src: "app", raw: p.raw, mk: p.mk });
+      const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: p.cat, paid: "me", sm: 50, ts: p.ts, src: sms ? "sms" : "app", raw: p.raw, mk: p.mk, via: sms ? m.a : undefined });
       S.exp.push(rec); added.push(rec);
     });
-    if (added.length || renamed) { save(); refresh(); if (added.length) { hap(2); toast(`${added.length} payment${added.length > 1 ? "s" : ""} added from ${/paisa/.test(q[0] && q[0].a) ? "Google Pay" : /phonepe/.test(q[0] && q[0].a) ? "PhonePe" : /paytm/.test(q[0] && q[0].a) ? "Paytm" : /\.gm$|mail|outlook/.test(q[0] && q[0].a) ? "bank emails" : "a payment app"}`); } } else if (q.length) persist();
+    if (added.length || renamed) { save(); refresh(); if (added.length) { hap(2); toast(added.length === 1 ? `${money(added[0].amt)} · ${added[0].title} added` : `${added.length} new payments added`, () => { added.forEach(e => removeRec("exp", e.id)); save(); refresh(); toast("Removed"); }); } } else if (q.length) persist();
   } finally { notifBusy = false; }
 }
 window.__notifChanged = () => importNotifs();
@@ -1842,7 +1849,7 @@ function deepReport(added, fixed, scanned) {
   const by = {}; added.filter(counted).forEach(e => { const k = monthStart(new Date(e.ts)).getTime(); (by[k] = by[k] || { n: 0, t: 0 }); by[k].n++; by[k].t += e.amt; });
   const rows = Object.entries(by).sort((a, b) => b[0] - a[0]).slice(0, 12).map(([k, v]) => `<button class="li" data-act="month-go" data-arg="${k}"><div class="mid"><div class="t1">${monthLabel(new Date(+k))}</div><div class="t2">${v.n} payment${v.n > 1 ? "s" : ""} added</div></div><div class="amt">${money(v.t, { round: true })}</div></button>`).join("");
   const nx = added.filter(e => !counted(e)).length;
-  openSheet("Inbox scanned", `<p class="muted" style="margin:2px 2px 12px;line-height:1.45">Checked ${scanned.toLocaleString()} messages. ${added.length ? `Added <b>${added.length}</b> payments that were missing` : "Nothing was missing"}${fixed ? `, and fixed ${fixed} existing ones` : ""}.${nx ? ` ${nx} large payments or transfers were kept aside as not counted — review them under transfers.` : ""}</p>${rows ? `<div class="list">${rows}</div>` : ""}`);
+  openSheet("Inbox scanned", `<p class="muted" style="margin:2px 2px 12px;line-height:1.45">Checked ${scanned.toLocaleString()} message${scanned === 1 ? "" : "s"}. ${added.length ? `Added <b>${added.length}</b> payment${added.length === 1 ? "" : "s"} that ${added.length === 1 ? "was" : "were"} missing` : "Nothing was missing"}${fixed ? `, and fixed ${fixed} existing one${fixed === 1 ? "" : "s"}` : ""}.${nx ? ` ${nx} large payments or transfers were kept aside as not counted — review them under transfers.` : ""}</p>${rows ? `<div class="list">${rows}</div>` : ""}`);
 }
 function markScanned() { if (!OB.sample && OB.scanMax) S.smsLast = Math.max(S.smsLast || 0, OB.scanMax); }
 
@@ -1881,7 +1888,7 @@ function renderHome() {
   const rv = reviewItems().length, ini = (S.me.name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
   return `
   <div class="hh"><div><h1>Hi ${esc(first(S.me.name))}</h1><p>Let's check your spending.</p></div><button class="hav" data-act="tab" data-arg="you" aria-label="Settings">${esc(ini)}</button></div>
-  <div class="hstat"><i class="${S.exp.length ? "on" : ""}"></i>${S.exp.some(e => e.src === "sample") ? "Sample data" : S.exp.length ? "Your data" : "No data yet"}${upd ? " · Updated " + ago(upd) : ""}</div>
+  <div class="hstat" data-act="refresh-all" role="button" aria-label="Refresh"><i class="${S.exp.length ? "on" : ""}"></i>${S.exp.some(e => e.src === "sample") ? "Sample data" : S.exp.length ? "Your data" : "No data yet"}${upd ? " · Updated " + ago(upd) : ""}</div>
   <div class="hm"><span class="lbl">${solo() ? "Spent this month" : "Spent together this month"}</span><button class="mt3" data-act="all-tx">${m.toLocaleDateString("en-GB", { month: "long" })} <span style="font-size:18px">›</span></button></div>
   <div class="htot" id="bigbal" data-v="${tot}">${money(tot, { round: true })}</div>
   ${(() => { const pm = addMonths(m, -1), el = isNow ? Date.now() - m.getTime() : periodEnd(m).getTime() - m.getTime(), prev = S.exp.filter(e => inMonth(e.ts, pm) && counted(e) && e.ts - pm.getTime() <= el).reduce((a, e) => a + e.amt, 0), d = tot - prev;
@@ -2000,6 +2007,23 @@ function show(tab, keepScroll) {
   $$("#tabs2 .t").forEach(b => b.classList.toggle("on", b.dataset.arg === tab)); document.body.dataset.tab = tab;
   requestAnimationFrame(() => animateIn(pg, keepScroll));
   if (tab === "month") bindSwipe(pg);
+  if (tab === "home" || tab === "month" || tab === "dues") bindPull(pg);
+}
+/* pull down to refresh: re-read new texts + notifications (+ partner sync) right now */
+let pullBusy = false;
+async function refreshAll(manual) {
+  if (pullBusy) return; pullBusy = true; const n0 = S.exp.length;
+  try { importNotifs(); await autoImport(); if (syncOn()) { await syncNow(); } } catch (e) { } finally { pullBusy = false; }
+  const n = S.exp.length - n0; refresh(); if (manual) toast(n > 0 ? `${n} new payment${n > 1 ? "s" : ""}` : "You're up to date");
+}
+function bindPull(pg) {
+  let y0 = null, dy = 0; const ind = $("#ptr");
+  const set = (d, spin) => { if (!ind) return; ind.style.transform = `translate(-50%, ${Math.min(d, 90) - 50}px) rotate(${d * 3}deg)`; ind.style.opacity = Math.min(1, d / 70); ind.classList.toggle("spin", !!spin); };
+  pg.addEventListener("touchstart", e => { y0 = pg.scrollTop <= 0 && !pullBusy ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+  pg.addEventListener("touchmove", e => { if (y0 == null) return; dy = Math.max(0, (e.touches[0].clientY - y0) * 0.55); if (dy > 4) set(dy); }, { passive: true });
+  pg.addEventListener("touchend", () => { if (y0 == null) return; y0 = null;
+    if (dy > 70) { set(70, true); hap(1); refreshAll(true).finally(() => setTimeout(() => { if (ind) { ind.style.transform = "translate(-50%,-50px)"; ind.style.opacity = 0; ind.classList.remove("spin"); } }, 250)); }
+    else if (ind) { ind.style.transform = "translate(-50%,-50px)"; ind.style.opacity = 0; } }, { passive: true });
 }
 function bindSwipe(pg) {
   let x0 = 0, y0 = 0;
@@ -2277,12 +2301,19 @@ function sampleInbox() {
   out.push({ id: id++, a: "VM-HDFCBK", b: "Rs 1,250 refunded to your card XX3307 by Myntra", d: Date.now() - 5 * DAY });
   return { scanned: 410, msgs: out, sample: true };
 }
+/* the native bridge has one reply slot (window.__onSms): run reads one after another, and never wait forever */
+let smsChain = Promise.resolve();
+function smsCall(start) {
+  const run = () => new Promise(res => { let done = false; const fin = r => { if (done) return; done = true; clearTimeout(t); res(r); }; const t = setTimeout(() => fin({ scanned: 0, msgs: [], error: "timeout" }), 45000);
+    window.__onSms = j => { try { fin(JSON.parse(j)); } catch (e) { fin({ scanned: 0, msgs: [], error: "parse" }); } }; try { start(); } catch (e) { fin({ scanned: 0, msgs: [], error: "bridge" }); } });
+  const p = smsChain.then(run, run); smsChain = p.catch(() => {}); return p;
+}
 function readSms(sample, days) {
   if (sample || !N) return new Promise(r => setTimeout(() => r(sampleInbox()), 50));
-  return new Promise(res => { window.__onSms = j => { try { res(JSON.parse(j)); } catch (e) { res({ scanned: 0, msgs: [], error: "parse" }); } }; N.scanSms(days || 90); });
+  return smsCall(() => N.scanSms(days || 90));
 }
 function scanSince(since) {
-  return new Promise(res => { window.__onSms = j => { try { res(JSON.parse(j)); } catch (e) { res({ scanned: 0, msgs: [] }); } }; N.scanSmsSince(String(since)); });
+  return smsCall(() => N.scanSmsSince(String(since)));
 }
 function askSmsPerm() {
   if (!N) return Promise.resolve(false); if (N.hasSmsPermission()) return Promise.resolve(true);
@@ -2400,6 +2431,7 @@ const A = {
   today: () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; hap(1); show("month"); },
   monthpick: () => openMonthPick(), "inv-hide": () => { S.invHide = Date.now(); persist(); refresh(); },
   "month-go": a => { U.month = new Date(+a); U.cat = "all"; U.week = null; closeSheet(); setTimeout(() => show("month"), 200); },
+  "refresh-all": () => { hap(1); refreshAll(true); },
   "all-tx": () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; hap(1); show("month"); },
   grp: a => openGroup(a), large: () => openLarge(),
   "wk-more": a => { const el = $("#mr-" + a), b = $("#mb-" + a); if (el) { const on = el.classList.toggle("on"); b.textContent = on ? "Show less" : "Show " + el.children.length + " more"; hap(1); } },
@@ -2533,7 +2565,7 @@ function boot() {
     if (S.onboarded) { applyTheme(); show("home"); done(); }
     else { OB.step = 0; renderOb(); done(); }
     ready = true; if (queuedInvite) { const q = queuedInvite; queuedInvite = null; handleInvite(q.code, q.server); } else window.__invite();
-    window.__shared(); setTimeout(autoImport, 2500); setTimeout(importNotifs, 2000);
+    window.__shared(); importNotifs(); setTimeout(autoImport, 700);
     setTimeout(() => aiCheck().then(() => { smartNames(); dailyInsight(); }), 3500); setTimeout(scheduleReminders, 5000);
     if (S.onboarded && (S.pv || 0) < 3) { S.pv = 3; persist(); setTimeout(() => deepScan(false), 4000); } setTimeout(checkClipInvite, 1200);
   }, window.__fast ? 50 : 2300);

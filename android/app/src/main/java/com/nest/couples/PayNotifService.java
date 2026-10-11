@@ -31,6 +31,14 @@ public class PayNotifService extends NotificationListenerService {
     private static final java.util.regex.Pattern BANK_ALERT = java.util.regex.Pattern.compile("(a/c|acct|account|\\bcard\\b|\\bupi\\b|vpa)");
     private static final String[] MAIL_APPS = { "com.google.android.gm", "com.microsoft.office.outlook", "com.yahoo.mobile.client.android.mail", "com.samsung.android.email.provider", "ch.protonmail.android", "com.zoho.mail" };
 
+    private static final String[] SMS_APPS = { "com.google.android.apps.messaging", "com.samsung.android.messaging", "com.android.mms", "com.android.messaging", "com.oneplus.mms", "com.coloros.mms", "com.miui.mms", "com.truecaller" };
+
+    static boolean isSmsApp(String pkg) {
+        if (pkg == null) return false;
+        for (String p : SMS_APPS) if (p.equals(pkg)) return true;
+        return false;
+    }
+
     static boolean isMailApp(String pkg) {
         if (pkg == null) return false;
         for (String p : MAIL_APPS) if (p.equals(pkg)) return true;
@@ -49,8 +57,8 @@ public class PayNotifService extends NotificationListenerService {
     public void onNotificationPosted(StatusBarNotification sbn) {
         try {
             String pkg = sbn.getPackageName();
-            boolean mail = isMailApp(pkg);
-            if (!mail && !isPayApp(pkg)) return;
+            boolean mail = isMailApp(pkg), sms = isSmsApp(pkg);
+            if (!mail && !sms && !isPayApp(pkg)) return;
             Notification n = sbn.getNotification();
             if (n == null || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return;
             Bundle x = n.extras;
@@ -63,8 +71,10 @@ public class PayNotifService extends NotificationListenerService {
             if (body.length() < 8 || body.length() > 600) return;
             if (!(low.contains("₹") || low.contains("rs") || low.contains("inr"))) return;
             // from mail apps keep only bank debit alerts (banks email small UPI payments they no longer text)
+            // from the SMS app keep only bank debit texts: catches RCS bank messages that never reach the SMS inbox
+            if (sms && !(BANK_ALERT.matcher(low).find() && (low.contains("debited") || low.contains("spent") || low.contains("sent rs") || low.contains("paid") || low.contains("withdrawn")) && !low.contains("otp"))) return;
             if (mail && !(BANK_ALERT.matcher(low).find() && (low.contains("debited") || low.contains("spent") || low.contains("paid") || low.contains("upi txn") || low.contains("transaction")))) return;
-            store(this, pkg, body, sbn.getPostTime());
+            store(this, sms ? "SMS:" + (title != null ? title : "") : pkg, sms ? String.valueOf(text != null ? text : body) : body, sbn.getPostTime());
             MainActivity a = MainActivity.live;
             if (a != null && MainActivity.foreground) a.notifPing();
         } catch (Throwable ignored) {
@@ -76,11 +86,11 @@ public class PayNotifService extends NotificationListenerService {
         JSONArray q = new JSONArray(sp.getString("q", "[]"));
         for (int i = 0; i < q.length(); i++) {
             JSONObject o = q.getJSONObject(i);
-            if (body.equals(o.optString("b")) && Math.abs(o.optLong("d") - when) < 120000) return; // same notification re-posted
+            if (body.equals(o.optString("b")) && Math.abs(o.optLong("d") - when) < 120000) return; // same text from the receiver and the SMS app, or a re-post
         }
         JSONObject o = new JSONObject();
         o.put("id", "n" + when + "_" + Math.abs(body.hashCode()));
-        o.put("a", "APP:" + pkg);
+        o.put("a", pkg.startsWith("SMS:") ? pkg : "APP:" + pkg);
         o.put("b", body);
         o.put("d", when);
         q.put(o);
