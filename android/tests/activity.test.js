@@ -1,0 +1,41 @@
+// Activity: category tiles filter, sort options, no duplication with Home
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
+(async () => {
+  const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.addInitScript(() => { window.__fast = 1; });
+  await p.goto('file://' + __dirname + '/../app/src/main/assets/www/index.html'); await p.waitForTimeout(400);
+  await p.evaluate(() => { S.onboarded = true; S.me.name = 'Sri'; S.mode = 'solo'; document.querySelector('#ob').classList.remove('on'); const t = Date.now(), D = 864e5;
+    [['Amazon', 1299, 'shop'], ['Swiggy', 450, 'food'], ['Zepto', 640, 'groc'], ['Myntra', 2400, 'shop'], ['Zomato', 720, 'food'], ['Uber', 210, 'move'], ['HDFC to self', 9000, 'xfer']].forEach((x, i) => S.exp.push({ id: 'e' + i, amt: x[1], title: x[0], cat: x[2], paid: 'me', sm: 50, ts: t - (i % 5) * D - 36e5, src: 'sms', u: t }));
+    U.month = monthStart(new Date()); show('month'); });
+  await p.waitForTimeout(400);
+  const t0 = await p.evaluate(() => ({ tiles: [...document.querySelectorAll('.ctile')].map(x => x.dataset.arg), spec: document.querySelectorAll('.cspec i').length, sort: document.querySelector('.sortb').innerText.trim() }));
+  ok(t0.tiles[0] === 'all' && t0.tiles[1] === 'shop' && t0.tiles.length === 5 && !t0.tiles.includes('xfer'), 'category tiles: All first, biggest category next, transfers excluded (' + t0.tiles.join(',') + ')');
+  ok(t0.spec === 4, 'spectrum bar has one segment per category');
+  ok(t0.sort === 'Newest', 'default sort is Newest');
+  await p.click('.ctile[data-arg=food]'); await p.waitForTimeout(300);
+  const f = await p.evaluate(() => ({ rows: [...document.querySelectorAll('#tl .li .t1')].map(x => x.innerText), bar: document.querySelector('.tbar').innerText, on: document.querySelector('.ctile.on').dataset.arg }));
+  ok(f.rows.length === 2 && f.rows.every(r => /swiggy|zomato/i.test(r)), 'tapping Dining shows only dining (' + f.rows.join(',') + ')');
+  ok(/Dining/.test(f.bar) && /2 payments/.test(f.bar) && /1,170/.test(f.bar) && f.on === 'food', 'toolbar shows the category, count and total');
+  await p.click('.ctile[data-arg=food]'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => (U.cat || 'all') === 'all' && document.querySelectorAll('#tl .li').length >= 6), 'tapping the same tile again clears the filter');
+  await p.click('[data-act=sort-open]'); await p.waitForTimeout(300); await p.click('[data-act=sort][data-arg=hi]'); await p.waitForTimeout(500);
+  const hi = await p.evaluate(() => [...document.querySelectorAll('.list.sorted .li .t1')].map(x => x.innerText));
+  ok(hi[0] === 'HDFC to self' && hi[1] === 'Myntra' && hi[2] === 'Amazon', 'Highest amount sorts the whole month (' + hi.slice(0, 3).join(',') + ')');
+  await p.click('.ctile[data-arg=shop]'); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => [...document.querySelectorAll('.list.sorted .li .t1')].map(x => x.innerText).join() === 'Myntra,Amazon'), 'sort and category filter combine');
+  await p.evaluate(() => { U.cat = 'all'; U.sort = 'lo'; show('month'); }); ok(await p.evaluate(() => document.querySelector('.list.sorted .li .t1').innerText === 'Uber'), 'Lowest amount puts the smallest first');
+  await p.evaluate(() => { U.sort = 'az'; show('month'); }); ok(await p.evaluate(() => document.querySelector('.list.sorted .li .t1').innerText === 'Amazon'), 'A–Z sorts by merchant');
+  await p.evaluate(() => { U.sort = 'old'; show('month'); }); ok(await p.evaluate(() => { const a = [...document.querySelectorAll('.list.sorted .li')].map(x => S.exp.find(e => e.id === x.dataset.arg).ts); return a.every((v, i) => !i || a[i - 1] <= v); }), 'Oldest first is chronological');
+  await p.evaluate(() => { U.sort = 'new'; show('month'); }); ok(await p.evaluate(() => !!document.querySelector('#tl .tn')), 'Newest returns to the week timeline');
+  // no duplication between Home and Activity
+  const act = await p.evaluate(() => ({ ins: !!document.querySelector('.gcard.ai, .hins'), inv: !!document.querySelector('[data-act=quick-invite], [data-act=duo-on]'), ring: !!document.querySelector('.ring') }));
+  await p.evaluate(() => show('home')); await p.waitForTimeout(200);
+  const home = await p.evaluate(() => ({ pick: !!document.querySelector('[data-act=monthpick]'), cats: !!document.querySelector('.ctile') }));
+  ok(!act.ins && !act.inv && !act.ring, 'Activity has no insight / invite / ring (those live on Home)');
+  ok(!home.pick && !home.cats, 'Home has no month picker or category tiles (those live on Activity)');
+  ok(!errs.length, 'no page errors ' + errs.join('; '));
+  await b.close();
+  res.forEach(r => console.log(r[0], r[1])); const n = res.filter(r => r[0] === 'FAIL').length; console.log(`\n${res.length - n}/${res.length} passed`); process.exit(n ? 1 : 0);
+})();
