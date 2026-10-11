@@ -6,7 +6,7 @@ const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
   const b = await chromium.launch(); const errs = [];
   const mk = async (name, amts) => { const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage(); p.on('pageerror', e => errs.push(e.message));
     await p.addInitScript(() => { window.__fast = 1; }); await p.goto(URL); await p.waitForTimeout(300);
-    await p.evaluate(([n, a]) => { S.onboarded = true; S.me.name = n; S.mode = 'solo'; document.querySelector('#ob').classList.remove('on'); const t = Date.now(); a.forEach((x, i) => S.exp.push({ id: n + i, amt: x, title: n + ' shop ' + i, cat: 'shop', paid: 'me', sm: 50, ts: t - i * 36e5, src: 'manual', u: t })); persist(); show('you'); }, [name, amts]); await p.waitForTimeout(300); return p; };
+    await p.evaluate(([n, a]) => { S.onboarded = true; S.me.name = n; S.mode = 'duo'; document.querySelector('#ob').classList.remove('on'); const t = Date.now(); a.forEach((x, i) => S.exp.push({ id: n + i, amt: x, title: n + ' shop ' + i, cat: 'shop', paid: 'me', sm: 50, ts: t - i * 36e5, src: 'manual', u: t })); persist(); show('you'); }, [name, amts]); await p.waitForTimeout(300); return p; };
   const A = await mk('Sri', [100, 200]), B = await mk('Gunjan', [50]);
   ok(await A.evaluate(() => !!document.querySelector('#code-in') && !!document.querySelector('[data-act=get-code]')), 'You screen shows "Get my code" and a box to enter a partner code');
   await A.click('[data-act=get-code]'); await A.waitForTimeout(1500);

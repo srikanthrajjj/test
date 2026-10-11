@@ -31,9 +31,6 @@ const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
   await p.click('[data-act=month-ok]'); await p.waitForTimeout(300); ok(await p.evaluate(() => !!document.querySelector('.tok')), 'confirming the month is remembered');
   await p.click('[data-act=share-report]'); await p.waitForTimeout(800); ok(await p.evaluate(() => window.__img > 10000), 'share creates a month story image');
   await p.evaluate(() => closeSheet()); await p.waitForTimeout(300);
-  // limits -> hint
-  await p.evaluate(() => { const c = S.exp.filter(e => inMonth(e.ts, U.month) && counted(e)).reduce((a, e) => (a[e.cat] = (a[e.cat] || 0) + e.amt, a), {}); const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0]; S.limits = { [top[0]]: Math.round(top[1] * 1.1) }; show('month'); });
-  ok(await p.evaluate(() => /of/.test(document.querySelector('.gcard') ? document.querySelector('.gcard').innerText : '') && /left|Over/.test(document.querySelector('.gcard').innerText)), 'a category near its limit shows a gentle nudge');
   // app lock
   await p.evaluate(() => show('you')); await p.waitForTimeout(300); await p.click('[data-act=lock-toggle]'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => S.lock === true), 'app lock turns on after confirming fingerprint');
