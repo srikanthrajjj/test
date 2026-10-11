@@ -12,7 +12,8 @@ import org.json.JSONObject;
 
 /**
  * Reads payment notifications from UPI and bank apps (GPay, PhonePe, Paytm, BHIM, CRED, bank apps)
- * so payments are caught even when the bank sends no SMS. Only notifications from payment apps that
+ * and bank alert emails (Gmail, Outlook…) so payments are caught even when the bank sends no SMS
+ * (e.g. UPI payments under ₹100, UPI Lite). Only notifications from payment apps that
  * mention an amount are kept, in a small on-device queue that the app drains on open.
  */
 public class PayNotifService extends NotificationListenerService {
@@ -27,6 +28,15 @@ public class PayNotifService extends NotificationListenerService {
             "com.fedmobile", "com.jupiter.money", "com.fi.money", "com.onecard"
     };
 
+    private static final java.util.regex.Pattern BANK_ALERT = java.util.regex.Pattern.compile("(a/c|acct|account|\\bcard\\b|\\bupi\\b|vpa)");
+    private static final String[] MAIL_APPS = { "com.google.android.gm", "com.microsoft.office.outlook", "com.yahoo.mobile.client.android.mail", "com.samsung.android.email.provider", "ch.protonmail.android", "com.zoho.mail" };
+
+    static boolean isMailApp(String pkg) {
+        if (pkg == null) return false;
+        for (String p : MAIL_APPS) if (p.equals(pkg)) return true;
+        return false;
+    }
+
     static boolean isPayApp(String pkg) {
         if (pkg == null) return false;
         for (String p : PAY_APPS) if (p.equals(pkg)) return true;
@@ -39,7 +49,8 @@ public class PayNotifService extends NotificationListenerService {
     public void onNotificationPosted(StatusBarNotification sbn) {
         try {
             String pkg = sbn.getPackageName();
-            if (!isPayApp(pkg)) return;
+            boolean mail = isMailApp(pkg);
+            if (!mail && !isPayApp(pkg)) return;
             Notification n = sbn.getNotification();
             if (n == null || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return;
             Bundle x = n.extras;
@@ -51,6 +62,8 @@ public class PayNotifService extends NotificationListenerService {
             String low = body.toLowerCase();
             if (body.length() < 8 || body.length() > 600) return;
             if (!(low.contains("₹") || low.contains("rs") || low.contains("inr"))) return;
+            // from mail apps keep only bank debit alerts (banks email small UPI payments they no longer text)
+            if (mail && !(BANK_ALERT.matcher(low).find() && (low.contains("debited") || low.contains("spent") || low.contains("paid") || low.contains("upi txn") || low.contains("transaction")))) return;
             store(this, pkg, body, sbn.getPostTime());
             MainActivity a = MainActivity.live;
             if (a != null && MainActivity.foreground) a.notifPing();

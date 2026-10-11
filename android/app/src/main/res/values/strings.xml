@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sc_add">Add expense</string>
+    <string name="sc_add_long">Add an expense</string>
+    <string name="sc_ask">Ask Nest</string>
+    <string name="tile_add">Add expense</string>
+</resources>

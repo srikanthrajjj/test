@@ -1008,7 +1008,7 @@ function nudgeCard() {
   const invHidden = S.invHide && Date.now() - S.invHide < 864e5;
   const promoHidden = S.promoHide && Date.now() - S.promoHide < 14 * 864e5;
   const inv = solo() ? (promoHidden || !S.exp.length ? "" : `<div class="gcard inv"><span class="gic" style="color:#F0508B;background:#F0508B26">${svgIc("people", 26)}</span><div class="gtx"><span><b style="display:inline;font-size:11px;letter-spacing:.06em;color:#F0508B;margin-right:6px">NEW</b>Track together with your partner</span><button class="lk" data-act="duo-on">See both spends in one timeline</button></div><button class="xb" data-act="promo-hide" aria-label="Dismiss">✕</button></div>`) : invHidden ? "" : !syncOn() && S.exp.length ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Track together with ${esc(first(S.p.name))}</span><button class="lk" data-act="quick-invite">Invite on WhatsApp</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : syncOn() && !S.sync.partner ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Waiting for ${esc(first(S.p.name))}</span><button class="lk" data-act="show-invite">Share invite again</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : "";
-  const notif = N && N.hasNotifAccess && !notifOn() && S.exp.length && !(S.notifHide && Date.now() - S.notifHide < 7 * 864e5) ? `<div class="gcard inv"><span class="gic" style="color:#3DDC97;background:#3DDC9726">${svgIc("spark", 26)}</span><div class="gtx"><span>Catch GPay, PhonePe &amp; Paytm payments</span><button class="lk" data-act="notif-access">Allow notification access</button></div><button class="xb" data-act="notif-hide" aria-label="Dismiss">✕</button></div>` : "";
+  const notif = N && N.hasNotifAccess && !notifOn() && S.exp.length && !(S.notifHide && Date.now() - S.notifHide < 7 * 864e5) ? `<div class="gcard inv"><span class="gic" style="color:#3DDC97;background:#3DDC9726">${svgIc("spark", 26)}</span><div class="gtx"><span>Small UPI payments send no bank SMS</span><button class="lk" data-act="notif-access">Catch them from GPay, PhonePe &amp; bank emails</button></div><button class="xb" data-act="notif-hide" aria-label="Dismiss">✕</button></div>` : "";
   return notif || inv;
 }
 function renderMonth() {
@@ -1711,6 +1711,8 @@ function checkClipInvite() {
   try { const c = inviteCodeIn(N.readClip()); if (c && c !== S.lastClip) { S.lastClip = c; persist(); handleInvite(c, DEFAULT_SERVER); } } catch (e) { }
 }
 function handleShared(t) {
+  if (t === "nest:add") { closeChat(); closeSheet(); setTimeout(() => openForm(), 150); return; }
+  if (t === "nest:ask") { closeSheet(); openChat(); return; }
   const ic = inviteCodeIn(t); if (ic) { handleInvite(ic, DEFAULT_SERVER); return; }
   const c = parseChunks(t);
   if (c.length === 1) { const x = c[0]; openForm({ amt: x.amt, title: x.title, cat: x.cat, ts: x.ts, paid: "me", sm: 50, src: "sms" }); toast("Found a payment — check and save"); }
@@ -1754,6 +1756,23 @@ window.__smsChanged = () => autoImport();
 
 /* ---------- payment-app notifications (GPay, PhonePe, Paytm, bank apps) ---------- */
 const GENERIC_T = /^(upi payment|card payment|upi to a person|local store \(qr\)|[a-z]{2,6})$/i;
+/* payment-app + bank-email notifications: only money going out, with the real payee name */
+const NOTIF_JUNK = /cashback|offer|reward|coupon|voucher|\bwin\b|\bwon\b|% off|\bget (?:₹|rs|flat|up ?to)|recharge now|requested|request(?:ed)? (?:from|for)|sent you|you(?:'ve| have)? received|received (?:₹|rs|inr|money|payment)|credited to (?:your|ur)|added to (?:your )?wallet|refund|failed|declined|pending|reversed|is due|due on|due date|autopay|reminder|statement|shipped|deliver|order (?:placed|confirmed)|otp/i;
+const NOTIF_OUT = /\b(paid|sent|debited|payment of|payment to|transaction of|spent|upi txn|purchase)\b/i;
+function notifPay(m) {
+  const b = String(m.b || "").replace(/\s+/g, " ").trim(); if (!b || NOTIF_JUNK.test(b) || !NOTIF_OUT.test(b)) return null;
+  if (/gm$|mail|outlook/i.test(m.a || "") && !/\b(a\/c|acct|account|card|upi|vpa)\b/i.test(b)) return null;
+  const p = parseSms(m); if (!p || !(p.amt > 0)) return null;
+  const stop = "(?=\\s+(?:successfully|was|is|has|via|from|using|on|through|for|at \\d)\\b|[.!,;]|$)";
+  const nm = (b.match(/\bto VPA \S+ ([A-Za-z][A-Za-z .&'-]{1,30}?)(?= on\b|[.,]|$)/) || b.match(/UPI\/P2[MA]\/\d+\/([A-Za-z][A-Za-z .&'-]{1,30}?)(?=\/|[.,]|\s+on\b|$)/i)
+    || b.match(new RegExp("\\b(?:paid|sent|payment of|transaction of)\\s+(?:rs\\.?|inr|₹)\\s*[\\d,]+(?:\\.\\d+)?\\s+(?:to|at)\\s+(.{2,40}?)" + stop, "i"))
+    || b.match(new RegExp("(?:rs\\.?|inr|₹)\\s*[\\d,]+(?:\\.\\d+)?\\s+(?:paid|sent)\\s+(?:to|at)\\s+(.{2,40}?)" + stop, "i")) || [])[1];
+  const messy = GENERIC_NM.test(p.title) || GENERIC_T.test(p.title) || /\s(successfully|was|is|has)$/i.test(p.title);
+  if (nm && messy && !/^(vpa|a\/c|account|your|you)\b/i.test(nm) && !(p.mk && S.names && S.names[p.mk])) { p.title = titleCase(nm.trim()); const c2 = catOf(p.title); if (c2 !== "other") p.cat = c2; }
+  else p.title = p.title.replace(/\s+(successfully|was|is)$/i, "");
+  if (p.cat === "cash") p.cat = "other"; // a UPI/app payment is never an ATM withdrawal
+  return p;
+}
 let notifBusy = false;
 function importNotifs() {
   if (!N || !N.takeNotifs || notifBusy || !S.onboarded) return; notifBusy = true;
@@ -1761,20 +1780,20 @@ function importNotifs() {
     let q = []; try { q = JSON.parse(N.takeNotifs() || "[]"); } catch (e) { }
     const seen = new Set(S.seen), added = []; let renamed = 0;
     q.forEach(m => {
-      const p = parseSms(m); if (!p || seen.has("n" + m.id)) return; S.seen.push("n" + m.id);
+      const p = notifPay(m); if (!p || seen.has("n" + m.id)) return; S.seen.push("n" + m.id);
       const ex = S.exp.filter(e => Math.abs(Math.abs(e.amt) - Math.abs(p.amt)) < .01 && Math.abs(e.ts - p.ts) < 20 * 60e3).sort((x, y) => (GENERIC_T.test(y.title) - GENERIC_T.test(x.title)) || Math.abs(x.ts - p.ts) - Math.abs(y.ts - p.ts))[0];
       if (ex) { ex.srcs = [...new Set([...(ex.srcs || [ex.src]), "app:" + appName(m.a)])]; if (GENERIC_T.test(ex.title) && !GENERIC_T.test(p.title)) { ex.title = p.title; if (ex.cat === "other") ex.cat = p.cat; ex.raw = ex.raw || p.raw; touch(ex); renamed++; } return; }
       if (wasGone(p)) return;
       const rec = touch({ id: uid(), amt: p.amt, title: p.title, cat: p.cat, paid: "me", sm: 50, ts: p.ts, src: "app", raw: p.raw, mk: p.mk });
       S.exp.push(rec); added.push(rec);
     });
-    if (added.length || renamed) { save(); refresh(); if (added.length) { hap(2); toast(`${added.length} payment${added.length > 1 ? "s" : ""} added from ${/paisa/.test(q[0] && q[0].a) ? "Google Pay" : /phonepe/.test(q[0] && q[0].a) ? "PhonePe" : /paytm/.test(q[0] && q[0].a) ? "Paytm" : "a payment app"}`); } } else if (q.length) persist();
+    if (added.length || renamed) { save(); refresh(); if (added.length) { hap(2); toast(`${added.length} payment${added.length > 1 ? "s" : ""} added from ${/paisa/.test(q[0] && q[0].a) ? "Google Pay" : /phonepe/.test(q[0] && q[0].a) ? "PhonePe" : /paytm/.test(q[0] && q[0].a) ? "Paytm" : /\.gm$|mail|outlook/.test(q[0] && q[0].a) ? "bank emails" : "a payment app"}`); } } else if (q.length) persist();
   } finally { notifBusy = false; }
 }
 window.__notifChanged = () => importNotifs();
 window.__voice = t => { if (!t) return; if (!$("#chat").classList.contains("on")) openChat(); setTimeout(() => sendChat(String(t)), 250); };
 window.__toast = m => toast(m);
-const appName = a => /paisa/.test(a) ? "GPay" : /phonepe/.test(a) ? "PhonePe" : /paytm/.test(a) ? "Paytm" : /cred|dreamplug/.test(a) ? "CRED" : /upiapp/.test(a) ? "BHIM" : "Bank app";
+const appName = a => /\.gm$|mail|outlook/.test(a) ? "Bank email" : /paisa/.test(a) ? "GPay" : /phonepe/.test(a) ? "PhonePe" : /paytm/.test(a) ? "Paytm" : /cred|dreamplug/.test(a) ? "CRED" : /upiapp/.test(a) ? "BHIM" : "Bank app";
 const notifOn = () => { try { return !!(N && N.hasNotifAccess && N.hasNotifAccess()); } catch (e) { return false; } };
 
 /* ---------- deep scan: the whole inbox, every month, no review needed ---------- */
@@ -1992,7 +2011,7 @@ function openForm(e) {
   const t = e || {};
   F = { id: t.id || null, amt: t.amt ? String(Math.abs(t.amt)) : "", title: t.title || "", cat: t.cat || "food", catAuto: !t.cat, paid: t.paid || "me", note: t.note || "", date: dkey(t.ts || Date.now()), src: t.src || "manual", ts: t.ts };
   openSheet(F.id ? "Edit expense" : "New expense", formHtml(), mountForm, () => { F = null; });
-  setTimeout(() => { const a = $("#f-amt"); a && !F.id && a.focus(); }, 380);
+  setTimeout(() => { const a = $("#f-amt"); a && F && !F.id && a.focus(); }, 380);
 }
 const formExp = () => ({ amt: parseFloat(F.amt) || 0 });
 function formHtml() {

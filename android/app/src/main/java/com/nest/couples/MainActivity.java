@@ -182,6 +182,8 @@ public class MainActivity extends Activity {
         handleIntent(intent);
     }
 
+    static final String ACTION_QUICK_ADD = "com.nest.couples.QUICK_ADD", ACTION_ASK = "com.nest.couples.ASK";
+
     /** nest://join?code=ABC123&s=https://server  -> invite;  ACTION_SEND text -> shared bank text. */
     private void handleIntent(Intent in) {
         if (in == null) return;
@@ -193,6 +195,10 @@ public class MainActivity extends Activity {
                 o.put("server", d.getQueryParameter("s"));
                 pendingInvite = o.toString();
                 js("window.__invite && window.__invite()");
+            } else if (ACTION_QUICK_ADD.equals(in.getAction()) || ACTION_ASK.equals(in.getAction())) {
+                pendingShare = ACTION_ASK.equals(in.getAction()) ? "nest:ask" : "nest:add";
+                in.setAction(Intent.ACTION_MAIN); // don't re-run on rotation / resume
+                js("window.__shared && window.__shared()");
             } else if (Intent.ACTION_SEND.equals(in.getAction()) && in.getStringExtra(Intent.EXTRA_TEXT) != null) {
                 pendingShare = in.getStringExtra(Intent.EXTRA_TEXT);
                 js("window.__shared && window.__shared()");

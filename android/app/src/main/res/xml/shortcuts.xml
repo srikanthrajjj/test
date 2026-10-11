@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="add" android:enabled="true" android:icon="@drawable/ic_sc_add"
+        android:shortcutShortLabel="@string/sc_add" android:shortcutLongLabel="@string/sc_add_long">
+        <intent android:action="com.nest.couples.QUICK_ADD" android:targetPackage="com.nest.couples" android:targetClass="com.nest.couples.MainActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="ask" android:enabled="true" android:icon="@drawable/ic_sc_ask"
+        android:shortcutShortLabel="@string/sc_ask" android:shortcutLongLabel="@string/sc_ask">
+        <intent android:action="com.nest.couples.ASK" android:targetPackage="com.nest.couples" android:targetClass="com.nest.couples.MainActivity" />
+    </shortcut>
+</shortcuts>

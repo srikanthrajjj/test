@@ -35,6 +35,13 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="nest" android:host="join" />
             </intent-filter>
+            <!-- launcher shortcuts + Quick Settings tile: one-tap add for payments that send no SMS -->
+            <intent-filter>
+                <action android:name="com.nest.couples.QUICK_ADD" />
+                <action android:name="com.nest.couples.ASK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
             <!-- "Share a bank text to Nest" (Play-safe alternative to reading the SMS inbox) -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -51,6 +58,17 @@
 
         <receiver android:name=".WeeklyReceiver" android:exported="false" />
         <receiver android:name=".ReminderReceiver" android:exported="false" />
+
+        <service
+            android:name=".QuickAddTile"
+            android:exported="true"
+            android:icon="@drawable/ic_tile"
+            android:label="@string/tile_add"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <!-- reads payment notifications from UPI / bank apps (user grants "Notification access") -->
         <service
