@@ -1580,6 +1580,13 @@ function answer(q) {
     const n1 = /^\d/.test(lg[1].replace(/[,]/g, "")) && !isNaN(parseFloat(lg[1].replace(/,/g, ""))), amt = parseFloat((n1 ? lg[1] : lg[2]).replace(/,/g, "")), what = (n1 ? lg[2] : lg[1]).replace(/\b(cash|on|for|at|i paid|groceries i paid)\b/g, " ").replace(/\s+/g, " ").trim() || "Expense";
     if (amt > 0) { const title = what.charAt(0).toUpperCase() + what.slice(1); return { content: `Ready to add ${f(amt)} — ${title}.`, actions: [{ type: "add_expense", amount: amt, title, category: catOf(title) === "other" && /grocer/.test(l) ? "groc" : catOf(title), paid: "me", date: null, cash: /cash/.test(l) }] }; }
   }
+  const w = l.replace(/[^a-z0-9₹ ']/g, " ").replace(/\s+/g, " ").trim(), nm = first(S.me.name);
+  if (!w) return { content: "I didn't catch that. Try one of these:", chips: SUGG() };
+  if (/^(hi+|hello+|hey+|hai|yo|hola|namaste|namaskar|good (morning|afternoon|evening|night)|gm)( there| nest)?$/.test(w)) return { content: `Hi ${nm}! I can tell you where your money went, compare months, show what's due, or add an expense — just type “chai 40”.`, chips: SUGG() };
+  if (/^(thanks?|thank you|thx|ty|ok+|okay|cool|great|nice|got it|awesome|perfect|super)( (so much|a lot|nest))?$/.test(w)) return { content: "Anytime 🙂 Ask me something else whenever you like.", chips: SUGG().slice(0, 3) };
+  if (/^(help|menu|options|commands|what can you do|what do you do|how does this work|how do you work|who are you)\b/.test(w)) return { content: "Here's what I can do, all on your phone:\n• **Where did I spend most this month?**\n• **Compare with last month** · **Why did it increase?**\n• **How much on food?** or any place, like **Swiggy last month**\n• **Biggest payments** · **What's due this week?**\n• Add an expense: **chai 40**, **paid 1200 for petrol**", chips: SUGG() };
+  if (/\b(bank )?balance\b/.test(w) && !/\bdue\b/.test(w)) return { content: "Nest tracks what you spend, not your bank balance — I never read balances from your texts. I can show this month's spending instead.", chips: ["How much did I spend this month?", "Where did I spend most this month?"] };
+  if (!S.exp.some(counted)) return { content: "You don't have any payments recorded yet, so there's nothing to analyse. Scan your inbox for bank texts, or add an expense here — like “chai 40”.", card: { head: "No payments recorded yet.", sub: "Scan your bank texts or add one by typing “chai 40”.", acts: [["Scan inbox", "rescan", "", "list"]] }, chips: ["chai 40", "What can you do?"] };
   const follow = CH.last && /^(and|what about|how about|same for|vs)\b/.test(l);
   const lp = l.replace(/\b(compare[sd]?|vs\.?|versus)\b.*?\b(with|to|and)?\s*(last|previous) month\b/, m0 => m0.replace(/(last|previous) month/, "")).replace(/\b(with|to|vs\.?|versus|than)\s+(last|previous) month\b/, "");
   const P = periodOf(lp, null);
@@ -1587,6 +1594,10 @@ function answer(q) {
   const catHit = CATS.filter(c => !["xfer", "cash", "iou"].includes(c.id)).find(c => (new RegExp("\\b" + c.n.toLowerCase().split(" ")[0] + "\\b").test(l)) || (c.id === "food" && /\b(food|eat|eating|dining|restaurants?)\b/.test(l)) || (c.id === "groc" && /grocer/.test(l)) || (c.id === "trip" && /\b(travel|trip|flights?|hotels?)\b/.test(l)) || (c.id === "move" && /\b(cab|cabs|uber|ola|fuel|petrol|transport|commute)\b/.test(l)) || (c.id === "refund" && /\brefunds?\b/.test(l)) || (c.id === "bill" && /\b(emi|bills?)\b/.test(l) && !/\bdue\b/.test(l)));
   const placeHit = !catHit && Object.keys(S.exp.reduce((o, e) => (o[e.title] = 1, o), {})).find(t => t.length > 2 && l.includes(t.toLowerCase()));
   if (!follow && (catHit || placeHit) && kind === "top") kind = "focus";
+  const listQ = /\b(show|list|see|view|all)\b.*\b(transactions?|payments?|expenses?|spends?|txns?)\b|^(my )?(transactions?|payments?|expenses?)$/.test(w);
+  if (kind === "top" && !follow && !listQ && !/\b(spen[dt]|spending|most|top|where|money|went|cost|how much|total|places?|visit|merchants?|shops?|categor|today|week|month|year|january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/.test(w)) return null;
+  if (kind === "top" && /\b(how much|total)\b/.test(w)) kind = "total";
+  if (listQ) kind = "list";
   const focus = follow ? CH.last.focus : catHit ? { cat: catHit.id } : placeHit ? { place: placeHit } : null;
   if (/why did it (increase|go up)|why (is|was) it (higher|more)/.test(l)) kind = "why";
   CH.last = { kind, focus, P };
@@ -1596,7 +1607,7 @@ function answer(q) {
   const tot = sel.reduce((a, e) => a + e.amt, 0), pp = prevP(P), prevSel = S.exp.filter(e => inP(e, pp) && counted(e) && (!focus || (focus.cat ? e.cat === focus.cat : e.title === focus.place))), ptot = prevSel.reduce((a, e) => a + e.amt, 0);
   const acts = [["View transactions", "chat-list", JSON.stringify({ a: P.a, b: P.b, focus }), "list"]];
   if (P.kind === "month") acts.push([`Compare ${pp.name || "previous"}`, "ask", `Compare with ${pp.name || "last month"}`, "chart"]);
-  if (!sel.length) return { card: { period: P.label, head: "Nothing recorded here yet.", sub: focus ? `No ${focus.cat ? CAT[focus.cat].n.toLowerCase() : focus.place} spending in this period.` : "No spending in this period.", acts: [] }, chips: ["Where did I spend most this month?"] };
+  if (!sel.length) { const t0 = Math.min(...S.exp.filter(counted).map(e => e.ts)); return { card: { period: P.label, head: `No ${focus ? (focus.cat ? CAT[focus.cat].n.toLowerCase() : focus.place) + " " : ""}spending recorded ${P.kind === "month" && !P.cur ? "in " + P.name : P.kind === "day" ? "today" : "in this period"}.`, sub: t0 >= P.b ? `Your records start on ${shortDate(t0)}.` : focus ? "Try another period or the whole month." : "", acts: [] }, chips: ["Where did I spend most this month?", "What can you do?"] }; }
   if (kind === "compare" || kind === "why") {
     const g = {}; sel.forEach(e => { g[e.cat] = g[e.cat] || [0, 0]; g[e.cat][0] += e.amt; }); prevSel.forEach(e => { g[e.cat] = g[e.cat] || [0, 0]; g[e.cat][1] += e.amt; });
     const rows = Object.entries(g).sort((a, b) => Math.abs(b[1][0] - b[1][1]) - Math.abs(a[1][0] - a[1][1])).slice(0, 4);
@@ -1604,6 +1615,7 @@ function answer(q) {
     if (kind === "why" && up) { const ex = sel.filter(e => e.cat === up[0]); const pl = groupBy(ex, e => e.title).slice(0, 3); return { card: { period: P.label, head: `${CAT[up[0]].n} drove it: up ${f(up[1][0] - up[1][1])}.`, sub: `Mostly ${pl.map(x => `${x[0]} (${f(x[1].t)})`).join(", ")}.`, bars: pl.map(x => [x[0], x[1].t]), foot: `${CAT[up[0]].n} · compared with ${pp.label}`, acts: [] }, chips: ["What's due this week?", "Biggest payments this month"] }; }
     return { card: { period: `${P.label} vs ${pp.same ? "same days of " + pp.name : pp.label}`, head: ptot ? `${f(tot)} — ${Math.abs(d)}% ${d <= 0 ? "less" : "more"} than ${pp.name || "before"}.` : `${f(tot)} so far — nothing to compare with yet.`, sub: ptot ? `${pp.name || "Before"}: ${f(ptot)}${pp.same ? " at the same point" : ""}.` : "", bars: rows.map(r => [CAT[r[0]].n, r[1][0], r[1][1]]), legend: `<span><i class="lc"></i>${esc(P.name || "This")}</span><span><i class="lp"></i>${esc(pp.name || "Before")}</span>`, foot: "By category · Recorded transactions", acts: acts.slice(0, 1) }, review: reviewFor(P), chips: d > 0 ? ["Why did it increase?", "What's due this week?"] : ["Where did I spend most?", "Biggest payments"] };
   }
+  if (kind === "list" || kind === "total") { const g = groupBy(sel, e => e.title); return { card: { period: P.label, head: kind === "list" ? `${sel.length} payment${sel.length > 1 ? "s" : ""}, ${f(tot)} in total.` : `You spent ${f(tot)}.`, sub: `${sel.length} payment${sel.length > 1 ? "s" : ""} · most at ${g[0][0]} (${f(g[0][1].t)})${ptot ? ` · ${pp.name || "before"}: ${f(ptot)}${pp.same ? " at the same point" : ""}` : ""}.`, bars: g.slice(0, 3).map(x => [x[0], x[1].t]), foot: "Recorded transactions", acts }, review: reviewFor(P), chips: ["Compare with last month", "Biggest payments this month"] }; }
   if (kind === "big") { const top = [...sel].sort((a, b) => b.amt - a.amt).slice(0, 5); return { card: { period: P.label, head: `Your biggest: ${esc(top[0].title)}, ${f(top[0].amt)}.`, sub: `Top 5 add up to ${f(top.reduce((a, e) => a + e.amt, 0))} of ${f(tot)}.`, bars: top.map(e => [`${e.title} · ${shortDate(e.ts)}`, e.amt]), foot: "Single payments · Recorded transactions", acts }, review: reviewFor(P), chips: ["Where did I spend most this month?", "Compare with last month"] }; }
   if (kind === "dues") { const L = allDues().filter(d => !d.paid && !d.ignored && d.days <= 31); if (!L.length) return { content: "Nothing due in the next month. Card bills, subscriptions and EMIs appear automatically — or add one in Dues.", chips: ["Where did I spend most this month?"] }; return { card: { period: "Next 30 days", head: `${money(L.reduce((a, d) => a + (d.amt || 0), 0), { round: true })} due across ${L.length} item${L.length > 1 ? "s" : ""}.`, sub: `Next: ${L[0].title}, ${dueWhen(L[0]).toLowerCase()}.`, bars: L.slice(0, 4).map(d => [`${d.title} · ${shortDate(d.due)}`, d.amt || 0]), foot: "Dues · from your texts and what you added", acts: [["Open dues", "tab", "dues", "list"]] }, chips: ["Where did I spend most this month?"] }; }
   const rank = focus ? sel : (sel.filter(e => !suspect(e)).length ? sel.filter(e => !suspect(e)) : sel);
@@ -1618,10 +1630,10 @@ async function sendChat(text) {
   if (CH.busy) return; CH.msgs.push({ role: "user", content: text, t: Date.now() }); hap(1);
   CH.busy = true; renderChat();
   try {
-    const loc = OPEN_Q.test(text) ? null : answer(text);
+    const loc = OPEN_Q.test(text) && !/^(help|what can you do)\b/i.test(text.trim()) ? null : answer(text);
     if (loc) { await new Promise(r => setTimeout(r, 350)); CH.msgs.push(Object.assign({ role: "assistant", content: loc.content || (loc.card ? loc.card.head : ""), local: true, t: Date.now() }, loc)); hap(1); return; }
-    if (!aiOk()) await aiCheck(true);
-    if (!aiOk()) { const fb = answer("where did i spend most this month"); CH.msgs.push(Object.assign({ role: "assistant", content: fb.card.head, local: true, t: Date.now() }, fb, { card: Object.assign({}, fb.card, { head: "Here's what I can tell from your data.", sub: fb.card.head + " " + fb.card.sub }) })); return; }
+    if (!aiOk() && !S.smartOff && (!S.aiAt || Date.now() - S.aiAt > 10 * 60e3)) await aiCheck(true);
+    if (!aiOk()) { CH.msgs.push({ role: "assistant", content: S.smartOff ? "That needs Smart insights, which you've turned off in Settings. Here's what I can answer on your phone:" : "I can't answer open questions right now — Smart insights aren't connected yet. Here's what I can answer on your phone:", local: true, t: Date.now(), chips: SUGG() }); hap(1); return; }
     if (syncOn()) { await syncNow(); while (syncing) await new Promise(r => setTimeout(r, 150)); }
     const history = CH.msgs.filter(m => !m.local || m.role === "user").slice(-12).map(m => ({ role: m.role, content: m.content }));
     const r = await aiApi("/v1/ai/chat", { messages: history, ctx: aiContext() }, 60000);
