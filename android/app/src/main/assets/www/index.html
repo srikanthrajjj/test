@@ -1132,7 +1132,7 @@ function openReview() {
     if (x.k === "cat") { const inv = INVEST_RE.test(x.e.title) || INVEST_RE.test(x.e.raw || ""); return `<div class="rvi"><div class="rvh">${ico(x.e.cat, x.e.title)}<div><b>${esc(x.e.title)} · ${f(x.e.amt)}</b><span>${shortDate(x.e.ts)} · ${inv ? "looks like an investment" : "paid to a person"}</span></div></div><div class="cacts"><button data-act="rv-xfer" data-arg="${x.e.id}">${inv ? "Investment" : "Not spending"}</button><button data-act="rv-keep" data-arg="${x.e.id}">Keep as expense</button></div></div>`; }
     if (x.k === "name") return `<div class="rvi"><div class="rvh">${ico(x.e.cat, x.e.title)}<div><b>${esc(x.e.title)} · ${f(x.e.amt)}</b><span>${shortDate(x.e.ts)}${x.e.raw ? " · " + esc(x.e.raw.slice(0, 70)) + "…" : ""}</span></div></div><div class="cacts"><button data-act="edit" data-arg="${x.e.id}">Name it</button><button data-act="rv-keep" data-arg="${x.e.id}">Looks fine</button></div></div>`;
     if (x.k === "dup") return `<div class="rvi"><div class="rvh">${ico(x.e.cat, x.e.title)}<div><b>Same ${f(x.e.amt)} twice?</b><span>${esc(x.e.title)} (${srcLbl(x.e)}, ${tmS(x.e.ts)}) and ${esc(x.f.title)} (${srcLbl(x.f)}, ${tmS(x.f.ts)})</span></div></div><div class="cacts"><button data-act="dup-merge" data-arg="${x.e.id}|${x.f.id}">Merge</button><button data-act="dup-keep" data-arg="${x.e.id}|${x.f.id}">Keep both</button></div></div>`;
-    return `<div class="rvi"><div class="rvh"><span class="ico gl" style="background:#FFB34024;color:#FFB340">${svgIc("warn")}</span><div><b>Bank text we couldn't read</b><span>${esc(bankName(x.u.a))} · ${shortDate(x.u.d)} — ${esc(x.u.b)}</span></div></div><div class="cacts"><button data-act="un-add" data-arg="${x.u.id}">Add as expense</button><button data-act="un-ignore" data-arg="${x.u.id}">Ignore ${esc(bankName(x.u.a))}</button></div></div>`;
+    return `<div class="rvi"><div class="rvh"><span class="ico gl" style="background:#FFB34024;color:#FFB340">${svgIc("warn")}</span><div><b>${x.u.app ? "Payment notification we couldn't read" : "Bank text we couldn't read"}</b><span>${esc(x.u.app ? x.u.a : bankName(x.u.a))} · ${shortDate(x.u.d)} — ${esc(x.u.b)}</span></div></div><div class="cacts"><button data-act="un-add" data-arg="${x.u.id}">Add as expense</button>${x.u.app ? `<button data-act="un-skip" data-arg="${x.u.id}">Not a payment</button>` : `<button data-act="un-ignore" data-arg="${x.u.id}">Ignore ${esc(bankName(x.u.a))}</button>`}</div></div>`;
   };
   openSheet("Needs a look", it.length ? `<p class="muted" style="margin:2px 2px 12px;line-height:1.45">One tap each. Renaming one payment fixes every payment from that sender.</p>${it.map(row).join("")}` : `<div class="empty"><b>All clear</b>Nothing needs your attention.</div>`);
 }
@@ -1758,17 +1758,33 @@ window.__smsChanged = () => autoImport();
 const GENERIC_T = /^(upi payment|card payment|upi to a person|local store \(qr\)|[a-z]{2,6})$/i;
 /* payment-app + bank-email notifications: only money going out, with the real payee name */
 const NOTIF_JUNK = /cashback|offer|reward|coupon|voucher|\bwin\b|\bwon\b|% off|\bget (?:₹|rs|flat|up ?to)|recharge now|requested|request(?:ed)? (?:from|for)|sent you|you(?:'ve| have)? received|received (?:₹|rs|inr|money|payment)|credited to (?:your|ur)|added to (?:your )?wallet|refund|failed|declined|pending|reversed|is due|due on|due date|autopay|reminder|statement|shipped|deliver|order (?:placed|confirmed)|otp/i;
-const NOTIF_OUT = /\b(paid|sent|debited|payment of|payment to|transaction of|spent|upi txn|purchase)\b/i;
+const NOTIF_OUT = /\b(paid|sent|debited|payment of|payment to|transaction of|spent|upi txn|purchase|payment successful|transaction successful|money sent|transferred)\b/i;
+/* a payment-app notification with an amount that we couldn't read goes to Review instead of vanishing */
+function notifSkipped(m) {
+  const b = String(m.b || "").replace(/\s+/g, " ").trim();
+  if (!/(?:rs\.?|inr|₹)\s*:?\s*\d/i.test(b) || /cashback|offer|reward|coupon|voucher|% off|sent you|you(?:'ve| have)? received|received (?:₹|rs|inr|money|payment)|credited to|request|is due|due on|reminder|otp|shipped|deliver/i.test(b) || /\.gm$|mail|outlook/i.test(m.a || "")) return;
+  S.unparsed = (S.unparsed || []).filter(u => u.id !== m.id).concat([{ id: m.id, a: appName(m.a), app: 1, b: b.slice(0, 240), d: m.d }]).sort((x, y) => y.d - x.d).slice(0, 40);
+}
+/* "Rahul Kumar. You paid ₹700": the notification title is the payee */
+function titleAsPayee(b) {
+  const t0 = b.split(/\.\s/)[0].trim();
+  return /^[A-Za-z][A-Za-z .&'-]{1,38}$/.test(t0) && !/\b(payment|transaction|successful|money|paid|sent|debit|alert|bank|upi|phonepe|paytm|google pay|gpay|cred|bhim|wallet|received)\b/i.test(t0) ? [0, t0] : null;
+}
 function notifPay(m) {
   const b = String(m.b || "").replace(/\s+/g, " ").trim(); if (!b || NOTIF_JUNK.test(b) || !NOTIF_OUT.test(b)) return null;
   if (/gm$|mail|outlook/i.test(m.a || "") && !/\b(a\/c|acct|account|card|upi|vpa)\b/i.test(b)) return null;
-  const p = parseSms(m); if (!p || !(p.amt > 0)) return null;
+  let p = parseSms(m);
+  if (!p) { const a0 = b.match(/(?:rs\.?|inr|₹)\s*:?\s*([\d,]+(?:\.\d{1,2})?)/i), v = a0 ? parseFloat(a0[1].replace(/,/g, "")) : 0; if (!(v > 0) || v > 5e6) return null;
+    p = { amt: v, title: "UPI payment", cat: "other", xfer: false, ts: m.d, sid: "sms" + (m.id != null ? m.id : hash(b + m.d)), raw: b.slice(0, 240), via: String(m.a || ""), mk: "" }; }
+  if (!(p.amt > 0)) return null;
   const stop = "(?=\\s+(?:successfully|was|is|has|via|from|using|on|through|for|at \\d)\\b|[.!,;]|$)";
   const nm = (b.match(/\bto VPA \S+ ([A-Za-z][A-Za-z .&'-]{1,30}?)(?= on\b|[.,]|$)/) || b.match(/UPI\/P2[MA]\/\d+\/([A-Za-z][A-Za-z .&'-]{1,30}?)(?=\/|[.,]|\s+on\b|$)/i)
     || b.match(new RegExp("\\b(?:paid|sent|payment of|transaction of)\\s+(?:rs\\.?|inr|₹)\\s*[\\d,]+(?:\\.\\d+)?\\s+(?:to|at)\\s+(.{2,40}?)" + stop, "i"))
-    || b.match(new RegExp("(?:rs\\.?|inr|₹)\\s*[\\d,]+(?:\\.\\d+)?\\s+(?:paid|sent)\\s+(?:to|at)\\s+(.{2,40}?)" + stop, "i")) || [])[1];
-  const messy = GENERIC_NM.test(p.title) || GENERIC_T.test(p.title) || /\s(successfully|was|is|has)$/i.test(p.title);
-  if (nm && messy && !/^(vpa|a\/c|account|your|you)\b/i.test(nm) && !(p.mk && S.names && S.names[p.mk])) { p.title = titleCase(nm.trim()); const c2 = catOf(p.title); if (c2 !== "other") p.cat = c2; }
+    || b.match(new RegExp("(?:rs\\.?|inr|₹)\\s*[\\d,]+(?:\\.\\d+)?\\s+(?:paid|sent)\\s+(?:successfully\\s+)?(?:to|at)\\s+(.{2,40}?)" + stop, "i"))
+    || b.match(new RegExp("\\b(?:paid|sent|successful(?:ly)?)\\.?\\s+to\\s+([A-Za-z][A-Za-z .&'-]{1,40}?)" + stop, "i"))
+    || titleAsPayee(b) || [])[1];
+  const messy = GENERIC_NM.test(p.title) || GENERIC_T.test(p.title) || /\s(successfully|was|is|has)$/i.test(p.title) || (nm && canonMerchant(titleCase(nm)).length > p.title.length + 2 && nm.toLowerCase().startsWith(p.title.toLowerCase()));
+  if (nm && messy && !/^(vpa|a\/c|account|your|you)\b/i.test(nm) && !(p.mk && S.names && S.names[p.mk])) { p.title = canonMerchant(titleCase(nm.trim())).slice(0, 28); const c2 = catOf(p.title); if (c2 !== "other") p.cat = c2; }
   else p.title = p.title.replace(/\s+(successfully|was|is)$/i, "");
   if (p.cat === "cash") p.cat = "other"; // a UPI/app payment is never an ATM withdrawal
   return p;
@@ -1780,7 +1796,8 @@ function importNotifs() {
     let q = []; try { q = JSON.parse(N.takeNotifs() || "[]"); } catch (e) { }
     const seen = new Set(S.seen), added = []; let renamed = 0;
     q.forEach(m => {
-      const p = notifPay(m); if (!p || seen.has("n" + m.id)) return; S.seen.push("n" + m.id);
+      if (seen.has("n" + m.id)) return;
+      const p = notifPay(m); if (!p) { notifSkipped(m); return; } S.seen.push("n" + m.id);
       const ex = S.exp.filter(e => Math.abs(Math.abs(e.amt) - Math.abs(p.amt)) < .01 && Math.abs(e.ts - p.ts) < 20 * 60e3).sort((x, y) => (GENERIC_T.test(y.title) - GENERIC_T.test(x.title)) || Math.abs(x.ts - p.ts) - Math.abs(y.ts - p.ts))[0];
       if (ex) { ex.srcs = [...new Set([...(ex.srcs || [ex.src]), "app:" + appName(m.a)])]; if (GENERIC_T.test(ex.title) && !GENERIC_T.test(p.title)) { ex.title = p.title; if (ex.cat === "other") ex.cat = p.cat; ex.raw = ex.raw || p.raw; touch(ex); renamed++; } return; }
       if (wasGone(p)) return;
@@ -2085,7 +2102,7 @@ function deleteExp(id) {
 /* =========================================================
    SMS — parse bank / UPI debit messages entirely on-device
    ========================================================= */
-const AMT_RE = /(?:rs\.?|inr|₹|usd|\$|eur|€|gbp|£)\s*([\d,]+(?:\.\d{1,2})?)/gi;
+const AMT_RE = /(?:rs\.?|inr|₹|usd|\$|eur|€|gbp|£)\s*:?\s*([\d,]+(?:\.\d{1,2})?)/gi;
 const XFER_RE = /\b(neft|imps|rtgs|self[- ]transfer|own account|fund transfer|credit card (?:bill|payment|pymt)|cc (?:bill|payment)|sip|mutual fund|zerodha|groww|upstox|kuvera|smallcase|ppf|nps|fixed deposit|fd\b|demat|investment)\b/i;
 const BILL_RE = /\b(emi|loan|insurance|premium|lic\b|bill ?(?:payment|paid|pay|desk)|bbps|electricity|postpaid|broadband|dth|recharge(?:d)?|piped gas|water bill|maintenance|nach|ecs|auto-?debit|auto-?pay|e-?mandate|mandate)\b/i;
 const DEBIT_RE = /\b(debited|debit|dr|spent|paid|purchase[d]?|withdrawn|withdrawal|sent|charged|deducted|payment of|txn of|transaction of|used for|pos|upi|transferred|remitted|recharge(?:d)?|emi|premium|nach|auto-?debit|bill ?(?:payment|paid)|payment (?:successful|made|done)|successfully paid)\b/i;
@@ -2207,8 +2224,8 @@ function parseSms(m) {
   if (!(amt > 0) || amt > 5e6) return null;
   let merch = "";
   const vpa = body.match(/(?:vpa|to|@)\s*([a-z0-9._-]{2,}@[a-z]{2,})/i) || body.match(/\b([a-z0-9._-]{2,})@(?:ok[a-z]+|ybl|ibl|axl|paytm|upi|axis|icici|hdfcbank|sbi|apl|okhdfc|oksbi|okaxis|okicici|freecharge|[a-z]{2,6})\b/i);
-  const named = body.match(/\b(?:at|to|towards|for|trf to|info:?)\s+(?!a\/c|account|your|card|vpa|upi|bank|ref|the\b|(?:rs|inr|usd|eur|gbp)\b|\d|dispute|details|more\b|any\b|assist|quer|report)([A-Za-z0-9][A-Za-z0-9 &'._*-]{1,32}?)(?=\s+(?:on|via|ref|using|from|upi|avl|bal|txn|a\/c|acct|card|is|has|if|not|call|dated|through|\d{1,2}[-/.]\d{1,2})|[.,;(]|$)/i);
-  const upiSlash = body.match(/UPI\/(?:DR|CR|P2[AM])?\/?\d{4,}\/([^\/]{2,30})\//i), afterDate = body.match(/\b\d{1,2}[-\/ ]?(?:[A-Za-z]{3}|\d{1,2})[-\/ ]?\d{2,4}(?:[: ]\d{2}:\d{2}(?::\d{2})?)?\s+(?:on|at)\s+([A-Za-z][A-Za-z0-9 &'.-]{1,28}?)(?=[.;,]|\s+(?:avl|bal|ref|upi)|\s*$)/i), beforeCredited = body.match(/[;,]\s*([A-Za-z][A-Za-z0-9 .&'-]{2,28}?)\s+credited/i);
+  const named = body.match(/\b(?:at|to|towards|for|trf to|info:?)\s+(?!a\/c|account|your|card|vpa|upi|bank|ref|the\b|(?:rs|inr|usd|eur|gbp)\b|\d|dispute|details|more\b|any\b|assist|quer|report|block\b|blocking\b|this sms)([A-Za-z0-9][A-Za-z0-9 &'._*-]{1,32}?)(?=\s+(?:on|via|ref|using|from|upi|avl|bal|txn|a\/c|acct|card|is|has|if|not|call|dated|through|\d{1,2}[-/.]\d{1,2})|[.,;(]|$)/i);
+  const upiSlash = body.match(/UPI\/(?:DR|CR|P2[AM])?\/?\d{4,}\/([^\/]{2,30}?)(?:\/|(?=\s+(?:not|on|ref|avl|bal|new|total)\b|[.;,]|\s*$))/i) || body.match(/UPI\/([A-Za-z][A-Za-z .]{2,30}?)(?=[.;,]|\s+(?:new|avl|bal|not|on|ref)\b|\s*$)/) || body.match(/\bUPI-([A-Za-z][A-Za-z .]{2,30}?)-/), afterDate = body.match(/\b\d{1,2}[-\/ ]?(?:[A-Za-z]{3}|\d{1,2})[-\/ ]?\d{2,4}(?:[: ]\d{2}:\d{2}(?::\d{2})?)?\s+(?:on|at)\s+([A-Za-z][A-Za-z0-9 &'.-]{1,28}?)(?=[.;,]|\s+(?:avl|bal|ref|upi)|\s*$)/i), beforeCredited = body.match(/[;,]\s*([A-Za-z][A-Za-z0-9 .&'-]{2,28}?)\s+credited/i);
   if (upiSlash) merch = upiSlash[1]; else if (beforeCredited) merch = beforeCredited[1]; else if (named) merch = named[1]; else if (afterDate) merch = afterDate[1]; else if (vpa) merch = (vpa[1] || vpa[0]).split("@")[0];
   const JUNK = /^(?:dear|your|ur|the|a\/?c|acct|account|card|cards|info|ref|txn|transaction|bank|hdfc|icici|sbi|axis|kotak|yes|idfc|indusind|pnb|bob|federal|rbl|upi|neft|imps|rtgs|ybl|okaxis|okhdfcbank|oksbi|okicici|customer|xx+|x+\d*|\d+|on|via|from|by|mobile|net ?banking|debit|credit|payment|merchant|beneficiary|self)\b/i;
   if (merch && JUNK.test(merch.trim()) && vpa) merch = (vpa[1] || vpa[0]).split("@")[0];
@@ -2435,7 +2452,8 @@ const A = {
   "add-cash": () => { openForm({ note: "cash" }); setTimeout(() => toast("Anything with “cash” in the note counts against cash withdrawn"), 400); },
   "dup-merge": a => { const [x, y] = a.split("|"), A = S.exp.find(e => e.id === x), B = S.exp.find(e => e.id === y); if (!A || !B) return; const keep = A.src === "sms" ? A : B.src === "sms" ? B : A, drop = keep === A ? B : A; if (GENERIC_NM.test(keep.title) && !GENERIC_NM.test(drop.title)) { keep.title = drop.title; if (keep.cat === "other") keep.cat = drop.cat; } keep.srcs = [...new Set([...(keep.srcs || [keep.src]), ...(drop.srcs || [drop.src])])]; keep.raw = keep.raw || drop.raw; touch(keep); S.exp.splice(S.exp.indexOf(drop), 1); tomb("exp", drop.id); goneAdd(drop); save(); hap(2); openReview(); refreshLater(); toast("Merged — counted once"); },
   "dup-keep": a => { a.split("|").forEach(id => { const e = S.exp.find(x => x.id === id); if (e) e.okDup = true; }); persist(); openReview(); refreshLater(); },
-  "un-add": a => { const u = (S.unparsed || []).find(x => String(x.id) === a); if (!u) return; u.done = 1; persist(); const amt = parseFloat(((u.b.match(/(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d+)?)/i) || [])[1] || "0").replace(/,/g, "")); closeSheet(); setTimeout(() => openForm({ amt: amt || "", ts: u.d, src: "sms", note: u.b.slice(0, 120) }), 300); },
+  "un-add": a => { const u = (S.unparsed || []).find(x => String(x.id) === a); if (!u) return; u.done = 1; persist(); const amt = parseFloat(((u.b.match(/(?:rs\.?|inr|₹)\s*:?\s*([\d,]+(?:\.\d+)?)/i) || [])[1] || "0").replace(/,/g, "")); closeSheet(); setTimeout(() => openForm({ amt: amt || "", ts: u.d, src: u.app ? "app" : "sms", note: u.b.slice(0, 120) }), 300); },
+  "un-skip": a => { const u = (S.unparsed || []).find(x => String(x.id) === a); if (!u) return; u.done = 1; persist(); openReview(); refreshLater(); },
   "un-ignore": a => { const u = (S.unparsed || []).find(x => String(x.id) === a); if (!u) return; S.ignore = [...new Set([...(S.ignore || []), u.a])]; S.unparsed = S.unparsed.filter(x => x.a !== u.a); persist(); openReview(); refreshLater(); toast(`Ignoring texts from ${u.a}`); },
   split: a => openSplit(a), "sp-n": a => { const i = $("#sp-amt"); if (i) i.value = a; },
   "sp-save": a => { const e = S.exp.find(x => x.id === a), who = ($("#sp-who").value || "").trim(), v = parseFloat($("#sp-amt").value); if (!e || !who || !(v > 0) || v >= Math.abs(e.amt) + .01) { toast("Add a name and an amount less than the total"); return; } S.exp.push(touch({ id: uid(), amt: -r2(v), title: `${who} owes you`, who, cat: "iou", paid: e.paid, sm: 50, ts: e.ts, src: "manual", note: e.title, link: e.id })); save(); closeSheet(); hap(2); refresh(); toast(`${who} owes you ${money(v)} — only your share counts now`); },
