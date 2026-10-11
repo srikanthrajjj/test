@@ -14,7 +14,7 @@ const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
   // inbox: an unreadable bank text, a card bill due, an ATM withdrawal, and a credit from Rahul later
   await p.evaluate(n => { let id = 1; const m = (d, a, body) => window.__inbox.push({ id: id++, a, b: body, d: n - d * 36e5 });
     m(30, 'VM-ICICIB', 'Alert: Rs 2,340.00 txn processed on ICICI card XX9911. Ref 99812');
-    m(28, 'AD-HDFCBK', 'Your HDFC Bank Credit Card XX4321 statement: Total amount due Rs 18,450.00 due on ' + new Date(n + 4 * 864e5).toLocaleDateString('en-GB').replace(/\//g, '-'));
+    m(28, 'AD-HDFCBK', 'Your HDFC Bank Credit Card XX4321 statement: Total amount due Rs 18,450.00 due on ' + new Date(n + 2 * 864e5).toLocaleDateString('en-GB').replace(/\//g, '-'));
     m(20, 'VM-SBIINB', 'Rs 3,000.00 withdrawn at ATM from A/c XX1234 on ' + new Date(n).toLocaleDateString('en-GB') + '. Avl Bal Rs 20,000');
     m(10, 'VM-HDFCBK', 'Rs.1,200.00 debited from A/c XX4821 to VPA swiggy@axb (UPI Ref 1)'); }, now);
   await p.evaluate(() => window.__smsChanged()); await p.waitForTimeout(800);
@@ -27,7 +27,7 @@ const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
   await p.waitForTimeout(300);
   const home = await p.evaluate(() => ({ rev: !!document.querySelector('.hrev[data-act=review]'), due: !!document.querySelector('.hdue [data-act=due-ignore]'), cash: !!document.querySelector('[data-act=add-cash]'), qa: document.querySelectorAll('.hqa button').length, tabs: document.querySelectorAll('#tabs2 .t').length }));
   ok(home.rev && home.due && home.cash, 'home shows review, card-bill-due (with Paid/Ignore) and cash-unaccounted cards');
-  ok(home.qa === 3 && home.tabs === 3, 'home has Add / Scan receipt / Ask Nest and Home·Activity·Dues tabs');
+  ok(home.qa === 3 && home.tabs === 4, 'home has Add / Scan receipt / Ask Nest and Home·Activity·Ask Nest·Dues tabs');
   await p.evaluate(() => openReview()); await p.waitForTimeout(400);
   ok(await p.evaluate(() => /twice/.test(document.querySelector('#sheet').innerText)), 'review inbox shows the possible duplicate');
   await p.evaluate(() => document.querySelector('[data-act=dup-merge]').click()); await p.waitForTimeout(300);

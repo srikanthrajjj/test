@@ -30,7 +30,7 @@ const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
   ok(await p.evaluate(() => /Nest noticed/i.test(document.querySelector('.gcard.ai') ? document.querySelector('.gcard.ai').innerText : '')), 'a daily "Nest noticed" insight appears on the Month screen');
   await p.evaluate(() => { S.smartOff = true; S.insight = null; S.askedMk = {}; }); await p.evaluate(() => dailyInsight()); ok(await p.evaluate(() => !S.insight), 'turning smart features off stops AI calls');
   await p.evaluate(() => { S.aiOn = false; window.aiCheck = async () => {}; }); await p.evaluate(() => { CH.msgs = []; openChat(); return sendChat('Any tips to save?'); }); await p.waitForTimeout(700);
-  ok(await p.evaluate(() => CH.msgs.some(m => m.role === 'assistant' && m.card && /what I can tell/.test(m.card.head))), 'without AI, chat still answers on-device');
+  ok(await p.evaluate(() => CH.msgs.some(m => m.role === 'assistant' && /Smart insights/.test(m.content) && (m.chips || []).length)), 'without AI, chat still answers on-device');
   ok(!errs.length, 'no JS errors ' + errs.join(';'));
   res.forEach(r => console.log(r[0], ' ', r[1])); console.log(res.filter(r => r[0] === 'PASS').length + '/' + res.length); await b.close();
 })().catch(e => { console.error('CRASH', e); process.exit(1); });

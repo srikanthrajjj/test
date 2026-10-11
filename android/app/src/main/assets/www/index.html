@@ -553,7 +553,7 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .composer{align-items:center}.composer .cadd{background:var(--card2);color:var(--ink)}.composer .cadd svg{stroke:currentColor}.cin{flex:1;position:relative;display:flex;align-items:center}.cin input{width:100%;padding-right:46px}.composer .mic{position:absolute;right:4px;width:40px;height:40px;background:none;color:var(--sub)}.composer .mic svg{stroke:currentColor}
 .cacts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cacts button{padding:0 8px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cacts button:only-child{grid-column:1/-1}
 #tabs2{position:fixed;left:0;right:0;bottom:0;z-index:29;display:grid;grid-template-columns:repeat(4,1fr);padding:6px 0 calc(6px + env(safe-area-inset-bottom));background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--line)}
-#tabs2 .t{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12.5px;font-weight:600;color:var(--sub);padding:4px 0}#tabs2 .t svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}#tabs2 .t.on{color:var(--accent)}#tabs2 .t.on svg{fill:color-mix(in srgb,var(--accent) 100%,transparent);stroke:var(--accent)}#tabs2 .t.on:nth-child(2) svg,#tabs2 .t.on:nth-child(4) svg{fill:none;stroke-width:2.4}#tabs2 .t.ask{color:var(--accent);gap:1px}#tabs2 .t.ask>span{width:46px;height:34px;margin-top:-6px;border-radius:17px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,transparent)}#tabs2 .t.ask svg{width:30px;height:30px;fill:var(--accent);stroke:none}
+#tabs2 .t{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12.5px;font-weight:600;color:var(--sub);padding:4px 0}#tabs2 .t svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}#tabs2 .t.on{color:var(--accent)}#tabs2 .t.on svg{fill:color-mix(in srgb,var(--accent) 100%,transparent);stroke:var(--accent)}#tabs2 .t.on:nth-child(2) svg,#tabs2 .t.on:nth-child(4) svg{fill:none;stroke-width:2.4}#tabs2 .t.ask{color:var(--sub);gap:1px}#tabs2 .t.ask>span{width:46px;height:34px;margin-top:-6px;border-radius:17px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,transparent)}#tabs2 .t.ask svg{width:30px;height:30px;fill:var(--accent);stroke:none}
 body[data-tab=you] #tabs2{display:none}body[data-tab=home] #fab,body[data-tab=dues] #fab{display:none}#fab{bottom:calc(84px + env(safe-area-inset-bottom))}
 .page{padding-bottom:calc(110px + env(safe-area-inset-bottom))}#toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 .hh{display:flex;justify-content:space-between;align-items:flex-start;padding-top:22px}.hh h1{font-size:32px;font-weight:750;letter-spacing:-.8px}.hh p{font-size:18px;color:var(--sub);margin-top:2px}
@@ -1730,6 +1730,7 @@ async function autoImport() {
   }
   autoBusy = true;
   try {
+    if (!S.dueV2) { const r0 = await scanSince(Date.now() - 75 * DAY); (r0.msgs || []).slice().sort((x, y) => x.d - y.d).forEach(m => { if (!ignored(m) && !parseSms(m)) applyDue(m); }); S.dueV2 = 1; persist(); scheduleReminders(); }
     const res = await scanSince(S.smsLast), seen = new Set(S.seen); let c = []; noteBalances(res.msgs);
     (res.msgs || []).forEach(m => { if (ignored(m)) return; const p = parseSms(m); if (p && !seen.has(p.sid)) c.push(p); else if (!p) sideSms(m); });
     c = dedupeCands(c).filter(x => !wasGone(x) && !S.exp.some(e => e.amt === x.amt && Math.abs(e.ts - x.ts) < 15 * 60e3 && (e.src === "sms" || e.src === "app" || canonMerchant(e.title) === canonMerchant(x.title))));
@@ -1866,8 +1867,11 @@ const dueKey = (series, due) => series + "@" + dkey(due);
 function nextOn(day, from) { const d = new Date(from); d.setHours(12, 0, 0, 0); const t = new Date(d.getFullYear(), d.getMonth(), Math.min(day, 28)); t.setHours(12, 0, 0, 0); return t.getTime() < d.getTime() - 7 * DAY ? new Date(d.getFullYear(), d.getMonth() + 1, Math.min(day, 28), 12).getTime() : t.getTime(); }
 function allDues() {
   const c = DCFG(), out = [], now = Date.now(), off = S.dueOff || {};
-  if (c.cards) (S.dues || []).forEach(d => { const s = "card:" + d.bank + d.card; if (off[s] || !d.due || now - d.due > 10 * DAY) return; const paid = S.exp.some(e => e.ts > d.d && e.ts < d.due + 4 * DAY && Math.abs(e.amt) >= d.amt * 0.9 && /credit ?card|card bill|cc (bill|payment)/i.test((e.raw || "") + " " + e.title)); out.push({ series: s, key: dueKey(s, d.due), title: `${bankName(d.bank)}${d.card ? " card ••" + d.card : " card"} bill`, amt: d.amt, due: d.due, kind: "card", paid }); });
-  if (c.bills) recurringList().forEach(r => { const s = "bill:" + r.key.toLowerCase(); if (off[s]) return; out.push({ series: s, key: dueKey(s, r.next), title: r.title, amt: r.amt, due: r.next, kind: "bill", paid: false, auto: 1 }); });
+  const smsBills = c.bills ? (S.dues || []).filter(d => d.kind === "bill" && d.due && now - d.due <= 10 * DAY) : [];
+  smsBills.forEach(d => { const s = "sms:" + d.title.toLowerCase(); if (off[s]) return; const w = d.title.split(" ")[0].toLowerCase(); const paid = !!d.paidAt || S.exp.some(e => counted(e) && e.ts > d.d - DAY && e.ts < d.due + 4 * DAY && (!d.amt || Math.abs(e.amt - d.amt) <= Math.max(2, d.amt * 0.1)) && (canonMerchant(e.title).toLowerCase().includes(w) || (e.raw || "").toLowerCase().includes(w) || (d.amt && e.cat === "bill" && Math.abs(e.amt - d.amt) < 1)));
+    out.push({ series: s, key: dueKey(s, d.due), title: d.title, amt: d.amt, due: d.due, kind: "bill", paid, auto: 1, sms: 1 }); });
+  if (c.cards) (S.dues || []).filter(d => (d.kind || "card") === "card").forEach(d => { const s = "card:" + d.bank + d.card; if (off[s] || !d.due || now - d.due > 10 * DAY) return; const paid = !!d.paidAt || S.exp.some(e => e.ts > d.d && e.ts < d.due + 4 * DAY && (Math.abs(e.amt) >= d.amt * 0.9 || (d.min && Math.abs(e.amt) >= d.min)) && /credit ?card|card bill|cc (bill|payment)/i.test((e.raw || "") + " " + e.title)); out.push({ series: s, key: dueKey(s, d.due), title: `${bankName(d.bank)}${/card/i.test(bankName(d.bank)) ? "" : " card"}${d.card ? " ••" + d.card : ""} bill`, amt: d.amt, min: d.min, due: d.due, kind: "card", paid }); });
+  if (c.bills) recurringList().forEach(r => { const s = "bill:" + r.key.toLowerCase(); if (off[s]) return; if (smsBills.some(d => Math.abs(d.due - r.next) < 8 * DAY && (d.title.split(" ")[0].toLowerCase() === r.key.split(" ")[0].toLowerCase() || (d.amt && Math.abs(d.amt - r.amt) <= r.amt * 0.15)))) return; out.push({ series: s, key: dueKey(s, r.next), title: r.title, amt: r.amt, due: r.next, kind: "bill", paid: false, auto: 1 }); });
   if (c.custom) (S.myDues || []).forEach(d => { const s = "my:" + d.id; if (off[s]) return; const due = d.repeat ? nextOn(d.day, now) : d.date; if (!due || (!d.repeat && now - due > 10 * DAY)) return;
     const paid = (d.paid || {})[dkey(due)] || S.exp.some(e => counted(e) && Math.abs(e.ts - due) < 6 * DAY && (canonMerchant(e.title).toLowerCase() === canonMerchant(d.title).toLowerCase()) && (!d.amt || Math.abs(e.amt - d.amt) <= Math.max(5, d.amt * 0.15)));
     out.push({ series: s, key: dueKey(s, due), title: d.title, amt: d.amt, due, kind: "custom", paid: !!paid, id: d.id, cat: d.cat }); });
@@ -1884,14 +1888,14 @@ function renderDues() {
   return `<div class="large"><h1>Dues</h1></div>
   <div class="card"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="muted" style="font-size:13px">Due in the next 30 days</div><b style="font-size:28px;letter-spacing:-.6px">${money(month.reduce((a, d) => a + (d.amt || 0), 0), { round: true })}</b><div class="muted" style="font-size:13px">${month.length} item${month.length === 1 ? "" : "s"} · reminders ${c.lead} day${c.lead > 1 ? "s" : ""} before at ${c.hour > 12 ? c.hour - 12 + " pm" : c.hour + " am"}</div></div><button class="btn soft" data-act="due-cfg">Reminders</button></div></div>
   ${grp("Overdue", open.filter(d => d.days < 0))}${grp("Next 7 days", open.filter(d => d.days >= 0 && d.days <= 7))}${grp("Later", open.filter(d => d.days > 7))}
-  ${!open.length ? `<div class="empty" style="padding:30px 20px"><b>Nothing due</b>Card bills, subscriptions and EMIs show up here automatically from your texts. Add rent, school fees or anything else yourself.</div>` : ""}
+  ${!open.length ? `<div class="empty" style="padding:30px 20px"><b>Nothing due</b>Card bills, phone and electricity bills, recharges, insurance and loan EMIs show up here automatically from your texts. Add rent, school fees or anything else yourself.</div>` : ""}
   <button class="btn prime block" data-act="due-add" style="margin-top:16px">Add a due</button>
   ${done.length ? `<div class="lab">Paid or ignored</div><div class="list">${done.map(d => `<button class="li mute" data-act="due-open" data-arg="${esc(d.key)}">${dueIco(d)}<div class="mid"><div class="t1">${esc(d.title)}</div><div class="t2">${d.paid ? "Paid" : "Ignored"} · ${shortDate(d.due)}</div></div><div class="amt">${d.amt ? money(d.amt, { round: true }) : ""}</div></button>`).join("")}</div>` : ""}`;
 }
 function openDue(key) {
   const d = allDues().find(x => x.key === key); if (!d) return;
   openSheet("", `<div class="dh">${dueIco(d).replace('class="ico', 'class="ico big')}<div class="dt">${esc(d.title)}</div><div class="da">${d.amt ? money(d.amt) : ""}</div><div class="ds" style="${d.days < 0 ? "color:var(--owe)" : ""}">${d.paid ? "Paid" : d.ignored ? "Ignored this time" : dueWhen(d)} · ${new Date(d.due).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</div></div>
-    <div class="muted" style="font-size:13.5px;margin:12px 2px;line-height:1.45">${d.kind === "card" ? "Read from your card statement text. Paying the bill is a transfer, so it won't count as spending twice." : d.kind === "bill" ? "Nest noticed you pay this every month. It marks itself paid when the payment shows up." : "Added by you. It marks itself paid when a matching payment shows up, or tap Mark paid."}</div>
+    <div class="muted" style="font-size:13.5px;margin:12px 2px;line-height:1.45">${d.kind === "card" ? `Read from your card statement text.${d.min ? ` Minimum due ${money(d.min, { round: true })}.` : ""} Paying the bill is a transfer, so it won't count as spending twice.` : d.sms ? "Read from the reminder text you got. It marks itself paid when the payment shows up." : d.kind === "bill" ? "Nest noticed you pay this every month. It marks itself paid when the payment shows up." : "Added by you. It marks itself paid when a matching payment shows up, or tap Mark paid."}</div>
     ${d.paid || d.ignored ? `<button class="btn soft block" data-act="due-undo" data-arg="${esc(d.key)}">Undo</button>` : `<div class="row" style="gap:10px"><button class="btn prime" style="flex:1" data-act="due-paid" data-arg="${esc(d.key)}">Mark paid</button><button class="btn soft" style="flex:1" data-act="due-ignore" data-arg="${esc(d.key)}">Ignore this time</button></div>`}
     ${d.kind === "custom" ? `<button class="btn soft block" data-act="due-edit" data-arg="${esc(d.id)}" style="margin-top:10px">Edit</button>` : ""}
     <button class="link" data-act="due-stop" data-arg="${esc(d.series)}" style="display:block;margin:14px auto 0;color:var(--owe)">Stop tracking this</button>`);
@@ -1911,7 +1915,7 @@ function openDueCfg() {
   const tg = (k, t, s) => `<button class="li" data-act="dcfg" data-arg="${k}|${!c[k]}"><div class="mid"><div class="t1">${t}</div><div class="t2">${s}</div></div><span class="tgl ${c[k] ? "on" : ""}"><i></i></span></button>`;
   openSheet("Due reminders", `<div class="lab" style="margin-top:0">Remind me</div>${seg("lead", [1, 2, 3, 5, 7], ["1 day", "2", "3", "5", "7 days"])}
     <div class="lab">At</div>${seg("hour", [9, 10, 18, 20], ["9 am", "10 am", "6 pm", "8 pm"])}
-    <div class="lab">Track</div><div class="list set">${tg("cards", "Credit card bills", "From your card statement texts")}${tg("bills", "Bills & subscriptions", "Netflix, rent, EMIs Nest sees every month")}${tg("custom", "Dues you add", "Rent, fees, anything else")}</div>`);
+    <div class="lab">Track</div><div class="list set">${tg("cards", "Credit card bills", "From your card statement texts")}${tg("bills", "Bills, recharges & EMIs", "From reminder texts, and payments Nest sees every month")}${tg("custom", "Dues you add", "Rent, fees, anything else")}</div>`);
 }
 function fyReport() {
   const now = new Date(), y0 = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1, a = new Date(y0, 3, 1).getTime(), b = new Date(y0 + 1, 3, 1).getTime();
@@ -2070,12 +2074,68 @@ const bankName = c => BANKS[String(c || "").toUpperCase()] || (/^[A-Z]{5,6}$/.te
 const sndr = a => String(a || "").toUpperCase().replace(/^APP:.*/, "APP").replace(/^[A-Z]{2}-/, "").replace(/-[A-Z]$/, "").slice(0, 12);
 const ignored = m => (S.ignore || []).includes(sndr(m.a));
 const BANKISH = /(?:rs\.?|inr|₹)\s*[\d,]+/i, MOVE = /\b(debit|debited|paid|spent|sent|withdraw|dr\b|txn|transaction|purchase)\b/i;
+/* ---------- dues from texts: card statements + bill / EMI / recharge reminders ---------- */
+const MON3 = "janfebmaraprmayjunjulaugsepoctnovdec";
+function datesIn(b, ref) {
+  const out = [], add = (i, y, mo, d) => { if (mo < 0 || mo > 11 || d < 1 || d > 31) return; let yy = y == null ? null : (+y < 100 ? 2000 + +y : +y); let t;
+    if (yy == null) { t = new Date(new Date(ref).getFullYear(), mo, d, 12).getTime(); if (t < ref - 60 * DAY) t = new Date(new Date(ref).getFullYear() + 1, mo, d, 12).getTime(); } else t = new Date(yy, mo, d, 12).getTime();
+    if (!isNaN(t)) out.push({ i, t }); };
+  let m; const R1 = /\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g, R2 = /\b(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})\b/g, R3 = /\b(\d{1,2})(?:st|nd|rd|th)?[-\s]?([A-Za-z]{3,9})\.?(?:[-\s,']+(\d{4}|\d{2})\b)?/g, R4 = /\b([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b(?:,?\s*(\d{4}))?/g;
+  while ((m = R1.exec(b))) add(m.index, m[1], +m[2] - 1, +m[3]);
+  while ((m = R2.exec(b))) if (!/^\d{4}$/.test(m[1])) add(m.index, m[3], +m[2] - 1, +m[1]);
+  const mi = w => { const k = w.slice(0, 3).toLowerCase(), i = MON3.indexOf(k); return i >= 0 && i % 3 === 0 && /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*$/i.test(w) ? i / 3 : -1; };
+  while ((m = R3.exec(b))) { const k = mi(m[2]); if (k >= 0) add(m.index, m[3], k, +m[1]); }
+  while ((m = R4.exec(b))) { const k = mi(m[1]); if (k >= 0 && !out.some(o => Math.abs(o.i - m.index) < 8)) add(m.index, m[3], k, +m[2]); }
+  return out.sort((x, y) => x.i - y.i);
+}
+const DUE_KW = /(payment due date|due date|due on|due by|is due|are due|due for (?:payment|renewal)(?: on)?|pay(?:able)? (?:by|before|on or before)|on or before|last date(?: of payment)?|expir(?:e|es|ed|ing|y)(?: on| date)?|valid (?:till|until|upto|up to)|will be (?:auto[- ]?)?debited on|to be debited on|scheduled (?:on|for)|renew(?:s|al)? on|before)\b/ig;
+const DUE_JUNK = /\b(otp|pre-?approved|eligible|apply|congrat|lucky|loan of up to|get (?:a |an )?(?:instant )?loan|instant loan|convert\w*\b.{0,30}\bemi|emi conversion|no[- ]cost emi|reward points?|points? (?:will|are|expir)|voucher|coupon|offer|sale\b|% off|upgrade|kyc)\b/i;
+const DUE_PAID = /(thank(?:s| you) for (?:the |your )?(?:payment|recharge)|payment (?:of .{0,45}?)?(?:has been |is |was )?(?:received|successful|credited|processed)|(?:received|credited) (?:your )?payment|recharge (?:of .{0,45}?)?(?:is |was |has been )?successful|successfully recharged|(?:has been|is) paid|bill paid)/i;
+const BILLERS = [[/airtel/i, "Airtel"], [/\bjio\b/i, "Jio"], [/\bvi\b|vodafone|\bidea\b/i, "Vi"], [/\bbsnl\b/i, "BSNL"], [/act fibernet|\bact\b broadband/i, "ACT Fibernet"], [/hathway/i, "Hathway"], [/tata ?play|tata ?sky/i, "Tata Play"], [/dish ?tv|\bd2h\b/i, "Dish TV"], [/sun direct/i, "Sun Direct"],
+  [/bescom|msedcl|mahadiscom|tneb|tangedco|tpddl|tata power|bses|adani electricity|cesc|kseb|apspdcl|apepdcl|tsspdcl|tgspdcl|uppcl|pspcl|wbsedcl|jvvnl|avvnl|mpez|electricity|power bill/i, "Electricity"], [/mahanagar gas|\bmgl\b|\bigl\b|indraprastha gas|gujarat gas|piped gas|\bpng\b/i, "Gas"], [/indane|hp gas|bharat ?gas|lpg|cylinder/i, "LPG cylinder"], [/water (?:bill|charges|tax)|bwssb|jal board/i, "Water"],
+  [/\blic\b|life insurance corp/i, "LIC"], [/bajaj (?:finserv|finance|fin)/i, "Bajaj Finserv"], [/hdb financial|\bhdbfs/i, "HDB Financial"], [/tvs credit/i, "TVS Credit"], [/home credit/i, "Home Credit"], [/mahindra finance/i, "Mahindra Finance"], [/muthoot/i, "Muthoot"],
+  [/netflix/i, "Netflix"], [/hotstar|jiocinema|jio ?hotstar/i, "JioHotstar"], [/prime video|amazon prime/i, "Amazon Prime"], [/spotify/i, "Spotify"], [/youtube premium/i, "YouTube Premium"], [/broadband|fib(?:er|re)/i, "Broadband"]];
+const SENDER_BILLER = { AIRTEL: "Airtel", AIRTLP: "Airtel", JIOINF: "Jio", JIOPAY: "Jio", JIOFBR: "Jio", VICARE: "Vi", VIINFO: "Vi", BSNLIN: "BSNL", TATAPL: "Tata Play", TTSKY: "Tata Play", DISHTV: "Dish TV", BESCOM: "Electricity", MSEDCL: "Electricity", TPDDL: "Electricity", BSESRP: "Electricity", BSESYP: "Electricity", ADANIE: "Electricity", LICIND: "LIC", BAJAJF: "Bajaj Finserv", BAJFIN: "Bajaj Finserv", BFLHFL: "Bajaj Finserv", HDBFSL: "HDB Financial", TVSCRD: "TVS Credit" };
+function dueSms(m) {
+  const b = String(m.b || "").replace(/\s+/g, " ").trim(), ref = m.d || Date.now(), from = sndr(m.a);
+  if (!b || b.length > 700 || DUE_JUNK.test(b)) return null;
+  const card = (/credit ?card|\bcc\b|card (?:no\.?|number|ending|account|a\/c|xx|\*)|card\s*(?:xx|\*+|x+)\d{4}/i.test(b) || /CC$|CRD$|CARD$/.test(from)) && !(/debit card/i.test(b) && !/credit/i.test(b));
+  if (DUE_PAID.test(b)) return { paid: true, card, from, title: billerOf(b, from), d: ref };
+  DUE_KW.lastIndex = 0; const kws = []; let k; while ((k = DUE_KW.exec(b))) kws.push(k.index + k[0].length);
+  if (!kws.length) return null;
+  if (/\b(debited|spent|withdrawn|was charged|has been charged)\b/i.test(b) && !/will be|to be|is due|due (?:on|by|date)/i.test(b)) return null;
+  const ds = datesIn(b, ref).filter(x => x.t >= ref - 2 * DAY && x.t <= ref + 75 * DAY); if (!ds.length) return null;
+  const near = ds.map(x => ({ x, g: Math.min(...kws.map(p => x.i >= p - 2 ? x.i - p : 999)) })).sort((a, c) => a.g - c.g)[0];
+  const due = (near.g < 40 ? near.x : ds.sort((a, c) => c.t - a.t)[0]).t;
+  const AM = /(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)/gi, amts = []; let a;
+  while ((a = AM.exec(b))) { const pre = b.slice(Math.max(0, a.index - 28), a.index).toLowerCase(), v = parseFloat(a[1].replace(/,/g, "")); if (!(v > 0)) continue; amts.push({ v, pre, min: /min(?:imum)?\.?\s*(?:amt|amount)?\.?\s*(?:due|payable)?(?:\s*(?:is|of|:))?\W*$/.test(pre), skip: /(limit|avl|avail|balance|bal\b|reward|cashback|credit of|late fee|charges of)\W*[\w ]{0,10}$/.test(pre) }); }
+  const good = amts.filter(x => !x.min && !x.skip), best = good.find(x => /(total|bill|amount|amt|outstanding|emi|premium|instal\w*|payable|due)\W*[\w ]{0,14}$/.test(x.pre)) || good[0];
+  const min = (amts.find(x => x.min) || {}).v || 0;
+  if (card) { if (!best) return null; const tail = (b.match(/ending\s*(?:in|with)?\s*(?:xx+|x+|\*+)?\s*(\d{4})\b|(?:card|a\/c|no\.?)\s*(?:no\.?|number)?\s*(?:xx+|x+|\*+)\s*(\d{4})\b|(?:xx+|\*+)(\d{4})\b/i) || []); return { kind: "card", bank: from, card: tail[1] || tail[2] || tail[3] || "", amt: best.v, min, due, d: ref }; }
+  const t = billerOf(b, from); if (!t) return null;
+  const type = /\bemi\b|instal(?:l)?ment|loan/i.test(b) ? " EMI" : /premium|policy/i.test(b) ? " premium" : /recharge|validity|plan (?:expir|end)|pack (?:expir|end)|prepaid/i.test(b) ? " recharge" : /subscription|membership|renew/i.test(b) ? " renewal" : /cylinder|lpg/i.test(t) ? "" : " bill";
+  if (!best && !/recharge|renewal/.test(type)) return null;
+  return { kind: "bill", title: (t + type).replace(/^(\w[\w ]*?) (\w+) \2$/, "$1 $2"), amt: best ? best.v : 0, due, d: ref };
+}
+function billerOf(b, from) {
+  const s = SENDER_BILLER[from]; if (s) return s;
+  const h = BILLERS.find(x => x[0].test(b)); if (h) return h[1];
+  if (BANKS[from] && /\bemi\b|loan/i.test(b)) return bankName(from) + " loan";
+  return "";
+}
+function applyDue(m) {
+  const r = dueSms(m); if (!r) return false;
+  S.dues = S.dues || [];
+  if (r.paid) { S.dues.forEach(x => { if (x.d < r.d && x.due > r.d - 40 * DAY && (r.card ? (x.kind || "card") === "card" && x.bank === r.from : x.kind === "bill" && r.title && x.title.indexOf(r.title) === 0)) x.paidAt = r.d; }); return !!(r.card || r.title); }
+  const same = x => r.kind === "card" ? (x.kind || "card") === "card" && x.bank === r.bank && x.card === r.card : x.kind === "bill" && x.title === r.title;
+  const old = S.dues.find(same); if (old && old.d >= r.d) return true;
+  S.dues = S.dues.filter(x => !same(x)).concat([r]).sort((x, y) => x.d - y.d).slice(-24);
+  return true;
+}
 /* messages the parser didn't turn into an expense: card dues, IOU repayments, and "needs review" */
 function sideSms(m, quiet) {
   const b = String(m.b || "").replace(/\s+/g, " ").trim(); if (!b || b.length > 600) return;
-  const due = b.match(/(?:total|amount|bill|statement)[^.]{0,30}?(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d+)?)[^.]{0,40}?due (?:on|by|date:?)\s*([0-9]{1,2}[-\/ ][A-Za-z0-9]{2,9}(?:[-\/ ][0-9]{2,4})?)/i);
-  if (due) { const v = parseFloat(due[1].replace(/,/g, "")), t = dateIn(due[2]); const card = (b.match(/(?:card|a\/c)\s*(?:ending|no\.?)?\s*(?:xx|x+|\*+)?\s*(\d{4})/i) || [])[1] || ""; S.dues = (S.dues || []).filter(x => !(x.card === card && x.bank === sndr(m.a))).concat([{ bank: sndr(m.a), card, amt: v, due: t, d: m.d }]).slice(-10); return; }
-  if (/payment (?:of|received)[^.]*credit card|credit card[^.]*payment (?:of[^.]*)?received/i.test(b)) { S.dues = (S.dues || []).filter(x => !(x.bank === sndr(m.a) && m.d > x.d)); return; }
+  if (applyDue(m)) return;
   if (HARD_NOISE_RE.test(b)) return;
   const cr = b.match(/(?:received|credited)[^.]*?(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d+)?)[^.]*?(?:from|by)\s+([A-Za-z][A-Za-z .]{1,30})/i) || b.match(/(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d+)?)[^.]*?(?:received|credited)[^.]*?(?:from|by)\s+([A-Za-z][A-Za-z .]{1,30})/i);
   if (cr) { const v = parseFloat(cr[1].replace(/,/g, "")), who = cr[2].trim().toLowerCase().replace(/^(?:upi|neft|imps|rtgs|vpa)\s+(?:from|by)?\s*/, "").split(" ")[0]; const iou = S.exp.find(e => e.cat === "iou" && !e.settled && Math.abs(-e.amt - v) <= 1 && (e.who || "").toLowerCase().split(" ")[0] === who); if (iou) { iou.settled = m.d; touch(iou); if (!quiet) toast(`${iou.who} paid you back ${money(v)} ✓`); } return; }
