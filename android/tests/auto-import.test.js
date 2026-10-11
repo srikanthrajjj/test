@@ -33,7 +33,7 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  ok(await A.evaluate(b=>S.exp.length===b+1,before),'new SMS (and its duplicate) added exactly once automatically');
  await A.evaluate(()=>window.__smsChanged()); await A.waitForTimeout(600); ok(await A.evaluate(b=>S.exp.length===b+1,before),'running auto-import again adds nothing (no duplicates)');
  // pair, sync
- await A.evaluate(()=>{ show('month'); }); await A.waitForTimeout(400); const code=await (async()=>{ await A.click('[data-act=quick-invite]'); await A.waitForFunction(()=>S.sync&&S.sync.code,null,{timeout:8000}); return A.evaluate(()=>S.sync.code); })(); await A.click('#sheet .x');
+ await A.evaluate(()=>{ S.notifHide=Date.now(); show('home'); document.querySelector('[data-act=quick-invite]').scrollIntoView({block:'center'}); }); await A.waitForTimeout(400); const code=await (async()=>{ await A.click('[data-act=quick-invite]'); await A.waitForFunction(()=>S.sync&&S.sync.code,null,{timeout:8000}); return A.evaluate(()=>S.sync.code); })(); await A.click('#sheet .x');
  await B.evaluate(([c,s])=>handleInvite(c,s),[code,SERVER]); await B.waitForSelector('#pr-name',{timeout:8000}); await B.fill('#pr-name','Gun'); await B.click('#pr-go'); await B.waitForTimeout(2500); await B.click('[data-act=ob-skip]'); await B.waitForTimeout(1000);
  await A.evaluate(()=>syncNow()); await A.waitForTimeout(800);
  ok(await A.evaluate(()=>/is connected/.test(document.querySelector('#sheet').innerText)),'creator sees "partner is connected — start syncing" pop-up');
@@ -78,11 +78,11 @@ const res=[]; const ok=(c,m)=>{res.push([c?'PASS':'FAIL',m])};
  await A.evaluate(()=>closeSheet());
  // UI: grouping + no dots + guide
  await A.evaluate(()=>{ const n=Date.now(); for(const a of [210,180,330]) S.exp.push({id:uid(),amt:a,title:'swiggy@axb',cat:'food',paid:'me',sm:50,ts:n-3600e3*a/100,src:'sms',u:n}); S.exp.push({id:uid(),amt:480000,title:'Sandeep Kumar',cat:'other',paid:'me',sm:50,ts:n-7200e3,src:'sms',u:n}); U.month=monthStart(new Date()); U.week=null; show('month'); }); await A.waitForTimeout(800);
- const ui=await A.evaluate(()=>({dots:document.querySelectorAll('.pd, .dot2').length, swiggyRows:[...document.querySelectorAll('#tl .li .t1')].filter(e=>/swiggy/i.test(e.innerText)).length, group:/\d payments/.test(document.querySelector('#tl').innerText), guide:!!document.querySelector('.gcard.warn')}));
- ok(ui.dots===0,'no payer dots anywhere on the Month screen'); ok(ui.swiggyRows<=2,'same-merchant payments are merged into one row per week ('+ui.swiggyRows+' Swiggy rows)'); ok(ui.group,'merged rows say "N payments"'); ok(ui.guide,'a guiding line flags the large payment share');
- await A.screenshot({path:'shots/g_1.png'}); await A.click('.gcard.warn'); await A.waitForTimeout(700); await A.screenshot({path:'shots/g_2.png'}); const t1=await A.evaluate(()=>S.exp.filter(counted).reduce((a,e)=>a+e.amt,0));
+ const ui=await A.evaluate(()=>({dots:document.querySelectorAll('.pd, .dot2').length, swiggyRows:[...document.querySelectorAll('#tl .li .t1')].filter(e=>/swiggy/i.test(e.innerText)).length, group:/\d payments/.test(document.querySelector('#tl').innerText), guide:(show('home'), !!document.querySelector('.hrev[data-act=large]'))}));
+ ok(ui.dots===0,'no payer dots anywhere on the Month screen'); ok(ui.swiggyRows<=2,'same-merchant payments are merged into one row per week ('+ui.swiggyRows+' Swiggy rows)'); ok(ui.group,'merged rows say "N payments"'); ok(ui.guide,'Home flags the large payment share');
+ await A.screenshot({path:'shots/g_1.png'}); await A.click('.hrev[data-act=large]'); await A.waitForTimeout(700); await A.screenshot({path:'shots/g_2.png'}); const t1=await A.evaluate(()=>S.exp.filter(counted).reduce((a,e)=>a+e.amt,0));
  await A.click('[data-act=lg-no]'); await A.waitForTimeout(600); const t2=await A.evaluate(()=>S.exp.filter(counted).reduce((a,e)=>a+e.amt,0)); ok(t1-t2===480000,'"Not spending" removes it from the total');
- await A.evaluate(()=>closeSheet()); await A.waitForTimeout(500); await A.screenshot({path:'shots/g_3.png'});
+ await A.evaluate(()=>{ closeSheet(); show('month'); }); await A.waitForTimeout(500); await A.screenshot({path:'shots/g_3.png'});
  await A.click('#tl .li >> nth=0'); await A.waitForTimeout(500); await A.screenshot({path:'shots/g_4.png'});
  for(const p of [A,B]) ok(p.errs.length===0,'no JS errors '+p.errs.join(';'));
  console.log(res.map(r=>r.join('  ')).join('\n')); console.log(res.filter(r=>r[0]==='PASS').length+'/'+res.length); await b.close(); })().catch(e=>{console.error('CRASH',e);process.exit(1)});

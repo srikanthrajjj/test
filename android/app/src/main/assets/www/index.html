@@ -423,7 +423,7 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .hero2{display:block;width:100%;text-align:left;margin-top:10px;padding:20px 20px 18px;border-radius:24px;background:var(--hero);border:1px solid var(--heroB);box-shadow:0 14px 40px -18px rgba(124,107,255,.45)}
 .h2t{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .h2t small{font-size:14px;color:var(--sub);font-weight:500}
-.hero2 .tot{font-size:44px;font-weight:700;letter-spacing:-1.6px;line-height:1.1;margin-top:4px}
+.hero2.cmp .tot{font-size:30px!important;letter-spacing:-.8px}.hero2.cmp{box-shadow:none}.hero2 .tot{font-size:44px;font-weight:700;letter-spacing:-1.6px;line-height:1.1;margin-top:4px}
 .ms{font-size:13px;font-weight:600;color:var(--vio);padding:6px 12px;border-radius:99px;border:1px solid var(--heroB);white-space:nowrap}.ms i{font-style:normal;margin-left:2px}
 .pbar{display:flex;gap:3px;height:6px;border-radius:99px;overflow:hidden;margin-top:18px;background:var(--card2)}.pbar i{display:block;height:100%;border-radius:99px;transition:width .8s var(--ease)}
 .pp{display:flex;align-items:center;margin-top:18px}.pi{flex:1;display:flex;gap:10px;align-items:center;min-width:0}.pi small{display:block;font-size:13px;color:var(--sub)}.pi b{display:block;font-size:19px;font-weight:650;letter-spacing:-.4px;margin-top:1px}.pi .avc{border:0;width:36px;height:36px}
@@ -433,8 +433,8 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .gic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;flex:none}.gic svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .gtx{flex:1;min-width:0;font-size:14px;color:var(--sub);line-height:1.35}.gtx b{display:block;font-size:16px;color:var(--ink);font-weight:650;margin-top:1px}
 .chev{color:var(--faint);font-size:24px}
-.gcard.inv .gtx span{display:block;color:var(--ink);font-size:15px;font-weight:550}.lk{display:block;color:var(--accent);font-size:14px;font-weight:600;margin-top:2px}
-.xb{color:var(--faint);font-size:15px;padding:6px;align-self:flex-start}
+.gcard.inv .gtx span{display:block;color:var(--ink);font-size:15px;font-weight:550}.lk{display:block;color:var(--accent);font-size:14px;font-weight:600;margin-top:2px;min-height:32px;text-align:left}
+.xb{color:var(--faint);font-size:15px;padding:6px;align-self:flex-start;min-width:36px;min-height:36px}
 .weeks{gap:8px;padding:18px 0 8px}
 .wchip{padding:8px 16px;border-radius:99px;border:1px solid var(--rowB);background:var(--card);color:var(--ink);font-weight:550}
 .wchip.on{background:rgba(124,107,255,.16);border-color:var(--vio);color:var(--ink)}.wchip.cur:not(.on){color:var(--ink)}
@@ -559,7 +559,7 @@ body[data-tab=you] #tabs2{display:none}body[data-tab=home] #fab,body[data-tab=du
 .hh{display:flex;justify-content:space-between;align-items:flex-start;padding-top:22px}.hh h1{font-size:32px;font-weight:750;letter-spacing:-.8px}.hh p{font-size:18px;color:var(--sub);margin-top:2px}
 .hav{width:56px;height:56px;border-radius:50%;background:color-mix(in srgb,var(--accent) 12%,var(--bg));color:var(--accent);font-weight:700;font-size:19px;flex:none}
 .hstat{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--sub);margin-top:12px}.hstat i{width:9px;height:9px;border-radius:50%;background:var(--faint)}.hstat i.on{background:var(--ok)}
-.hm{display:flex;justify-content:space-between;align-items:center;margin-top:26px}.hm .lbl{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:700}.mt3{display:flex;align-items:center;gap:6px;font-size:16px}.mt3 svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2}
+.hm{display:flex;justify-content:space-between;align-items:center;margin-top:26px}.hm .lbl{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--sub);font-weight:700}.mt3{display:flex;align-items:center;gap:6px;font-size:16px;min-height:40px;padding:0 4px}.mt3 svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2}
 .htot{font-size:clamp(42px,13vw,56px);font-weight:800;letter-spacing:-2px;line-height:1.1;margin-top:6px}.hsub{font-size:18px;color:var(--sub)}
 .hbar{height:12px;border-radius:99px;background:var(--card2);overflow:hidden;margin-top:16px}.hbar i{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .8s var(--ease)}
 .hleft{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font-size:15px;color:var(--sub)}.hleft b{color:var(--ink);font-size:19px}
@@ -568,7 +568,7 @@ body[data-tab=you] #tabs2{display:none}body[data-tab=home] #fab,body[data-tab=du
 .hins{display:flex;gap:14px;margin-top:22px;padding:18px;border-radius:18px;background:color-mix(in srgb,var(--accent) 9%,var(--bg))}.hins .spk{color:var(--accent);flex:none}.hins .spk svg{width:26px;height:26px;fill:currentColor;stroke:none}.hins b{font-size:17px}.hins p{color:var(--sub);font-size:15px;margin-top:4px}.hins button{display:block;margin:10px 0 0 auto;color:var(--accent);font-weight:600;font-size:15.5px}
 .hrev{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:14px;padding:14px;border-radius:16px;background:var(--card2)}.hrev b{display:block;font-size:15px}.hrev span:not(.rdot2):not(.chev){font-size:13px;color:var(--sub)}.rdot2{min-width:26px;height:26px;border-radius:13px;background:#FFB340;color:#2a1a00;font-weight:800;display:grid;place-items:center;font-size:13px}
 .hqa{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;margin:24px 0 6px;padding-bottom:22px;border-bottom:1px solid var(--line)}.hqa>i{background:var(--line);margin:10px 0}.hqa button{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:15px}.hqa button>span{width:62px;height:62px;border-radius:16px;background:var(--card2);display:grid;place-items:center}.hqa .i2{width:28px;height:28px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round}.hqa .ac svg{width:28px;height:28px;stroke:var(--accent);fill:none;stroke-width:1.8}
-.hrec{display:flex;justify-content:space-between;align-items:center;margin-top:20px}.hrec h2{font-size:22px;font-weight:700}.hrec button{color:var(--accent);font-size:16px;font-weight:500}
+.hrec{display:flex;justify-content:space-between;align-items:center;margin-top:20px}.hrec h2{font-size:22px;font-weight:700}.hrec button{color:var(--accent);font-size:16px;font-weight:500;min-height:40px;padding:0 4px}
 .hday{font-size:15px;color:var(--sub);margin:16px 0 4px}.li.hrow{padding:12px 0;border-bottom:1px solid var(--line);border-radius:0;background:none}.li.hrow .ico{border-radius:12px;width:52px;height:52px}.li.hrow .amt{font-size:17px;font-weight:600}
 .hask{display:flex;align-items:center;gap:12px;width:100%;margin-top:22px;padding:0 16px;min-height:58px;border-radius:16px;border:1.5px solid color-mix(in srgb,var(--accent) 35%,var(--line));text-align:left}.hask .spk{color:var(--accent)}.hask .spk svg{width:22px;height:22px;fill:currentColor;stroke:none}.hask .ph{flex:1;color:var(--sub);font-size:16px}.mic2 .i2{width:22px;height:22px;stroke:var(--sub);fill:none;stroke-width:1.8}
 .htry{text-align:center;color:var(--sub);font-size:14px;margin-top:10px}
@@ -987,18 +987,12 @@ function groupRow(g) {
   const act = g.items.length > 1 ? `data-act="grp" data-arg="${g.id}"` : `data-act="open" data-arg="${g.items[0].id}"`;
   return `<button class="li ${g.x ? "mute" : ""}" ${act}>${ico(cat, title)}<div class="mid"><div class="t1">${esc(title)}</div><div class="t2">${sub}</div></div><div class="amt ${g.t < 0 ? "rf" : ""}">${money(g.t, { sign: g.t < 0 })}</div></button>`;
 }
-function guideHints(m, cExp, total, isNow) {
-  const out = [], L = largeOf(m), mn = m.toLocaleDateString("en-GB", { month: "long" });
-  if (L.big.length && L.share >= 0.3) out.push({ t: `${L.big.length} large payment${L.big.length > 1 ? "s" : ""}`, v: `${Math.round(L.share * 100)}% of ${mn} — real spending?`, a: "large", warn: 1, ic: "warn" });
-  if (isNow && Date.now() >= periodEnd(m).getTime() - 2.5 * 864e5) out.push({ t: "Month ends soon", v: solo() ? "See where it went" : "See who spent what", a: "breakdown", ic: "spark" });
-  if (total > 0 && !out.length && cExp.length > 4) {
-    const g = {}; cExp.forEach(e => { const k = merchKey(e.title); g[k] = g[k] || { n: canonMerchant(e.title), t: 0, c: e.cat }; g[k].t += e.amt; });
-    const top = Object.values(g).sort((a, b) => b.t - a.t)[0], cats = {}; cExp.forEach(e => cats[e.cat] = (cats[e.cat] || 0) + e.amt);
-    const tc = Object.entries(cats).sort((a, b) => b[1] - a[1])[0];
-    if (top && top.t >= total * 0.15) { const ik = iconKey(top.c, top.n); out.push({ t: `${esc(top.n)} is the biggest`, v: `${money(top.t, { round: true })} (${Math.round(top.t / total * 100)}%)`, a: "breakdown", ic: ik, col: IC_COL[ik] }); }
-    else if (tc && tc[0] !== "other" && tc[1] >= total * 0.35) out.push({ t: `${CAT[tc[0]].n} is the biggest category`, v: `${money(tc[1], { round: true })} (${Math.round(tc[1] / total * 100)}%)`, a: "breakdown", ic: CAT_IC[tc[0]], col: IC_COL[CAT_IC[tc[0]]] });
-  }
-  return out.slice(0, 1);
+function nudgeCard() {
+  const invHidden = S.invHide && Date.now() - S.invHide < 864e5;
+  const promoHidden = S.promoHide && Date.now() - S.promoHide < 14 * 864e5;
+  const inv = solo() ? (promoHidden || !S.exp.length ? "" : `<div class="gcard inv"><span class="gic" style="color:#F0508B;background:#F0508B26">${svgIc("people", 26)}</span><div class="gtx"><span><b style="display:inline;font-size:11px;letter-spacing:.06em;color:#F0508B;margin-right:6px">NEW</b>Track together with your partner</span><button class="lk" data-act="duo-on">See both spends in one timeline</button></div><button class="xb" data-act="promo-hide" aria-label="Dismiss">✕</button></div>`) : invHidden ? "" : !syncOn() && S.exp.length ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Track together with ${esc(first(S.p.name))}</span><button class="lk" data-act="quick-invite">Invite on WhatsApp</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : syncOn() && !S.sync.partner ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Waiting for ${esc(first(S.p.name))}</span><button class="lk" data-act="show-invite">Share invite again</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : "";
+  const notif = N && N.hasNotifAccess && !notifOn() && S.exp.length && !(S.notifHide && Date.now() - S.notifHide < 7 * 864e5) ? `<div class="gcard inv"><span class="gic" style="color:#3DDC97;background:#3DDC9726">${svgIc("spark", 26)}</span><div class="gtx"><span>Catch GPay, PhonePe &amp; Paytm payments</span><button class="lk" data-act="notif-access">Allow notification access</button></div><button class="xb" data-act="notif-hide" aria-label="Dismiss">✕</button></div>` : "";
+  return notif || inv;
 }
 function renderMonth() {
   const m = U.month, isNow = m.getTime() === monthStart(new Date()).getTime();
@@ -1017,38 +1011,27 @@ function renderMonth() {
       <div class="tn-h"><span>${w.cur ? "This week" : w.label + " " + mon}</span>${!solo() && who === "all" ? (() => { const a = wAll.filter(e => e.paid === "me" && counted(e)).reduce((x, e) => x + e.amt, 0), b = wt - a; return `<span class="tn-m sbs"><i style="color:${S.me.color}">${money(a, { round: true })}</i><i style="color:${S.p.color}">${money(b, { round: true })}</i></span>`; })() : `<span class="tn-m">${money(wt, { round: true })}</span>`}</div>
       <div class="list">${shown.map(groupRow).join("")}${more.length ? `<div class="morerows" id="mr-${w.w}">${more.map(groupRow).join("")}</div><button class="li moreb" id="mb-${w.w}" data-act="wk-more" data-arg="${w.w}">Show ${more.length} more</button>` : ""}</div></div>`;
   });
-  const invHidden = S.invHide && Date.now() - S.invHide < 864e5;
-  const promoHidden = S.promoHide && Date.now() - S.promoHide < 14 * 864e5;
-  const inv = solo() ? (promoHidden || !S.exp.length ? "" : `<div class="gcard inv"><span class="gic" style="color:#F0508B;background:#F0508B26">${svgIc("people", 26)}</span><div class="gtx"><span><b style="display:inline;font-size:11px;letter-spacing:.06em;color:#F0508B;margin-right:6px">NEW</b>Track together with your partner</span><button class="lk" data-act="duo-on">See both spends in one timeline</button></div><button class="xb" data-act="promo-hide" aria-label="Dismiss">✕</button></div>`) : invHidden ? "" : !syncOn() && S.exp.length ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Track together with ${esc(first(S.p.name))}</span><button class="lk" data-act="quick-invite">Invite on WhatsApp</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : syncOn() && !S.sync.partner ? `<div class="gcard inv"><span class="gic" style="color:#6E8BFF;background:#6E8BFF26">${svgIc("people", 26)}</span><div class="gtx"><span>Waiting for ${esc(first(S.p.name))}</span><button class="lk" data-act="show-invite">Share invite again</button></div><button class="xb" data-act="inv-hide" aria-label="Dismiss">✕</button></div>` : "";
-  const hints = guideHints(m, cExp, total, isNow);
   const share = total > 0 ? Math.min(100, Math.max(0, Math.round(me / total * 100))) : 0;
   const xferTot = mExp.filter(e => !counted(e)).reduce((a, e) => a + e.amt, 0), refTot = mExp.filter(e => e.cat === "refund").reduce((a, e) => a - e.amt, 0);
-  const C = 2 * Math.PI * 44, gap = total && me && pp ? 6 : 0, la = Math.max(0, C * me / (total || 1) - gap), lb = Math.max(0, C * pp / (total || 1) - gap);
-  const lead = me === pp ? null : me > pp ? S.me : S.p, leadV = Math.abs(me - pp);
-  const ring = `<div class="ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" class="rt"/>${total ? `<circle cx="50" cy="50" r="44" class="ra" style="stroke:${S.me.color};stroke-dasharray:${la} ${C}"/><circle cx="50" cy="50" r="44" class="ra" style="stroke:${S.p.color};stroke-dasharray:${lb} ${C};stroke-dashoffset:${-(la + gap)}"/>` : ""}</svg><div class="rc">${lead ? `<span class="avc" style="background:${lead.color}">${esc((lead.name.trim()[0] || "?").toUpperCase())}</span><small>${esc(first(lead.name))} spent</small><b>${money(leadV, { round: true })} more</b>` : `<small>${total ? "Spent equally" : "No spends"}</small>`}</div></div>`;
   const qs = [], today = new Date(), dayN = isNow ? today.getDate() : lastD.getDate();
   { const days = new Set(cExp.map(e => new Date(e.ts).getDate())); let run = 0, best = 0; for (let d = 1; d <= dayN; d++) { if (days.has(d)) run = 0; else best = Math.max(best, ++run); }
     let cur = 0; if (isNow) for (let d = dayN; d >= 1 && !days.has(d); d--) cur++;
     const n = isNow ? cur : best; if (n >= 2) qs.push(`<span class="q" style="--c:#FF9F43">${svgIc("flame", 18)}<b>${n}</b> ${isNow ? "no-spend day streak" : "no-spend days in a row"}</span>`); }
   { const pm = addMonths(m, -1), prev = S.exp.filter(e => inMonth(e.ts, pm) && counted(e) && e.ts - pm.getTime() <= (isNow ? Date.now() : periodEnd(m).getTime()) - m.getTime()).reduce((a, e) => a + e.amt, 0);
-    if (prev > 0 && total > 0) { const d = Math.round((total - prev) / prev * 100); if (Math.abs(d) >= 3) qs.push(`<span class="q" style="--c:${d < 0 ? "#3DDC97" : "#FFB340"}">${svgIc(d < 0 ? "down" : "up", 18)}<b>${Math.abs(d)}%</b> ${d < 0 ? "less" : "more"} than last month</span>`); } }
+    if (!isNow && prev > 0 && total > 0) { const d = Math.round((total - prev) / prev * 100); if (Math.abs(d) >= 3) qs.push(`<span class="q" style="--c:${d < 0 ? "#3DDC97" : "#FFB340"}">${svgIc(d < 0 ? "down" : "up", 18)}<b>${Math.abs(d)}%</b> ${d < 0 ? "less" : "more"} than last month</span>`); } }
   { const per = {}; cExp.forEach(e => { const d = new Date(e.ts).getDate(); per[d] = (per[d] || 0) + e.amt; }); const top = Object.entries(per).sort((a, b) => b[1] - a[1])[0];
     if (top && cExp.length > 4) qs.push(`<span class="q" style="--c:#8B7CFF">${svgIc("spark", 18)}Priciest day <b>${top[0]} ${mon}</b> ${money(top[1], { round: true })}</span>`); }
   const quests = qs.length ? `<div class="quests">${qs.join("")}</div>` : "";
   return `
   <div class="top"><div class="tl1"><button class="nv" data-act="mprev" aria-label="Previous month">‹</button><button class="mt2" data-act="monthpick" aria-label="Choose month">${monthLabel(m)}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><button class="nv" data-act="mnext" ${isNow ? "disabled" : ""} aria-label="Next month">›</button></div>
     <div class="tr1"><button class="ib2" data-act="search" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg></button><button class="pr2" data-act="tab" data-arg="you" aria-label="Settings"><span class="avc" style="background:${S.me.color}">${esc((S.me.name.trim()[0] || "?").toUpperCase())}</span>${solo() ? "" : `<span class="avc" style="background:${S.p.color}">${esc((S.p.name.trim()[0] || "?").toUpperCase())}</span>`}</button></div></div>
-  <button class="hero2" data-act="breakdown" aria-label="Open month summary">
-    <div class="h2t"><div><small>${isNow ? (solo() ? "Spent this month" : "Spent together") : "Spent in " + m.toLocaleDateString("en-GB", { month: "long" })}</small><div class="tot" id="bigbal" data-v="${total}">${money(total, { round: true })}</div></div><span class="ms">Month summary <i>›</i></span></div>
+  <button class="hero2 cmp" data-act="breakdown" aria-label="Open month summary">
+    <div class="h2t"><div><small>${cExp.length} payment${cExp.length === 1 ? "" : "s"} in ${m.toLocaleDateString("en-GB", { month: "long" })}</small><div class="tot">${money(total, { round: true })}</div></div><span class="ms">Month summary <i>›</i></span></div>
     ${solo() ? "" : `<div class="pbar"><i style="background:${S.me.color};width:${total ? Math.max(share, 2) : 0}%"></i>${pp > 0 ? `<i style="background:${S.p.color};width:${100 - share}%"></i>` : ""}</div>
-    <div class="duo">${ring}<div class="dp">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<div class="pi"><span class="avc" style="background:${u.color}">${esc((u.name.trim()[0] || "?").toUpperCase())}</span><div><small>${esc(first(u.name))} <em style="color:${u.color}">${total ? pc : 0}%</em></small><b>${money(v, { round: true })}</b></div></div>`).join("")}</div></div>`}
+    <div class="hduo" style="margin-top:12px">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<span><i style="background:${u.color}"></i>${esc(first(u.name))} <b>${money(v, { round: true })}</b> <em style="color:var(--sub);font-style:normal">${total ? pc : 0}%</em></span>`).join("")}</div>`}
   </button>
   ${refTot > 0 ? `<div class="xl" style="padding-bottom:0">includes ${money(refTot, { round: true })} in refunds, already taken off</div>` : ""}
   ${xferTot ? `<button class="xl" data-act="transfers">${money(xferTot, { round: true })} in transfers, investments &amp; cash withdrawals, not counted <i>›</i></button>` : ""}
-  ${isNow && S.insight && S.insight.d === dkey(Date.now()) && aiOk() ? `<button class="gcard ai" data-act="ask-insight"><span class="gic" style="color:#8B7CFF;background:#8B7CFF26">${svgIc("spark", 24)}</span><div class="gtx"><span class="ain">Nest noticed</span><b>${esc(S.insight.t)}</b></div><span class="chev">›</span></button>` : ""}
-  ${hints.map(h => `<button class="gcard ${h.warn ? "warn" : ""}" data-act="${h.a}"><span class="gic" style="color:${h.warn ? "#FFB340" : h.col || "#8B7CFF"};background:${h.warn ? "#FFB34022" : (h.col || "#8B7CFF") + "26"}">${svgIc(h.ic || "card", 26)}</span><div class="gtx"><span>${h.t}</span><b>${h.v}</b></div><span class="chev">›</span></button>`).join("")}
-  ${N && N.hasNotifAccess && !notifOn() && S.exp.length && !(S.notifHide && Date.now() - S.notifHide < 7 * 864e5) ? `<div class="gcard inv"><span class="gic" style="color:#3DDC97;background:#3DDC9726">${svgIc("spark", 26)}</span><div class="gtx"><span>Catch GPay, PhonePe &amp; Paytm payments</span><button class="lk" data-act="notif-access">Allow notification access</button></div><button class="xb" data-act="notif-hide" aria-label="Dismiss">✕</button></div>` : ""}
-  ${inv}
   ${!solo() && mExp.length ? `<div class="whoseg seg"><button class="${(U.who || "all") === "all" ? "on" : ""}" data-act="who" data-arg="all">Both</button><button class="${U.who === "me" ? "on" : ""}" data-act="who" data-arg="me"><i style="background:${S.me.color}"></i>${esc(first(S.me.name))}</button><button class="${U.who === "p" ? "on" : ""}" data-act="who" data-arg="p"><i style="background:${S.p.color}"></i>${esc(first(S.p.name))}</button></div>` : ""}
   ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
   <div class="tl" id="tl">${tl}</div>
@@ -1824,19 +1807,19 @@ function dupPairs() {
   return out;
 }
 function renderHome() {
-  const now = new Date(), m = U.month, isNow = m.getTime() === monthStart(now).getTime();
+  const now = new Date(), m = monthStart(now), isNow = true;
   const mo = S.exp.filter(e => inMonth(e.ts, m) && counted(e)), tot = mo.reduce((a, e) => a + e.amt, 0);
   const me = mo.filter(e => e.paid === "me").reduce((a, e) => a + e.amt, 0);
   const ins = (aiOk() && S.insight && S.insight.d === dkey(Date.now()) && isNow) ? { t: S.insight.t, s: "", ask: S.insight.ask || "Tell me more" } : isNow ? localInsight() : null;
   const upd = Math.max(S.sync && S.sync.lastOk || 0, S.smsLast || 0, ...S.exp.slice(-20).map(e => e.u || 0));
-  const recent = [...S.exp].filter(e => isNow || inMonth(e.ts, m)).sort((a, b) => b.ts - a.ts).slice(0, 6), dl = ts => { const d = dkey(ts), t = dkey(Date.now()), y = dkey(Date.now() - DAY); return d === t ? "Today" : d === y ? "Yesterday" : new Date(ts).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" }); };
+  const recent = [...S.exp].sort((a, b) => b.ts - a.ts).slice(0, 5), dl = ts => { const d = dkey(ts), t = dkey(Date.now()), y = dkey(Date.now() - DAY); return d === t ? "Today" : d === y ? "Yesterday" : new Date(ts).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" }); };
   let lastD = "", rows = "";
   recent.forEach(e => { const d = dl(e.ts); if (d !== lastD) { rows += `<div class="hday">${d}</div>`; lastD = d; } rows += `<button class="li hrow ${counted(e) ? "" : "mute"}" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div><div class="t2">${counted(e) ? CAT[e.cat].n : "Not counted"}${multiPeople() ? " · " + esc(first(person(e.paid).name)) : ""} · ${new Date(e.ts).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase()}</div></div><div class="amt ${e.amt < 0 ? "rf" : ""}">${money(e.amt, { sign: e.amt < 0 })}</div></button>`; });
   const rv = reviewItems().length, ini = (S.me.name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
   return `
   <div class="hh"><div><h1>Hi ${esc(first(S.me.name))}</h1><p>Let's check your spending.</p></div><button class="hav" data-act="tab" data-arg="you" aria-label="Settings">${esc(ini)}</button></div>
   <div class="hstat"><i class="${S.exp.length ? "on" : ""}"></i>${S.exp.some(e => e.src === "sample") ? "Sample data" : S.exp.length ? "Your data" : "No data yet"}${upd ? " · Updated " + ago(upd) : ""}</div>
-  <div class="hm"><span class="lbl">${isNow ? (solo() ? "Spent this month" : "Spent together") : "Spent in " + m.toLocaleDateString("en-GB", { month: "long" })}</span><button class="mt3" data-act="monthpick">${m.toLocaleDateString("en-GB", { month: "long" })}${m.getFullYear() !== now.getFullYear() ? " " + m.getFullYear() : ""}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button></div>
+  <div class="hm"><span class="lbl">${solo() ? "Spent this month" : "Spent together this month"}</span><button class="mt3" data-act="all-tx">${m.toLocaleDateString("en-GB", { month: "long" })} <span style="font-size:18px">›</span></button></div>
   <div class="htot" id="bigbal" data-v="${tot}">${money(tot, { round: true })}</div>
   ${(() => { const pm = addMonths(m, -1), el = isNow ? Date.now() - m.getTime() : periodEnd(m).getTime() - m.getTime(), prev = S.exp.filter(e => inMonth(e.ts, pm) && counted(e) && e.ts - pm.getTime() <= el).reduce((a, e) => a + e.amt, 0), d = tot - prev;
     const days = Math.max(1, Math.ceil(((isNow ? Date.now() : periodEnd(m).getTime()) - m.getTime()) / DAY)), per = {}; mo.forEach(e => { const k = Math.floor((e.ts - m.getTime()) / DAY); per[k] = (per[k] || 0) + e.amt; }); const mx = Math.max(1, ...Object.values(per));
@@ -1848,9 +1831,11 @@ function renderHome() {
   ${dueSoon().slice(0, 2).map(d => `<div class="hdue ${d.days < 0 ? "late" : ""}">${dueIco(d)}<button class="hd1" data-act="due-open" data-arg="${esc(d.key)}"><b>${esc(d.title)}</b><span>${d.amt ? money(d.amt, { round: true }) + " · " : ""}${dueWhen(d)} · ${shortDate(d.due)}</span></button><div class="hd2"><button data-act="due-paid" data-arg="${esc(d.key)}">Paid</button><button data-act="due-ignore" data-arg="${esc(d.key)}">Ignore</button></div></div>`).join("")}
   ${(() => { const m0 = monthStart(new Date()), w = S.exp.filter(e => e.cat === "cash" && inMonth(e.ts, m0)).reduce((a, e) => a + e.amt, 0), c = S.exp.filter(e => e.cash && inMonth(e.ts, m0)).reduce((a, e) => a + e.amt, 0); return w - c > 300 ? `<button class="hrev" data-act="add-cash"><span class="rdot2" style="background:#3DDC97">${CUR[S.cur].sym}</span><div><b>${money(w - c, { round: true })} cash not accounted for</b><span>You took out ${money(w, { round: true })} this month — add what you spent</span></div><span class="chev">›</span></button>` : ""; })()}
   ${(() => { const o = S.exp.filter(e => e.cat === "iou" && !e.settled).reduce((a, e) => a - e.amt, 0); return o > 0 ? `<button class="hrev" data-act="people"><span class="rdot2" style="background:#4C8DFF;color:#fff">🤝</span><div><b>${money(o, { round: true })} owed to you</b><span>Request it on WhatsApp with a UPI link</span></div><span class="chev">›</span></button>` : ""; })()}
+  ${(() => { const L = largeOf(m); return L.big.length && L.share >= 0.3 ? `<button class="hrev" data-act="large"><span class="rdot2" style="background:#FFB340">!</span><div><b>${L.big.length} large payment${L.big.length > 1 ? "s" : ""} — ${Math.round(L.share * 100)}% of this month</b><span>Rent, gold, investments? Mark what isn't spending</span></div><span class="chev">›</span></button>` : ""; })()}
   ${rv ? `<button class="hrev" data-act="review"><span class="rdot2">${rv}</span><div><b>${rv} payment${rv > 1 ? "s" : ""} need${rv > 1 ? "" : "s"} a look</b><span>Possible duplicates, investments or unclear names</span></div><span class="chev">›</span></button>` : ""}
+  ${nudgeCard()}
   <div class="hqa"><button data-act="add"><span>${svgIc2("plus")}</span>Add expense</button><i></i><button data-act="receipt"><span>${svgIc2("scan")}</span>Scan receipt</button><i></i><button data-act="chat"><span class="ac">${svgIc("spark", 26)}</span>Ask Nest</button></div>
-  <div class="hrec"><h2>Recent transactions</h2><button data-act="tab" data-arg="month">View all</button></div>
+  <div class="hrec"><h2>Recent transactions</h2><button data-act="all-tx">View all</button></div>
   ${rows || `<div class="empty"><b>No transactions yet</b>Add one, or tap your initials (top right) → Scan entire inbox.</div>`}
   <div class="htry">Try “Where can I cut spending?”</div>
   <input type="file" id="rcpt" accept="image/*" hidden>`;
@@ -2348,7 +2333,8 @@ const A = {
   breakdown: () => openBreakdown(),
   today: () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; hap(1); show("month"); },
   monthpick: () => openMonthPick(), "inv-hide": () => { S.invHide = Date.now(); persist(); refresh(); },
-  "month-go": a => { U.month = new Date(+a); U.cat = "all"; U.week = null; closeSheet(); setTimeout(() => show(U.tab === "home" ? "home" : "month"), 200); },
+  "month-go": a => { U.month = new Date(+a); U.cat = "all"; U.week = null; closeSheet(); setTimeout(() => show("month"), 200); },
+  "all-tx": () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; hap(1); show("month"); },
   grp: a => openGroup(a), large: () => openLarge(),
   "wk-more": a => { const el = $("#mr-" + a), b = $("#mb-" + a); if (el) { const on = el.classList.toggle("on"); b.textContent = on ? "Show less" : "Show " + el.children.length + " more"; hap(1); } },
   "toggle-xfer": a => { const e = S.exp.find(x => x.id === a); if (!e) return; if (e.cat === "xfer") { e.cat = e.prevCat && CAT[e.prevCat] && !["xfer", "cash"].includes(e.prevCat) ? e.prevCat : catOf(e.title); e.ok = true; } else { e.prevCat = e.cat; e.cat = "xfer"; } touch(e); save(); closeSheet(); refresh(); toast(e.cat === "xfer" ? "Won't be counted" : "Counted as spending"); },
