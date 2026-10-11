@@ -141,11 +141,67 @@ async function chat(env, rows, member, history) {
 
 
 
+
+// ================= AI layer (OpenAI-compatible gateway, e.g. Haimaker) =================
+// The phone sends a compact, already-aggregated context (totals, categories, places, recent rows) - never raw SMS or balances.
+const AI = { key: Deno.env.get("HAIMAKER_API_KEY") || Deno.env.get("AI_API_KEY") || "", base: (Deno.env.get("AI_BASE_URL") || "https://api.haimaker.ai/v1").replace(/\/+$/, ""), model: Deno.env.get("AI_MODEL") || "haimaker/auto" };
+const AI_CATS = ["food", "groc", "move", "shop", "home", "bill", "fun", "trip", "care", "subs", "gift", "other"];
+const meterMem = new Map();
+function devOk(dev, cap) {
+  const k = String(dev || "anon").slice(0, 64) + "|" + today(); const n = (meterMem.get(k) || 0) + 1; meterMem.set(k, n);
+  if (meterMem.size > 5000) meterMem.clear();
+  return n <= cap;
+}
+async function llm(messages, { json: wantJson = false, max = 700, temperature = 0.3 } = {}) {
+  const r = await fetch(AI.base + "/chat/completions", {
+    method: "POST", headers: { authorization: "Bearer " + AI.key, "content-type": "application/json" },
+    body: JSON.stringify({ model: AI.model, messages, max_tokens: max, temperature, ...(wantJson ? { response_format: { type: "json_object" } } : {}) })
+  });
+  const t = await r.text();
+  if (!r.ok) { console.error("ai", r.status, t.slice(0, 300)); throw Object.assign(new Error(r.status === 401 ? "AI key rejected" : "AI unavailable"), { status: 502 }); }
+  const j = JSON.parse(t), out = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content || "";
+  if (!wantJson) return out.trim();
+  const m = out.match(/\{[\s\S]*\}/); try { return JSON.parse(m ? m[0] : out); } catch { return {}; }
+}
+const ctxStr = (c) => JSON.stringify(c || {}).slice(0, 24000);
+function aiPersona(ctx) {
+  const solo = ctx && ctx.mode === "solo";
+  return `You are Nest, a warm, sharp money companion inside an Indian expense tracker${solo ? "" : " shared by a couple"}. You only see the data below (built on the user's phone from bank SMS and payment apps).
+Rules:
+- Every number you state must come from the data. If the data can't answer, say what's missing. Never invent figures, merchants or dates.
+- Be brief: 1-4 short sentences, or a short list when comparing. Use the currency symbol "${(ctx && ctx.sym) || "₹"}" and Indian digit grouping. At most one emoji.
+- Be specific and useful: name the place, the amount, the change vs last month, and one practical next step when it helps. No lectures, no generic finance advice, no disclaimers.
+${solo ? "" : "- This is a shared tracker that records who spent what. Never talk about owing, splitting or settling. Be fair to both partners.\n"}- "Transfers" are money moves (NEFT, SIP, card bills), not spending. Refunds are already subtracted.
+- If the user asks you to log/add an expense, fill "add" with {amount, title, category (one of ${AI_CATS.join("/")}), paid_by ("me"${solo ? "" : " or \"partner\""}), date YYYY-MM-DD}. It's only a proposal the user confirms - never say it's saved.
+Reply ONLY as JSON: {"reply": string, "add": object|null}.
+DATA (JSON): ${ctxStr(ctx)}`;
+}
+async function aiChat(ctx, history) {
+  const msgs = history.slice(-12).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 2000) }));
+  if (!msgs.length || msgs[msgs.length - 1].role !== "user") throw Object.assign(new Error("last message must be from the user"), { status: 400 });
+  const o = await llm([{ role: "system", content: aiPersona(ctx) }, ...msgs], { json: true, max: 600 });
+  const actions = [];
+  const a = o && o.add;
+  if (a && a.amount > 0) actions.push({ type: "add_expense", amount: Math.round(+a.amount * 100) / 100, title: String(a.title || "Expense").slice(0, 40), category: AI_CATS.includes(a.category) ? a.category : "other", paid: a.paid_by === "partner" ? "p" : "me", date: /^\d{4}-\d{2}-\d{2}$/.test(a.date || "") ? a.date : null });
+  return { reply: String((o && o.reply) || "Sorry, I couldn't work that out - try asking another way.").slice(0, 1500), actions };
+}
+async function aiNames(items) {
+  const list = items.slice(0, 30).map((x) => ({ k: String(x.k || "").slice(0, 40), t: String(x.t || "").slice(0, 40) })).filter((x) => x.k);
+  if (!list.length) return { names: [] };
+  const o = await llm([{ role: "system", content: `You clean up merchant names from Indian bank SMS / UPI ids. For each item, k is the raw code (UPI handle or bank descriptor) and t is the current guess. Return the real brand or business name a person would recognise (e.g. "asspl" -> "Amazon", "bundltechnologies" -> "Swiggy", "blinkcommerce" -> "Blinkit"), and a category from ${AI_CATS.join("/")}. If k looks like a private person (a personal name or phone number), return name "Person" and category "other". If unsure, keep t and set sure=false. Reply ONLY JSON: {"names":[{"k":...,"name":...,"cat":...,"sure":true|false}]}` }, { role: "user", content: JSON.stringify(list) }], { json: true, max: 1200, temperature: 0 });
+  const names = (o && Array.isArray(o.names) ? o.names : []).filter((x) => x && x.k && x.name).map((x) => ({ k: String(x.k), name: String(x.name).slice(0, 28), cat: AI_CATS.includes(x.cat) ? x.cat : "other", sure: x.sure !== false }));
+  return { names };
+}
+async function aiInsight(ctx) {
+  const o = await llm([{ role: "system", content: `You write ONE short, specific, genuinely useful observation (max 22 words) about this person's spending this month, the kind a sharp friend would notice: a change vs last month, a habit, a recurring charge, a category heading over its limit, or a good streak. Use only numbers from the data, the currency symbol "${(ctx && ctx.sym) || "₹"}", no emoji, no advice clichés. Also give a short follow-up question the user could ask. Reply ONLY JSON: {"text": string, "ask": string}. DATA: ${ctxStr(ctx)}` }, { role: "user", content: "What's worth noticing?" }], { json: true, max: 200, temperature: 0.4 });
+  return { text: String((o && o.text) || "").slice(0, 220), ask: String((o && o.ask) || "").slice(0, 120) };
+}
+
 // ================= Nest sync API (Supabase Edge Function) =================
 const SB = Deno.env.get("SUPABASE_URL") || "";
 const KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const ENV = { ANTHROPIC_API_KEY: Deno.env.get("ANTHROPIC_API_KEY") || "", MODEL: Deno.env.get("MODEL") || "claude-opus-5-5", ANTHROPIC_BASE_URL: Deno.env.get("ANTHROPIC_BASE_URL") || "", CHAT_EFFORT: Deno.env.get("CHAT_EFFORT") || "medium" };
-const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization, content-type, apikey, x-client-info", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-max-age": "86400" };
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization, content-type, apikey, x-client-info, x-nest-device", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-max-age": "86400" };
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", ...CORS } });
 const err = (status, message) => json({ error: message }, status);
 const plain = (t) => new Response(t, { headers: { "content-type": "text/plain; charset=utf-8", ...CORS } });
@@ -190,7 +246,17 @@ async function handle(req) {
   const url = new URL(req.url);
   const path = url.pathname.replace(/^\/(?:functions\/v1\/)?nest/, "").replace(/\/+$/, "");
   try {
-    if (path === "" || path === "/v1/health") return json({ ok: true, agent: !!ENV.ANTHROPIC_API_KEY });
+    if (path === "" || path === "/v1/health") return json({ ok: true, agent: !!ENV.ANTHROPIC_API_KEY, ai: !!AI.key });
+    if (req.method === "POST" && path.startsWith("/v1/ai/")) {
+      if (!AI.key) return err(503, "AI isn't switched on yet - add HAIMAKER_API_KEY to the function secrets.");
+      const dev = req.headers.get("x-nest-device") || req.headers.get("x-forwarded-for") || "anon";
+      if (!devOk(dev, 120)) return err(429, "Daily AI limit reached - try again tomorrow.");
+      const b = await body(req, 64 * 1024);
+      if (path === "/v1/ai/chat") { if (!Array.isArray(b.messages) || !b.messages.length) return err(400, "messages required"); return json(await aiChat(b.ctx, b.messages)); }
+      if (path === "/v1/ai/names") return json(await aiNames(Array.isArray(b.items) ? b.items : []));
+      if (path === "/v1/ai/insight") return json(await aiInsight(b.ctx));
+      return err(404, "Not found");
+    }
     if (req.method === "GET" && path === "/v1/pair/peek") {
       const code = (url.searchParams.get("code") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
       const r = code ? await rpc("nest_peek", { p_code: code }) : { error: "not_found" };

@@ -528,6 +528,7 @@ h1.lt{font-size:34px;font-weight:700;letter-spacing:-.8px;line-height:1.1;margin
 .lims .li{padding:8px 2px}.lims .inp{width:120px;min-height:40px;text-align:right}
 .tgl{width:46px;height:28px;border-radius:99px;background:var(--card2);position:relative;flex:none;transition:background .2s}.tgl i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}.tgl.on{background:var(--ok)}.tgl.on i{left:21px}
 #lock{position:fixed;inset:0;z-index:999;background:var(--bg);display:grid;place-items:center}.lk2{text-align:center;display:grid;gap:14px;justify-items:center}.lki{font-size:44px}.lk2 b{font-size:20px}
+.gcard.ai .ain{display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#8B7CFF;font-weight:700}.gcard.ai b{font-weight:550;font-size:15px;line-height:1.35}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media (max-height:640px){.orb{display:none}.ob-h{font-size:28px}}
 </style>
@@ -651,10 +652,10 @@ function pending() {
   return ch;
 }
 async function api(path, body, o = {}) {
-  const base = o.base != null ? o.base : (S.sync && S.sync.url) || "", tok = o.token || (S.sync && S.sync.token);
+  const base = o.base != null ? o.base : (S.sync && S.sync.url) || "", tok = o.token === "-" ? null : o.token || (S.sync && S.sync.token);
   const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), o.timeout || 20000);
   try {
-    const r = await fetch(base + path, { method: body ? "POST" : "GET", signal: ctl.signal, headers: Object.assign({ "content-type": "application/json" }, tok ? { authorization: "Bearer " + tok } : {}), body: body ? JSON.stringify(body) : undefined });
+    const r = await fetch(base + path, { method: body ? "POST" : "GET", signal: ctl.signal, headers: Object.assign({ "content-type": "application/json" }, tok ? { authorization: "Bearer " + tok } : {}, o.headers || {}), body: body ? JSON.stringify(body) : undefined });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw Object.assign(new Error(j.error || "Request failed (" + r.status + ")"), { status: r.status });
     return j;
@@ -726,7 +727,7 @@ window.__unlock = ok => {
   if (ok) { const d = $("#lock"); d && d.remove(); }
 };
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") hiddenAt = Date.now(); else if (S.lock && hiddenAt && Date.now() - hiddenAt > 30000) showLock(); });
-window.__resume = () => { if (Date.now() - lastResume < 800) return; lastResume = Date.now(); syncNow(); autoImport(); importNotifs(); checkClipInvite(); };
+window.__resume = () => { if (Date.now() - lastResume < 800) return; lastResume = Date.now(); syncNow(); autoImport(); importNotifs(); checkClipInvite(); setTimeout(() => { smartNames(); dailyInsight(); }, 4000); };
 setInterval(() => { if (document.visibilityState === "visible") { if (syncOn()) syncNow(); autoImport(); importNotifs(); } }, 15000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") window.__resume(); });
 addEventListener("focus", () => window.__resume());
@@ -991,6 +992,7 @@ function renderMonth() {
   </button>
   ${refTot > 0 ? `<div class="xl" style="padding-bottom:0">includes ${money(refTot, { round: true })} in refunds, already taken off</div>` : ""}
   ${xferTot ? `<button class="xl" data-act="transfers">${money(xferTot, { round: true })} in transfers &amp; investments, not counted <i>›</i></button>` : ""}
+  ${isNow && S.insight && S.insight.d === dkey(Date.now()) && aiOk() ? `<button class="gcard ai" data-act="ask-insight"><span class="gic" style="color:#8B7CFF;background:#8B7CFF26">${svgIc("spark", 24)}</span><div class="gtx"><span class="ain">Nest noticed</span><b>${esc(S.insight.t)}</b></div><span class="chev">›</span></button>` : ""}
   ${hints.map(h => `<button class="gcard ${h.warn ? "warn" : ""}" data-act="${h.a}"><span class="gic" style="color:${h.warn ? "#FFB340" : h.col || "#8B7CFF"};background:${h.warn ? "#FFB34022" : (h.col || "#8B7CFF") + "26"}">${svgIc(h.ic || "card", 26)}</span><div class="gtx"><span>${h.t}</span><b>${h.v}</b></div><span class="chev">›</span></button>`).join("")}
   ${N && N.hasNotifAccess && !notifOn() && S.exp.length && !(S.notifHide && Date.now() - S.notifHide < 7 * 864e5) ? `<div class="gcard inv"><span class="gic" style="color:#3DDC97;background:#3DDC9726">${svgIc("spark", 26)}</span><div class="gtx"><span>Catch GPay, PhonePe &amp; Paytm payments</span><button class="lk" data-act="notif-access">Allow notification access</button></div><button class="xb" data-act="notif-hide" aria-label="Dismiss">✕</button></div>` : ""}
   ${inv}
@@ -1177,6 +1179,7 @@ function renderYou() {
   <div class="sec"><h2>Privacy & reminders</h2></div>
   <div class="list set">
     ${N && N.lockAvailable && N.lockAvailable() ? `<button class="li" data-act="lock-toggle"><span class="ib" style="background:#5B5BD622">🔒</span><div class="mid"><div class="t1">App lock</div><div class="t2">Fingerprint, face or screen lock</div></div><span class="tgl ${S.lock ? "on" : ""}"><i></i></span></button>` : ""}
+    <button class="li" data-act="smart-toggle"><span class="ib" style="background:#8B7CFF22">✦</span><div class="mid"><div class="t1">Smart names &amp; insights</div><div class="t2">AI sees totals, places &amp; recent payments — never your SMS or balances</div></div><span class="tgl ${S.smartOff ? "" : "on"}"><i></i></span></button>
     ${N && N.setWeekly ? `<button class="li" data-act="weekly-toggle"><span class="ib" style="background:#F5A52422">🗓</span><div class="mid"><div class="t1">Sunday summary</div><div class="t2">Your week in 10 seconds, Sundays at 9 pm</div></div><span class="tgl ${S.weeklyOff ? "" : "on"}"><i></i></span></button>` : ""}
   </div>
   <div class="sec"><h2>Preferences</h2></div>
@@ -1297,13 +1300,38 @@ function openNudge() {
 /* =========================================================
    AGENT — daily brief + chat (server-side AI) with an on-device fallback
    ========================================================= */
-const aiOk = () => syncOn() && S.sync.agent !== false;
+const aiOk = () => S.aiOn === true && S.aiOff !== true;
+const aiBase = () => (S.sync && S.sync.url) || DEFAULT_SERVER;
+const aiApi = (path, body, timeout) => { if (!S.dev) { S.dev = uid() + uid(); persist(); } return api(path, body, { base: aiBase(), token: "-", timeout: timeout || 45000, headers: { "x-nest-device": S.dev } }); };
+async function aiCheck(force) {
+  if (!force && S.aiAt && Date.now() - S.aiAt < 6 * 36e5) return;
+  try { const r = await api("/v1/health", null, { base: aiBase(), timeout: 12000 }); S.aiOn = !!r.ai; S.aiAt = Date.now(); persist(); } catch (e) { }
+}
+/* what the AI sees: aggregates + the last 60 payments. Never raw SMS, bank balances or account numbers. */
+function aiContext() {
+  const now = new Date(), m = monthStart(now), pm = new Date(m.getFullYear(), m.getMonth() - 1, 1), f = x => Math.round(x);
+  const cnt = S.exp.filter(counted), inM = (d) => cnt.filter(e => inMonth(e.ts, d));
+  const by = (l, k) => { const o = {}; l.forEach(e => { const kk = k(e); o[kk] = (o[kk] || 0) + e.amt; }); return Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, f(v)]); };
+  const who = e => solo() ? undefined : first(person(e.paid).name);
+  const d90 = cnt.filter(e => e.ts > Date.now() - 90 * DAY), places = {}; d90.forEach(e => { const k = canonMerchant(e.title); const o = places[k] = places[k] || { n: 0, t: 0 }; o.n++; o.t += e.amt; });
+  const weeks = []; for (let i = 7; i >= 0; i--) { const a = wkStart(Date.now()) - i * 7 * DAY; weeks.push([dkey(a), f(cnt.filter(e => wkStart(e.ts) === a).reduce((x, e) => x + e.amt, 0))]); }
+  const mo = inM(m), pmo = inM(pm), day = now.getDate(), pmSame = pmo.filter(e => new Date(e.ts).getDate() <= day);
+  return {
+    today: dkey(Date.now()), mode: solo() ? "solo" : "couple", me: first(S.me.name), partner: solo() ? undefined : first(S.p.name), currency: S.cur, sym: CUR[S.cur].sym,
+    this_month: { name: monthLabel(m), total: f(mo.reduce((a, e) => a + e.amt, 0)), payments: mo.length, by_category: by(mo, e => CAT[e.cat].n), by_person: solo() ? undefined : by(mo, e => first(person(e.paid).name)), refunds: f(-S.exp.filter(e => inMonth(e.ts, m) && e.cat === "refund").reduce((a, e) => a + e.amt, 0)), transfers_not_counted: f(S.exp.filter(e => inMonth(e.ts, m) && e.cat === "xfer").reduce((a, e) => a + e.amt, 0)) },
+    last_month: { name: monthLabel(pm), total: f(pmo.reduce((a, e) => a + e.amt, 0)), same_point_last_month: f(pmSame.reduce((a, e) => a + e.amt, 0)), by_category: by(pmo, e => CAT[e.cat].n) },
+    weekly_totals: weeks, top_places_90d: Object.entries(places).sort((a, b) => b[1].t - a[1].t).slice(0, 15).map(([k, v]) => ({ place: k, times: v.n, total: f(v.t) })),
+    recurring_90d: Object.entries(places).filter(([k, v]) => v.n >= 3).sort((a, b) => b[1].n - a[1].n).slice(0, 10).map(([k, v]) => ({ place: k, times: v.n, avg: f(v.t / v.n) })),
+    limits: S.limits ? Object.entries(S.limits).map(([c, l]) => ({ category: CAT[c] ? CAT[c].n : c, limit: l, spent: f(mo.filter(e => e.cat === c).reduce((a, e) => a + e.amt, 0)) })) : [],
+    recent: [...S.exp].sort((a, b) => b.ts - a.ts).slice(0, 60).map(e => ({ d: dkey(e.ts), place: e.title, amt: Math.round(e.amt * 100) / 100, cat: CAT[e.cat].n, who: who(e) }))
+  };
+}
 let CH = { msgs: [], busy: false };
 const md = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 const SUGG = () => solo() ? ["Where did I spend most this month?", "How does this month compare to last?", "Which places do I visit most?", `Log ${CUR[S.cur].sym}500 groceries`] : ["Where did we spend most this month?", `What did ${first(S.p.name)} spend this week?`, "Which places do we visit most?", `Log ${CUR[S.cur].sym}500 groceries I paid`];
 function openChat() {
   const c = $("#chat"); c.setAttribute("aria-hidden", "false");
-  c.innerHTML = `<header><button class="x" data-act="chat-close" aria-label="Close">✕</button><span class="av2">✦</span><div><b>Nest</b><small>Your money agent · ${aiOk() ? "online" : "needs sync"}</small></div></header>
+  c.innerHTML = `<header><button class="x" data-act="chat-close" aria-label="Close">✕</button><span class="av2">✦</span><div><b>Nest</b><small>${aiOk() ? "Knows your spending · AI" : "On-device answers"}</small></div></header>
   <div id="msgs" aria-live="polite"></div>
   <form class="composer" id="cform"><input id="chat-in" placeholder="Ask about your spending…" autocomplete="off" aria-label="Message"><button type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>`;
   requestAnimationFrame(() => c.classList.add("on")); hap(0);
@@ -1319,7 +1347,7 @@ function actionCard(a, mi, ai) {
 }
 function actionRec(a) {
   const M = syncOn() ? myId() : "a";
-  return { id: uid(), amt: a.amount, title: a.title, cat: CAT[a.category] ? a.category : "other", paid: a.paid === M ? "me" : "p", sm: 50, ts: a.date ? new Date(a.date + "T12:00:00").getTime() : Date.now(), src: "agent" };
+  return { id: uid(), amt: a.amount, title: a.title, cat: CAT[a.category] ? a.category : "other", paid: a.paid === "me" || a.paid === M || solo() ? "me" : "p", sm: 50, ts: a.date ? new Date(a.date + "T12:00:00").getTime() : Date.now(), src: "agent" };
 }
 function renderChat(scroll = true) {
   const el = $("#msgs"); if (!el) return;
@@ -1328,17 +1356,46 @@ function renderChat(scroll = true) {
 }
 async function sendChat(text) {
   if (CH.busy) return; CH.msgs.push({ role: "user", content: text }); hap(1);
-  if (!syncOn()) { CH.msgs.push({ role: "assistant", content: "I need your Nest connected to a server to look at your data with AI. Connect in You → Sync, then ask me again.", local: true }); renderChat(); return; }
   CH.busy = true; renderChat();
   try {
-    await syncNow(); while (syncing) await new Promise(r => setTimeout(r, 150));
+    if (!aiOk()) await aiCheck(true);
+    if (!aiOk()) { CH.msgs.push({ role: "assistant", content: localAnswer(text), local: true }); return; }
+    if (syncOn()) { await syncNow(); while (syncing) await new Promise(r => setTimeout(r, 150)); }
     const history = CH.msgs.filter(m => !m.local || m.role === "user").map(m => ({ role: m.role, content: m.content }));
-    const r = await api("/v1/agent/chat", { messages: history }, { timeout: 60000 });
+    const r = await aiApi("/v1/ai/chat", { messages: history, ctx: aiContext() }, 60000);
     CH.msgs.push({ role: "assistant", content: r.reply, actions: (r.actions || []).map(a => Object.assign({}, a)) }); hap(1);
   } catch (e) {
-    if (e.status === 503) S.sync.agent = false;
-    CH.msgs.push({ role: "assistant", content: e.status === 503 ? "The AI agent isn't switched on for your server yet. Add your Anthropic key to the Worker (see the README) and I'll be right here." : e.status === 429 ? "We've hit today's agent limit — I'll be back tomorrow." : "I couldn't reach the server just now. " + e.message, local: true });
+    if (e.status === 503) { S.aiOn = false; persist(); }
+    CH.msgs.push({ role: "assistant", content: e.status === 503 || e.status === 502 ? localAnswer(text) : e.status === 429 ? "We've hit today's agent limit — I'll be back tomorrow." : "I couldn't reach the server just now. " + e.message, local: true });
   } finally { CH.busy = false; renderChat(); }
+}
+function localAnswer(q) {
+  const c = aiContext(), t = c.this_month, f = x => money(x, { round: true }), l = q.toLowerCase();
+  if (/compare|last month|vs/.test(l)) return `${t.name}: ${f(t.total)} so far. At the same point in ${c.last_month.name} you'd spent ${f(c.last_month.same_point_last_month)} (full month ${f(c.last_month.total)}).`;
+  if (/place|where|most|visit/.test(l)) return `Top places (90 days): ${c.top_places_90d.slice(0, 4).map(p => `**${p.place}** ${f(p.total)} (${p.times}×)`).join(", ")}.`;
+  if (/categor/.test(l)) return `${t.name} by category: ${t.by_category.slice(0, 5).map(([k, v]) => `${k} ${f(v)}`).join(", ")}.`;
+  return `${t.name}: **${f(t.total)}** across ${t.payments} payments. Biggest category: ${t.by_category[0] ? `${t.by_category[0][0]} (${f(t.by_category[0][1])})` : "—"}. (Smart AI answers are offline right now.)`;
+}
+const GENERIC_NM = /^(upi payment|card payment|local store \(qr\)|upi to a person|refund|atm withdrawal)$/i;
+let namesBusy = false;
+async function smartNames() {
+  if (namesBusy || !aiOk() || S.smartOff) return; namesBusy = true;
+  try {
+    S.askedMk = S.askedMk || {}; const todo = {};
+    S.exp.forEach(e => { if ((e.src !== "sms" && e.src !== "app") || e.cat === "xfer") return; const k = mkOf(e); if (!k || k.length < 3 || S.askedMk[k] || (S.names && S.names[k]) || /^\d+$/.test(k)) return; if (!(e.cat === "other" || GENERIC_NM.test(e.title) || !brandOf(e.title))) return; if (/^\+?\d{10}/.test(k)) return; todo[k] = e.title; });
+    const items = Object.entries(todo).slice(0, 30).map(([k, t]) => ({ k, t })); if (!items.length) return;
+    const r = await aiApi("/v1/ai/names", { items }); let n = 0; S.names = S.names || {};
+    items.forEach(i => S.askedMk[i.k] = 1);
+    (r.names || []).forEach(x => { if (!x.sure || x.name === "Person" || !todo[x.k]) return; S.names[x.k] = { t: x.name, c: CAT[x.cat] ? x.cat : undefined, ai: 1 };
+      S.exp.forEach(e => { if (mkOf(e) !== x.k) return; let ch = false; if (e.title !== x.name) { e.title = x.name; ch = true; } if (x.cat && CAT[x.cat] && e.cat === "other") { e.cat = x.cat; ch = true; } if (ch) { touch(e); n++; } }); });
+    if (n) { save(); refresh(); toast(`✦ Smart names: tidied ${n} payment${n > 1 ? "s" : ""}`); } else persist();
+  } catch (e) { } finally { namesBusy = false; }
+}
+async function dailyInsight() {
+  if (!aiOk() || S.smartOff) return; const k = dkey(Date.now());
+  if (S.insight && S.insight.d === k) return;
+  const mo = S.exp.filter(e => inMonth(e.ts, monthStart(new Date())) && counted(e)); if (mo.length < 5) return;
+  try { const r = await aiApi("/v1/ai/insight", { ctx: aiContext() }, 30000); if (r.text) { S.insight = { d: k, t: r.text, ask: r.ask || "" }; persist(); if (U.tab === "month") refresh(); } } catch (e) { }
 }
 function doAction(mi, ai, yes) {
   const m = CH.msgs[mi], a = m && m.actions && m.actions[ai]; if (!a || a.done) return;
@@ -1842,6 +1899,8 @@ const A = {
   "app-settings": () => { try { N.openAppSettings(); } catch (e) { toast("Open Settings → Apps → Nest → Permissions"); } },
   smsretry: () => { closeSheet(); OB.step = 3; if (OB.from !== "settings") OB.from = "ob"; runScan(false, OB.from === "settings" ? 365 : undefined); },
   transfers: () => openTransfers(),
+  "ask-insight": () => { openChat(); const q = (S.insight && S.insight.ask) || "Tell me more about this"; CH.msgs.push({ role: "assistant", content: S.insight.t }); renderChat(); setTimeout(() => sendChat(q), 200); },
+  "smart-toggle": () => { S.smartOff = !S.smartOff; persist(); refresh(); toast(S.smartOff ? "Smart features off" : "Smart features on"); if (!S.smartOff) { aiCheck(true).then(() => { smartNames(); dailyInsight(); }); } },
   "set-mode": a => { if (a === "duo") return duoOn(); if (syncOn()) return; S.mode = "solo"; persist(); hap(1); refresh(); },
   "duo-on": () => duoOn(),
   "promo-hide": () => { S.promoHide = Date.now(); persist(); refresh(); },
@@ -1894,6 +1953,7 @@ function boot() {
     else { OB.step = 0; renderOb(); done(); }
     ready = true; if (queuedInvite) { const q = queuedInvite; queuedInvite = null; handleInvite(q.code, q.server); } else window.__invite();
     window.__shared(); setTimeout(autoImport, 2500); setTimeout(importNotifs, 2000);
+    setTimeout(() => aiCheck().then(() => { smartNames(); dailyInsight(); }), 3500);
     if (S.onboarded && (S.pv || 0) < 3) { S.pv = 3; persist(); setTimeout(() => deepScan(false), 4000); } setTimeout(checkClipInvite, 1200);
   }, window.__fast ? 50 : 2300);
 }

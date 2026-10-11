@@ -1,0 +1,36 @@
+// AI features end-to-end: needs the function running locally with a mock LLM (scratchpad aitest/serve.mjs on :8797)
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const URL = 'file:///tmp/claude-0/-home-user-test/efa09150-834c-5941-8bea-cc0b76604455/scratchpad/www-ai/index.html';
+const res = []; const ok = (c, m) => res.push([c ? 'PASS' : 'FAIL', m]);
+(async () => {
+  const b = await chromium.launch({ args: ['--allow-file-access-from-files', '--disable-web-security'] });
+  const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
+  const errs = []; p.on('pageerror', e => errs.push(e.message));
+  await p.addInitScript(() => { window.__fast = 1; });
+  await p.goto(URL); await p.waitForTimeout(300);
+  await p.click('[data-act=ob-next]'); await p.fill('#ob-me', 'Sri'); await p.click('[data-act=ob-names]'); await p.click('[data-act=ob-sample]');
+  await p.waitForSelector('[data-act=ob-add]', { timeout: 9000 }); await p.click('[data-act=ob-add]'); await p.waitForTimeout(2800); await p.evaluate(() => closeSheet());
+  await p.evaluate(() => aiCheck(true)); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => aiOk()), 'app detects the AI is switched on (solo user, no sync needed)');
+  const ctx = await p.evaluate(() => { const c = aiContext(); return { keys: Object.keys(c), raw: JSON.stringify(c).includes('debited'), recent: c.recent.length, mode: c.mode }; });
+  ok(ctx.recent > 5 && ctx.mode === 'solo' && ctx.keys.includes('this_month') && ctx.keys.includes('top_places_90d'), 'chat context has month totals, places and recent payments');
+  ok(!ctx.raw, 'context never includes raw SMS text');
+  await p.evaluate(() => { openChat(); }); await p.waitForTimeout(300); await p.evaluate(() => sendChat('Where did I spend most?')); await p.waitForTimeout(800);
+  ok(await p.evaluate(() => CH.msgs.some(m => /CTX_OK/.test(m.content))), 'chat answer is built on the user\'s data');
+  await p.evaluate(() => sendChat('log 500 groceries')); await p.waitForTimeout(800);
+  const n0 = await p.evaluate(() => S.exp.length);
+  await p.evaluate(() => { const mi = CH.msgs.length - 1; doAction(mi, 0, true); }); await p.waitForTimeout(300);
+  ok(await p.evaluate(n => S.exp.length === n + 1 && S.exp.some(e => e.amt === 500 && e.cat === 'groc'), n0), 'asking to log an expense gives a confirm card that adds it');
+  await p.evaluate(() => closeChat());
+  await p.evaluate(() => { const t = Date.now(); S.exp.push({ id: 'z1', amt: 230, title: 'Zxqmart', cat: 'other', paid: 'me', sm: 50, ts: t - 3e6, src: 'sms', mk: 'zxqmart@okaxis', u: t }); S.exp.push({ id: 'z2', amt: 120, title: 'Zxqmart', cat: 'other', paid: 'me', sm: 50, ts: t - 9e6, src: 'sms', mk: 'zxqmart@okaxis', u: t }); });
+  await p.evaluate(() => smartNames()); await p.waitForTimeout(800);
+  ok(await p.evaluate(() => ['z1', 'z2'].every(id => { const e = S.exp.find(x => x.id === id); return e.title === 'ZXQ Mart' && e.cat === 'groc'; })), 'smart names turns an unknown merchant code into a real name + category');
+  ok(await p.evaluate(() => S.names['zxqmart@okaxis'] && parseSms({ id: 77, a: 'VM-X', b: 'Rs.60.00 debited from A/c XX1 to VPA zxqmart@okaxis UPI Ref 1', d: Date.now() }).title === 'ZXQ Mart'), 'future payments to that merchant get the clean name');
+  await p.evaluate(() => { S.insight = null; return dailyInsight(); }); await p.waitForTimeout(800); await p.evaluate(() => { U.month = monthStart(new Date()); show('month'); }); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => /Nest noticed/i.test(document.querySelector('.gcard.ai') ? document.querySelector('.gcard.ai').innerText : '')), 'a daily "Nest noticed" insight appears on the Month screen');
+  await p.evaluate(() => { S.smartOff = true; S.insight = null; S.askedMk = {}; }); await p.evaluate(() => dailyInsight()); ok(await p.evaluate(() => !S.insight), 'turning smart features off stops AI calls');
+  await p.evaluate(() => { S.aiOn = false; window.aiCheck = async () => {}; }); await p.evaluate(() => { CH.msgs = []; openChat(); return sendChat('Where did I spend most?'); }); await p.waitForTimeout(300);
+  ok(await p.evaluate(() => CH.msgs.some(m => m.role === 'assistant' && /Top places/.test(m.content))), 'without AI, chat still answers on-device');
+  ok(!errs.length, 'no JS errors ' + errs.join(';'));
+  res.forEach(r => console.log(r[0], ' ', r[1])); console.log(res.filter(r => r[0] === 'PASS').length + '/' + res.length); await b.close();
+})().catch(e => { console.error('CRASH', e); process.exit(1); });
