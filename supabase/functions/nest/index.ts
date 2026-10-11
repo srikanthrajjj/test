@@ -192,6 +192,21 @@ async function aiNames(items) {
   const names = (o && Array.isArray(o.names) ? o.names : []).filter((x) => x && x.k && x.name).map((x) => ({ k: String(x.k), name: String(x.name).slice(0, 28), cat: AI_CATS.includes(x.cat) ? x.cat : "other", sure: x.sure !== false }));
   return { names };
 }
+async function aiReceipt(img) {
+  if (!/^data:image\/(jpeg|png|webp);base64,/.test(img || "") || img.length > 1_400_000) throw Object.assign(new Error("Send a JPEG/PNG photo under 1 MB"), { status: 400 });
+  const r = await fetch(AI.base + "/chat/completions", {
+    method: "POST", headers: { authorization: "Bearer " + AI.key, "content-type": "application/json" },
+    body: JSON.stringify({ model: Deno.env.get("AI_VISION_MODEL") || AI.model, max_tokens: 300, temperature: 0, response_format: { type: "json_object" }, messages: [
+      { role: "system", content: `Read this shop receipt or bill. Reply ONLY JSON: {"merchant": string, "total": number (the final amount paid, after tax/discount), "date": "YYYY-MM-DD" or null, "category": one of ${AI_CATS.join("/")}, "items": [up to 5 short item names]}. If it isn't a receipt, reply {"error":"not a receipt"}.` },
+      { role: "user", content: [{ type: "text", text: "Extract the receipt." }, { type: "image_url", image_url: { url: img } }] }] })
+  });
+  const t = await r.text();
+  if (!r.ok) { console.error("ai receipt", r.status, t.slice(0, 300)); throw Object.assign(new Error("AI unavailable"), { status: 502 }); }
+  const j = JSON.parse(t), out = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "{}";
+  const m = out.match(/\{[\s\S]*\}/); let o = {}; try { o = JSON.parse(m ? m[0] : out); } catch { }
+  if (o.error || !(+o.total > 0)) return { error: "Couldn't read a total from that photo." };
+  return { merchant: String(o.merchant || "Receipt").slice(0, 40), total: Math.round(+o.total * 100) / 100, date: /^\d{4}-\d{2}-\d{2}$/.test(o.date || "") ? o.date : null, category: AI_CATS.includes(o.category) ? o.category : "other", items: Array.isArray(o.items) ? o.items.slice(0, 5).map(String) : [] };
+}
 async function aiInsight(ctx) {
   const o = await llm([{ role: "system", content: `You write ONE short, specific, genuinely useful observation (max 22 words) about this person's spending this month, the kind a sharp friend would notice: a change vs last month, a habit, a recurring charge, a category heading over its limit, or a good streak. Use only numbers from the data, the currency symbol "${(ctx && ctx.sym) || "₹"}", no emoji, no advice clichés. Also give a short follow-up question the user could ask. Reply ONLY JSON: {"text": string, "ask": string}. DATA: ${ctxStr(ctx)}` }, { role: "user", content: "What's worth noticing?" }], { json: true, max: 200, temperature: 0.4 });
   return { text: String((o && o.text) || "").slice(0, 220), ask: String((o && o.ask) || "").slice(0, 120) };
@@ -251,7 +266,8 @@ async function handle(req) {
       if (!AI.key) return err(503, "AI isn't switched on yet - add HAIMAKER_API_KEY to the function secrets.");
       const dev = req.headers.get("x-nest-device") || req.headers.get("x-forwarded-for") || "anon";
       if (!devOk(dev, 120)) return err(429, "Daily AI limit reached - try again tomorrow.");
-      const b = await body(req, 64 * 1024);
+      const b = await body(req, path === "/v1/ai/receipt" ? 1_500_000 : 64 * 1024);
+      if (path === "/v1/ai/receipt") return json(await aiReceipt(b.image));
       if (path === "/v1/ai/chat") { if (!Array.isArray(b.messages) || !b.messages.length) return err(400, "messages required"); return json(await aiChat(b.ctx, b.messages)); }
       if (path === "/v1/ai/names") return json(await aiNames(Array.isArray(b.items) ? b.items : []));
       if (path === "/v1/ai/insight") return json(await aiInsight(b.ctx));

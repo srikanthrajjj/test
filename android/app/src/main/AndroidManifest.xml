@@ -50,6 +50,7 @@
             android:grantUriPermissions="true" />
 
         <receiver android:name=".WeeklyReceiver" android:exported="false" />
+        <receiver android:name=".ReminderReceiver" android:exported="false" />
 
         <!-- reads payment notifications from UPI / bank apps (user grants "Notification access") -->
         <service

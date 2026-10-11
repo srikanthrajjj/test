@@ -17,12 +17,19 @@ public class ApkProvider extends ContentProvider {
         return new File(new File(getContext().getCacheDir(), "share"), "Nest.apk");
     }
 
+    private String name(Uri uri) {
+        String n = uri == null ? null : uri.getLastPathSegment();
+        if (n == null || n.length() == 0) return "Nest.apk";
+        return n.replaceAll("[^A-Za-z0-9._-]", "_");
+    }
+
     private boolean img(Uri uri) {
-        return uri != null && uri.getPath() != null && uri.getPath().endsWith(".png");
+        return name(uri).endsWith(".png");
     }
 
     private File fileFor(Uri uri) {
-        return img(uri) ? new File(new File(getContext().getCacheDir(), "share"), "nest-month.png") : file();
+        String n = name(uri);
+        return "Nest.apk".equals(n) ? file() : new File(new File(getContext().getCacheDir(), "share"), n);
     }
 
     @Override
@@ -38,13 +45,14 @@ public class ApkProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] args, String sort) {
         MatrixCursor c = new MatrixCursor(new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE});
-        c.addRow(new Object[]{img(uri) ? "nest-month.png" : "Nest.apk", fileFor(uri).length()});
+        c.addRow(new Object[]{name(uri), fileFor(uri).length()});
         return c;
     }
 
     @Override
     public String getType(Uri uri) {
-        return img(uri) ? "image/png" : "application/vnd.android.package-archive";
+        String n = name(uri);
+        return n.endsWith(".png") ? "image/png" : n.endsWith(".apk") ? "application/vnd.android.package-archive" : n.endsWith(".csv") ? "text/csv" : "application/octet-stream";
     }
 
     @Override

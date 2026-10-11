@@ -104,6 +104,28 @@ public class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(true);
 
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        web.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams params) {
+                if (fileCb != null) fileCb.onReceiveValue(null);
+                fileCb = cb;
+                try {
+                    Intent i = params.createIntent();
+                    String[] types = params.getAcceptTypes();
+                    if (types != null && types.length > 0 && types[0] != null && types[0].startsWith("image")) {
+                        Intent cam = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                        Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+                        pick.setType("image/*");
+                        i = Intent.createChooser(pick, "Receipt photo");
+                    }
+                    startActivityForResult(i, REQ_FILE);
+                } catch (Exception e) {
+                    fileCb = null;
+                    return false;
+                }
+                return true;
+            }
+        });
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
@@ -210,6 +232,9 @@ public class MainActivity extends Activity {
     }
 
     private static final int REQ_AUTH = 31;
+    private static final int REQ_VOICE = 32;
+    private static final int REQ_FILE = 33;
+    private ValueCallback<Uri[]> fileCb;
 
     @SuppressWarnings("deprecation")
     private void startAuth() {
@@ -245,6 +270,22 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int code, int result, Intent data) {
         super.onActivityResult(code, result, data);
         if (code == REQ_AUTH) js("window.__unlock && window.__unlock(" + (result == RESULT_OK) + ")");
+        if (code == REQ_FILE) {
+            Uri[] r = null;
+            if (result == RESULT_OK && data != null) {
+                if (data.getClipData() != null) {
+                    int n = data.getClipData().getItemCount();
+                    r = new Uri[n];
+                    for (int k = 0; k < n; k++) r[k] = data.getClipData().getItemAt(k).getUri();
+                } else if (data.getData() != null) r = new Uri[]{data.getData()};
+            }
+            if (fileCb != null) fileCb.onReceiveValue(r);
+            fileCb = null;
+        }
+        if (code == REQ_VOICE && result == RESULT_OK && data != null) {
+            java.util.ArrayList<String> r = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+            if (r != null && !r.isEmpty()) js("window.__voice && window.__voice(" + JSONObject.quote(r.get(0)) + ")");
+        }
     }
 
     void notifPing() {
@@ -458,6 +499,52 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean isNight() {
             return MainActivity.this.isNight();
+        }
+
+        @JavascriptInterface
+        public void reminders(final String json) {
+            ReminderReceiver.scheduleAll(MainActivity.this, json);
+        }
+
+        @JavascriptInterface
+        public void shareFile(final String b64, final String fname, final String mime) {
+            ui.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        String n = fname.replaceAll("[^A-Za-z0-9._-]", "_");
+                        File dir = new File(getCacheDir(), "share");
+                        dir.mkdirs();
+                        OutputStream os = new FileOutputStream(new File(dir, n));
+                        os.write(android.util.Base64.decode(b64, android.util.Base64.DEFAULT));
+                        os.close();
+                        Intent i = new Intent(Intent.ACTION_SEND);
+                        i.setType(mime);
+                        i.putExtra(Intent.EXTRA_STREAM, Uri.parse("content://com.nest.couples.apk/" + n));
+                        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivity(Intent.createChooser(i, "Save your Nest backup"));
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void voice() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Intent i = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                        i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                        i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "en-IN");
+                        i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Ask Nest or say an expense");
+                        startActivityForResult(i, REQ_VOICE);
+                    } catch (Exception e) {
+                        js("window.__toast && window.__toast('Voice input isn\\'t available on this phone')");
+                    }
+                }
+            });
         }
 
         @JavascriptInterface
