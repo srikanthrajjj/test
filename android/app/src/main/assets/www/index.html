@@ -609,6 +609,15 @@ button.hd1{text-align:left;background:none}.li.hrow.mute{opacity:.6}
 #ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 8px);z-index:40;width:40px;height:40px;border-radius:50%;background:var(--card);box-shadow:0 6px 18px rgba(0,0,0,.18);display:grid;place-items:center;transform:translate(-50%,-50px);opacity:0;transition:opacity .2s;pointer-events:none}
 #ptr svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}#ptr.spin svg{animation:ptrspin .8s linear infinite}@keyframes ptrspin{to{transform:rotate(360deg)}}
 .hstat{cursor:pointer}
+
+/* Home timeline */
+.hwk{display:flex;justify-content:space-between;align-items:baseline;margin:20px 0 2px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}.hwk b{font-weight:700;color:var(--ink)}.hwk span{font-variant-numeric:tabular-nums}
+.hdg{position:relative;padding-left:20px}.hdg::before{content:"";position:absolute;left:5px;top:24px;bottom:0;width:2px;border-radius:2px;background:var(--line)}
+.hdg .hday{display:flex;justify-content:space-between;align-items:center;position:relative;margin:14px 0 2px;font-size:15px}.hdg .hday span:last-child{font-size:14px;color:var(--sub);font-variant-numeric:tabular-nums}
+.hdg .hday::before{content:"";position:absolute;left:-20px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:var(--card);border:2px solid var(--line);box-sizing:border-box}
+.hdg.live .hday{color:var(--ink);font-weight:600}.hdg.live .hday::before{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent);animation:hpulse 2s infinite}
+@keyframes hpulse{70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.hdg .li.hrow:last-child{border-bottom:0}.hdg .rt{font-variant-numeric:tabular-nums}.hdg.live .rt{color:var(--accent);font-weight:500}
 </style>
 </head>
 <body>
@@ -1882,9 +1891,7 @@ function renderHome() {
   const me = mo.filter(e => e.paid === "me").reduce((a, e) => a + e.amt, 0);
   const ins = (aiOk() && S.insight && S.insight.d === dkey(Date.now()) && isNow) ? { t: S.insight.t, s: "", ask: S.insight.ask || "Tell me more" } : isNow ? localInsight() : null;
   const upd = Math.max(S.sync && S.sync.lastOk || 0, S.smsLast || 0, ...S.exp.slice(-20).map(e => e.u || 0));
-  const recent = [...S.exp].sort((a, b) => b.ts - a.ts).slice(0, 5), dl = ts => { const d = dkey(ts), t = dkey(Date.now()), y = dkey(Date.now() - DAY); return d === t ? "Today" : d === y ? "Yesterday" : new Date(ts).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" }); };
-  let lastD = "", rows = "";
-  recent.forEach(e => { const d = dl(e.ts); if (d !== lastD) { rows += `<div class="hday">${d}</div>`; lastD = d; } rows += `<button class="li hrow ${counted(e) ? "" : "mute"}" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div><div class="t2">${counted(e) ? CAT[e.cat].n : "Not counted"}${multiPeople() ? " · " + esc(first(person(e.paid).name)) : ""} · ${new Date(e.ts).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase()}</div></div><div class="amt ${e.amt < 0 ? "rf" : ""}">${money(e.amt, { sign: e.amt < 0 })}</div></button>`; });
+  const rows = homeTimeline();
   const rv = reviewItems().length, ini = (S.me.name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
   return `
   <div class="hh"><div><h1>Hi ${esc(first(S.me.name))}</h1><p>Let's check your spending.</p></div><button class="hav" data-act="tab" data-arg="you" aria-label="Settings">${esc(ini)}</button></div>
@@ -1910,6 +1917,21 @@ function renderHome() {
   <div class="htry">Try “Where can I cut spending?”</div>
   <input type="file" id="rcpt" accept="image/*" hidden>`;
 }
+/* Home timeline: today in "min / hr ago", earlier days grouped under This week / Last week / date range */
+const relTime = ts => { const m = Math.floor((Date.now() - ts) / 60e3); if (dkey(ts) !== dkey(Date.now()) || m < 0) return new Date(ts).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase(); return m < 1 ? "Just now" : m < 60 ? `${m} min ago` : `${Math.floor(m / 60)} hr ago`; };
+function homeTimeline() {
+  const all = [...S.exp].sort((a, b) => b.ts - a.ts), now = Date.now(), wk0 = wkStart(now);
+  let list = all.filter(e => now - e.ts < 14 * DAY).slice(0, 12); if (list.length < 5) list = all.slice(0, 5);
+  if (!list.length) return "";
+  const dayName = ts => { const d = dkey(ts); return d === dkey(now) ? "Today" : d === dkey(now - DAY) ? "Yesterday" : new Date(ts).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); };
+  const wkName = w => w === wk0 ? "This week" : w === wk0 - 7 * DAY ? "Last week" : `${shortDate(w)} – ${shortDate(w + 6 * DAY)}`;
+  const tot = l => l.filter(counted).reduce((a, e) => a + e.amt, 0);
+  const weeks = []; list.forEach(e => { const w = wkStart(e.ts); let W = weeks.find(x => x.w === w); if (!W) weeks.push(W = { w, days: [] }); const k = dkey(e.ts); let D = W.days.find(x => x.k === k); if (!D) W.days.push(D = { k, ts: e.ts, items: [] }); D.items.push(e); });
+  const row = e => `<button class="li hrow ${counted(e) ? "" : "mute"}" data-act="open" data-arg="${e.id}">${ico(e.cat, e.title)}<div class="mid"><div class="t1">${esc(e.title)}</div><div class="t2">${counted(e) ? CAT[e.cat].n : "Not counted"}${multiPeople() ? " · " + esc(first(person(e.paid).name)) : ""} · <span class="rt" data-ts="${e.ts}">${relTime(e.ts)}</span></div></div><div class="amt ${e.amt < 0 ? "rf" : ""}">${money(e.amt, { sign: e.amt < 0 })}</div></button>`;
+  return weeks.map(W => { const wl = W.days.flatMap(d => d.items);
+    return `<div class="hwk"><b>${wkName(W.w)}</b><span>${money(tot(wl), { round: true })}</span></div>` + W.days.map(D => `<div class="hdg ${D.k === dkey(now) ? "live" : ""}"><div class="hday"><span>${dayName(D.ts)}</span><span>${money(tot(D.items), { round: true })}</span></div>${D.items.map(row).join("")}</div>`).join(""); }).join("");
+}
+setInterval(() => { if (U.tab !== "home" || document.hidden) return; $$("#main .rt[data-ts]").forEach(el => { const t = relTime(+el.dataset.ts); if (el.textContent !== t) el.textContent = t; }); }, 30e3);
 function svgIc2(k) {
   const P = { plus: '<path d="M12 5v14M5 12h14"/>', scan: '<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M8 10h8M8 14h5"/>', mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>', home: '<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>', act: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', bud: '<path d="M6 20V11M12 20V5M18 20v-6"/>' };
   return `<svg viewBox="0 0 24 24" class="i2">${P[k]}</svg>`;
