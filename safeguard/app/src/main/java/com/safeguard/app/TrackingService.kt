@@ -20,6 +20,10 @@ import com.google.android.gms.location.*
  */
 class TrackingService : LifecycleService() {
 
+    companion object {
+        private const val DWELL_MS = 30 * 60 * 1000L // 30 minutes
+    }
+
     private lateinit var client: FusedLocationProviderClient
     private var callback: LocationCallback? = null
 
@@ -76,23 +80,43 @@ class TrackingService : LifecycleService() {
     /** Core rule engine: compare current spot to the safe zone and to every place. */
     private fun check(loc: Location) {
         val ctx = this
+        val now = System.currentTimeMillis()
 
-        // 1) Safe zone
+        // Keep the paired guardian app's map current.
+        val code = Store.pairingCode(ctx)
+        if (code.isNotBlank()) {
+            Thread { SupabaseApi.pushLocation(code, loc.latitude, loc.longitude) }.start()
+        }
+
+        // 1) Safe zone: alert on exit, then a once-only reminder after 30 min still outside.
         Store.safeZone(ctx)?.let { (lat, lon, radius) ->
             val d = distance(loc.latitude, loc.longitude, lat, lon)
             val inside = d <= radius
             val wasInside = Store.wasInsideSafeZone(ctx)
+
             if (wasInside && !inside) {
-                fire(
-                    "Left the safe zone",
-                    "Now about ${d.toInt()} m from the safe zone.",
-                    loc
-                )
+                fire("Left the safe zone", "Now about ${d.toInt()} m from the safe zone.", loc)
+                Store.setSafeZoneOutsideSince(ctx, now)
+                Store.setSafeZoneDwellAlerted(ctx, false)
+            }
+            if (inside) {
+                Store.setSafeZoneOutsideSince(ctx, 0L)
+                Store.setSafeZoneDwellAlerted(ctx, false)
+            } else {
+                val since = Store.safeZoneOutsideSince(ctx)
+                if (since > 0 && !Store.safeZoneDwellAlerted(ctx) && now - since >= DWELL_MS) {
+                    fire(
+                        "Still outside the safe zone",
+                        "Has been outside the safe zone for over 30 minutes.",
+                        loc
+                    )
+                    Store.setSafeZoneDwellAlerted(ctx, true)
+                }
             }
             Store.setInsideSafeZone(ctx, inside)
         }
 
-        // 2) Places (arrive / leave)
+        // 2) Places (arrive / leave), plus a once-only ">30 min here" reminder.
         val currentlyInside = Store.insideSet(ctx)
         val nextInside = HashSet<String>()
         for (p in Store.places(ctx)) {
@@ -107,13 +131,34 @@ class TrackingService : LifecycleService() {
             if (p.mode == "leave" && !inside && wasInside) {
                 fire("Left: ${p.name}", "Left ${p.name}.", loc)
             }
+
+            if (inside && !wasInside) {
+                Store.setPlaceInsideSince(ctx, p.id, now)
+                Store.setPlaceDwellAlerted(ctx, p.id, false)
+            } else if (inside) {
+                val since = Store.placeInsideSince(ctx, p.id)
+                if (since > 0 && !Store.placeDwellAlerted(ctx, p.id) && now - since >= DWELL_MS) {
+                    fire("Still at ${p.name}", "Has been at ${p.name} for over 30 minutes.", loc)
+                    Store.setPlaceDwellAlerted(ctx, p.id, true)
+                }
+            } else {
+                Store.setPlaceInsideSince(ctx, p.id, 0L)
+                Store.setPlaceDwellAlerted(ctx, p.id, false)
+            }
         }
         Store.setInsideSet(ctx, nextInside)
     }
 
-    /** Notify on the phone, and optionally text the guardian with a map link. */
+    /** Notify on the phone, push to the paired guardian app, and optionally text a guardian. */
     private fun fire(title: String, body: String, loc: Location) {
         NotificationHelper.alert(this, title, body)
+
+        val code = Store.pairingCode(this)
+        if (code.isNotBlank()) {
+            Thread {
+                SupabaseApi.pushAlert(code, title, body, loc.latitude, loc.longitude)
+            }.start()
+        }
 
         val phone = Store.guardian(this)
         if (phone.isNotBlank() &&

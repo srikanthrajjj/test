@@ -1,9 +1,8 @@
-name: Build SafeGuard APK
+name: Build SafeGuard APKs
 on:
   workflow_dispatch:
   push:
-    paths: ['safeguard/**', '.github/workflows/safeguard-apk.yml']
-    branches-ignore: []
+    paths: ['safeguard/**', 'safeguard-guardian/**', '.github/workflows/safeguard-apk.yml']
 permissions:
   contents: write
 jobs:
@@ -17,19 +16,41 @@ jobs:
           java-version: '17'
       - name: Accept SDK licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-      - name: Build debug APK
+
+      - name: Build SafeGuard (tracked phone) debug APK
         working-directory: safeguard
-        run: ./gradlew --no-daemon assembleDebug
+        run: |
+          ./gradlew --no-daemon assembleDebug \
+            -PSUPABASE_URL="${SUPABASE_URL}" \
+            -PSUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Build SafeGuard Guardian debug APK
+        working-directory: safeguard-guardian
+        run: |
+          ./gradlew --no-daemon assembleDebug \
+            -PSUPABASE_URL="${SUPABASE_URL}" \
+            -PSUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
       - uses: actions/upload-artifact@v4
         with:
-          name: SafeGuard-debug-apk
-          path: safeguard/app/build/outputs/apk/debug/*.apk
-      - name: Commit APK to dist/
+          name: SafeGuard-debug-apks
+          path: |
+            safeguard/app/build/outputs/apk/debug/*.apk
+            safeguard-guardian/app/build/outputs/apk/debug/*.apk
+
+      - name: Commit APKs to dist/
         run: |
           mkdir -p dist
           cp safeguard/app/build/outputs/apk/debug/app-debug.apk dist/SafeGuard.apk
+          cp safeguard-guardian/app/build/outputs/apk/debug/app-debug.apk dist/SafeGuardGuardian.apk
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add dist/SafeGuard.apk
-          git commit -m "Add built SafeGuard.apk" || exit 0
+          git add dist/SafeGuard.apk dist/SafeGuardGuardian.apk
+          git commit -m "Add built SafeGuard + SafeGuard Guardian APKs" || exit 0
           git push

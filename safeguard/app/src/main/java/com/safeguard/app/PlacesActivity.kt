@@ -1,14 +1,11 @@
 package com.safeguard.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.EditText
-import android.widget.Spinner
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -26,6 +23,17 @@ class PlacesActivity : AppCompatActivity() {
     private lateinit var b: ActivityPlacesBinding
     private val items = ArrayList<Place>()
 
+    private val searchLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { res ->
+        val data = res.data ?: return@registerForActivityResult
+        val name = data.getStringExtra("name") ?: return@registerForActivityResult
+        val lat = data.getDoubleExtra("lat", 0.0)
+        val lon = data.getDoubleExtra("lon", 0.0)
+        val radius = data.getIntExtra("radius", 300)
+        askMode(name, lat, lon, radius)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivityPlacesBinding.inflate(layoutInflater)
@@ -35,8 +43,27 @@ class PlacesActivity : AppCompatActivity() {
         b.list.layoutManager = LinearLayoutManager(this)
         b.list.adapter = Adapter()
 
-        b.fabAdd.setOnClickListener { addDialog() }
+        b.fabAdd.setOnClickListener {
+            searchLauncher.launch(Intent(this, SearchPlaceActivity::class.java))
+        }
         reload()
+    }
+
+    private fun askMode(name: String, lat: Double, lon: Double, radius: Int) {
+        AlertDialog.Builder(this)
+            .setTitle(name)
+            .setItems(arrayOf("Alert when I arrive", "Alert when I leave")) { _, which ->
+                Store.addPlace(
+                    this,
+                    Place(
+                        UUID.randomUUID().toString(),
+                        name, lat, lon, radius,
+                        if (which == 0) "arrive" else "leave"
+                    )
+                )
+                reload()
+            }
+            .show()
     }
 
     private fun reload() {
@@ -44,44 +71,6 @@ class PlacesActivity : AppCompatActivity() {
         items.addAll(Store.places(this))
         b.list.adapter?.notifyDataSetChanged()
         b.empty.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
-    }
-
-    private fun addDialog() {
-        val view = layoutInflater.inflate(R.layout.dialog_add_place, null)
-        val name = view.findViewById<EditText>(R.id.name)
-        val lat = view.findViewById<EditText>(R.id.lat)
-        val lon = view.findViewById<EditText>(R.id.lon)
-        val radius = view.findViewById<EditText>(R.id.radius)
-        val mode = view.findViewById<Spinner>(R.id.mode)
-        mode.adapter = ArrayAdapter(
-            this, android.R.layout.simple_spinner_dropdown_item,
-            arrayOf("Alert when I arrive", "Alert when I leave")
-        )
-
-        AlertDialog.Builder(this)
-            .setTitle("Add a place")
-            .setView(view)
-            .setPositiveButton("Save") { _, _ ->
-                val la = lat.text.toString().toDoubleOrNull()
-                val lo = lon.text.toString().toDoubleOrNull()
-                val r = radius.text.toString().toIntOrNull() ?: 150
-                if (name.text.isBlank() || la == null || lo == null) {
-                    Toast.makeText(this, "Fill name, lat, lon", Toast.LENGTH_SHORT).show()
-                    return@setPositiveButton
-                }
-                Store.addPlace(
-                    this,
-                    Place(
-                        UUID.randomUUID().toString(),
-                        name.text.toString().trim(),
-                        la, lo, r,
-                        if (mode.selectedItemPosition == 0) "arrive" else "leave"
-                    )
-                )
-                reload()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
     }
 
     inner class Adapter : RecyclerView.Adapter<Adapter.VH>() {

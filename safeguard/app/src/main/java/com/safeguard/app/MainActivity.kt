@@ -28,6 +28,21 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { refresh() }
 
+    private val searchLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { res ->
+        val data = res.data ?: return@registerForActivityResult
+        val name = data.getStringExtra("name") ?: return@registerForActivityResult
+        val lat = data.getDoubleExtra("lat", 0.0)
+        val lon = data.getDoubleExtra("lon", 0.0)
+        val radius = data.getIntExtra("radius", 300)
+        Store.setSafeZone(this, lat, lon, radius)
+        Store.setInsideSafeZone(this, true)
+        Toast.makeText(this, "Safe zone set: $name", Toast.LENGTH_SHORT).show()
+        b.map.controller.setCenter(org.osmdroid.util.GeoPoint(lat, lon))
+        refresh()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Configuration.getInstance()
@@ -44,11 +59,16 @@ class MainActivity : AppCompatActivity() {
         askPermissions()
 
         b.toggle.setOnClickListener { onToggle() }
-        b.btnSafeZone.setOnClickListener { setSafeZoneHere() }
+        b.btnSafeZone.setOnClickListener {
+            searchLauncher.launch(Intent(this, SearchPlaceActivity::class.java))
+        }
         b.btnPlaces.setOnClickListener {
             startActivity(Intent(this, PlacesActivity::class.java))
         }
         b.btnGuardian.setOnClickListener { editGuardian() }
+        b.btnPair.setOnClickListener {
+            startActivity(Intent(this, PairingActivity::class.java))
+        }
 
         centerStart()
     }
@@ -116,23 +136,7 @@ class MainActivity : AppCompatActivity() {
         refresh()
     }
 
-    // ---------- safe zone ----------
-    @SuppressLint("MissingPermission")
-    private fun setSafeZoneHere() {
-        val c = b.map.mapCenter
-        val radii = arrayOf("200 m", "300 m", "500 m", "1 km")
-        val values = intArrayOf(200, 300, 500, 1000)
-        AlertDialog.Builder(this)
-            .setTitle("Safe zone radius")
-            .setItems(radii) { _, which ->
-                Store.setSafeZone(this, c.latitude, c.longitude, values[which])
-                Store.setInsideSafeZone(this, true)
-                Toast.makeText(this, "Safe zone set", Toast.LENGTH_SHORT).show()
-                refresh()
-            }
-            .show()
-    }
-
+    // ---------- guardian (SMS) ----------
     private fun editGuardian() {
         val input = android.widget.EditText(this)
         input.hint = "+91XXXXXXXXXX"
@@ -216,6 +220,9 @@ class MainActivity : AppCompatActivity() {
 
         val g = Store.guardian(this)
         b.btnGuardian.text = if (g.isBlank()) "Add guardian" else "Guardian: $g"
+
+        val code = Store.pairingCode(this)
+        b.btnPair.text = if (code.isBlank()) "Pair guardian app" else "Guardian app code: $code"
         drawOverlays()
     }
 }

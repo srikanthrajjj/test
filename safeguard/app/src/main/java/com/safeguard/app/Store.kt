@@ -112,4 +112,27 @@ object Store {
 
     fun setInsideSafeZone(c: Context, v: Boolean) =
         prefs(c).edit().putBoolean("in_sz", v).apply()
+
+    // ---- Dwell timers (for the ">30 min in one place" / ">30 min outside" reminder) ----
+    // Epoch millis of when the current inside/outside state began. 0 = not currently timing.
+    fun safeZoneOutsideSince(c: Context) = prefs(c).getLong("sz_out_since", 0L)
+    fun setSafeZoneOutsideSince(c: Context, t: Long) =
+        prefs(c).edit().putLong("sz_out_since", t).apply()
+    fun safeZoneDwellAlerted(c: Context) = prefs(c).getBoolean("sz_dwell_alerted", false)
+    fun setSafeZoneDwellAlerted(c: Context, v: Boolean) =
+        prefs(c).edit().putBoolean("sz_dwell_alerted", v).apply()
+
+    fun placeInsideSince(c: Context, id: String) =
+        prefs(c).getLong("place_in_since_$id", 0L)
+    fun setPlaceInsideSince(c: Context, id: String, t: Long) =
+        prefs(c).edit().putLong("place_in_since_$id", t).apply()
+    fun placeDwellAlerted(c: Context, id: String) =
+        prefs(c).getBoolean("place_dwell_alerted_$id", false)
+    fun setPlaceDwellAlerted(c: Context, id: String, v: Boolean) =
+        prefs(c).edit().putBoolean("place_dwell_alerted_$id", v).apply()
+
+    // ---- Pairing with a guardian app (via Supabase) ----
+    fun pairingCode(c: Context): String = prefs(c).getString("pairing_code", "") ?: ""
+    fun setPairingCode(c: Context, code: String) =
+        prefs(c).edit().putString("pairing_code", code).apply()
 }
