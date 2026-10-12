@@ -618,6 +618,132 @@ button.hd1{text-align:left;background:none}.li.hrow.mute{opacity:.6}
 .hdg.live .hday{color:var(--ink);font-weight:600}.hdg.live .hday::before{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent);animation:hpulse 2s infinite}
 @keyframes hpulse{70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
 .hdg .li.hrow:last-child{border-bottom:0}.hdg .rt{font-variant-numeric:tabular-nums}.hdg.live .rt{color:var(--accent);font-weight:500}
+
+/* =================== Nest teal theme (v4 design) =================== */
+:root,:root[data-theme=dark]{
+  --bg:#13232C; --card:#1B2E39; --card2:#22384A; --ink:#EAF2F4; --sub:#8EA3AD; --faint:#5A6F7A;
+  --line:rgba(255,255,255,.09); --scrim:rgba(4,12,16,.6); --glass:rgba(19,35,44,.94);
+  --accent:#6FE3CF; --ok:#6FE3CF; --owe:#FF7A59; --hero:#1B2E39; --heroB:rgba(255,255,255,.06); --rowB:rgba(255,255,255,.09);
+  --cream:#FBF4E6; --creamInk:#17262E; --creamSub:#5D6B71; --onAccent:#0C2A2A; --up:#F07A3A;
+  color-scheme:dark;
+}
+html,body{background:var(--bg)}
+.btn.prime,.qbtn,.send,#fab{color:var(--onAccent)!important}
+.btn.prime{background:var(--accent)}
+#fab{display:none!important}
+/* tab bar: Home · Activity · Ask Nest */
+#tabs2{grid-template-columns:repeat(3,1fr)!important;background:var(--glass);border-top:1px solid var(--line)}
+#tabs2 .t{color:var(--sub);font-weight:500;font-size:13px;gap:5px;padding:8px 0 4px}
+#tabs2 .t svg{width:25px!important;height:25px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important}
+#tabs2 .t.on{color:var(--accent)}#tabs2 .t.on svg{fill:none!important;stroke:var(--accent)!important}
+body[data-tab=dues] #tabs2 .t[data-arg=home]{color:var(--accent)}
+/* shared */
+.pill{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 16px;border-radius:99px;background:var(--card2);color:var(--ink);font-size:16px;font-weight:500}.pill svg{opacity:.8}
+.bk{display:flex;align-items:center;gap:6px;color:var(--accent);font-size:16px;min-height:44px;margin-top:6px}
+hr{border:0;border-top:1.5px dashed rgba(23,38,46,.22);margin:14px 0}
+/* Home header */
+.nh{display:flex;align-items:center;gap:12px;padding:14px 2px 14px}.nh h1{font-size:30px;font-weight:700;letter-spacing:-.6px;flex:1}
+.nh .pill{position:absolute;left:50%;transform:translateX(-50%)}
+.nav2{width:42px;height:42px;border-radius:50%;background:var(--card2);color:var(--ink);font-size:17px;font-weight:600;display:grid;place-items:center}
+/* receipt card */
+.rcpt{position:relative;background:var(--cream);color:var(--creamInk);border-radius:18px 18px 0 0;padding:20px 22px 18px;margin-bottom:18px;
+  -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 9px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/18px 9px repeat-x;
+  mask:linear-gradient(#000 0 0) top/100% calc(100% - 9px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/18px 9px repeat-x;padding-bottom:26px}
+.rc-l{font-size:13px;letter-spacing:.12em;font-weight:600;color:var(--creamSub)}
+.rc-t{font-size:46px;font-weight:800;letter-spacing:-1.6px;line-height:1.05;margin-top:8px}
+.rc-s{font-size:16px;color:var(--creamSub);margin-top:6px}
+.rc-c{display:flex;align-items:center;gap:12px;font-size:16px}.rc-c i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--up);flex:none}.rc-c b{color:var(--up);font-weight:700}
+.rc-c.dn i{background:#1E9E86}.rc-c.dn b{color:#1E9E86}
+.rc-rows>div{display:flex;align-items:center;gap:14px;padding:7px 0;font-size:16px}.rc-rows i{display:grid;place-items:center;color:var(--creamInk)}.rc-rows span{flex:1}.rc-rows b{font-weight:600;font-variant-numeric:tabular-nums}
+.rc-x{display:inline-flex;align-items:center;gap:8px;color:#16728A;font-size:16px;font-weight:600;min-height:32px}
+/* insight row */
+.hin2{display:flex;align-items:flex-start;gap:14px;width:100%;text-align:left;padding:4px 4px 16px}.hin2 .sp{color:var(--accent);margin-top:2px}.hin2 b{display:block;font-size:17px;font-weight:600;line-height:1.35}.hin2 em{font-style:normal;color:var(--accent)}.hin2 span{display:block;font-size:14.5px;color:var(--sub);margin-top:3px}
+/* quick quest card */
+.qcard{border:1.5px solid var(--accent);border-radius:18px;padding:16px 16px 14px;background:color-mix(in srgb,var(--accent) 5%,var(--bg));margin-bottom:12px}
+.qh{display:flex;align-items:center;gap:10px}.qh b{flex:1;font-size:13px;letter-spacing:.1em;color:var(--accent);font-weight:600}.qh em{font-style:normal;font-size:13px;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--ink)}
+.qi{color:var(--accent);display:grid;place-items:center}
+.qt{font-size:21px;font-weight:700;letter-spacing:-.3px;margin:10px 0 12px}
+.qsteps{display:flex;align-items:center;justify-content:center;gap:0;margin:6px 0 8px}.qsteps i{flex:1;max-width:40px;border-top:1.5px dashed var(--faint);margin:0 4px}
+.qsteps span{width:38px;height:42px;display:grid;place-items:center;color:var(--ink);border-radius:8px}.qsteps span.c{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);box-shadow:inset 0 0 0 1.5px var(--accent)}.qsteps span.d{color:var(--accent)}
+.qs{text-align:center;color:var(--ink);opacity:.85;font-size:15px;margin:2px 0 12px}
+.qbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:50px;border-radius:12px;background:var(--accent);font-size:17px;font-weight:600}
+.qbtn[disabled]{opacity:.45}
+.qcard.done{border-style:dashed}.qcard.done .qt{font-size:18px;margin-bottom:4px}.qcard.done .qs{text-align:left;margin:0}
+/* add expense + rows */
+.hadd{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:16px;font-weight:500;margin:4px 0 8px}
+.hrow2{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:13px 14px;border-radius:14px;background:var(--card);margin-bottom:8px;color:var(--ink)}
+.hrow2>i{width:38px;height:38px;border-radius:10px;background:var(--card2);display:grid;place-items:center;font-style:normal;font-weight:700;color:var(--accent);flex:none}.hrow2>div{flex:1;min-width:0}.hrow2 b{display:block;font-size:15.5px;font-weight:600}.hrow2 span{display:block;font-size:13.5px;color:var(--sub);margin-top:2px}.hrow2>svg{color:var(--sub);flex:none}
+.hdue{background:var(--card)!important;border-color:var(--line)!important}
+.hrec{margin-top:22px}
+/* Activity */
+.ah{display:flex;align-items:center;justify-content:space-between;padding:14px 2px 6px}.ah h1{font-size:32px;font-weight:700;letter-spacing:-.6px}.ib3{width:44px;height:44px;display:grid;place-items:center;color:var(--ink)}
+.apills{display:flex;gap:10px;margin:6px 0 14px}
+.aseg{display:grid;grid-template-columns:1fr 1fr;padding:3px;border-radius:12px;border:1px solid var(--line);margin-bottom:14px}.aseg button{min-height:40px;border-radius:9px;font-size:16px;color:var(--ink)}.aseg button.on{background:var(--accent);color:var(--onAccent);font-weight:600}
+.anet{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:12px}.anet small{font-size:14.5px;color:var(--ink);opacity:.85}.anet b{display:block;font-size:30px;font-weight:700;letter-spacing:-.6px;margin-top:2px}.anet span{font-size:13.5px;color:var(--sub)}
+.acats{border-radius:14px;overflow:hidden;background:var(--card)}
+.acat{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 14px;border-bottom:1px solid var(--line);color:var(--ink)}.acat:last-child{border-bottom:0}
+.acat>i{color:var(--ink);display:grid;place-items:center;flex:none}.ac1{flex:1;min-width:0}.ac2{display:flex;justify-content:space-between;font-size:16px}.ac2 b{font-weight:500;font-variant-numeric:tabular-nums}
+.ac3{display:flex;align-items:center;gap:10px;margin-top:8px}.ac3 s{flex:1;height:6px;border-radius:99px;background:var(--card2);overflow:hidden;text-decoration:none}.ac3 u{display:block;height:100%;border-radius:99px;background:var(--accent);transform-origin:left;animation:cgrow .8s var(--ease) both}.ac3 em{font-style:normal;font-size:13px;color:var(--sub);min-width:32px;text-align:right}
+.acat>svg{color:var(--sub);flex:none}.arv{display:flex;align-items:center;gap:2px;color:var(--accent);font-size:13px;font-weight:600;flex:none;padding:6px 0 6px 4px}
+.ash{display:flex;justify-content:space-between;align-items:baseline;padding:22px 2px 10px;border-top:1.5px dashed var(--line);margin-top:16px}.ash h2{font-size:22px;font-weight:700}.ash span{font-size:14px;color:var(--sub)}
+.amer{border-radius:14px;overflow:hidden;background:var(--card)}.amer button{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;color:var(--ink)}.amer button:last-child{border-bottom:0}.amer .ico{width:36px;height:36px;border-radius:10px}.amer .mn{flex:1;font-size:16px}.amer b{font-weight:500;font-variant-numeric:tabular-nums}.amer svg:last-child{color:var(--sub)}
+.axl{display:flex;align-items:center;gap:6px;color:var(--sub);font-size:14px;margin:14px 2px 0;min-height:32px}
+.apeople{display:flex;align-items:center;justify-content:center;gap:10px;margin:18px 0 6px;padding-top:16px;border-top:1.5px dashed var(--line);font-size:15.5px;color:var(--ink)}.apeople b{font-weight:600}.apeople i{font-style:normal;color:var(--sub)}
+/* Quick quest overlay */
+#quest{position:fixed;inset:0;z-index:76;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .4s var(--ease);visibility:hidden;overflow-y:auto}
+#quest.on{transform:none;visibility:visible}
+.qhd{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 10px) 8px 4px}.qhd h2{flex:1;text-align:center;font-size:21px;font-weight:600}.qhd .x{width:48px;height:48px;display:grid;place-items:center;color:var(--ink)}
+.qbody{padding:4px 18px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+.qn{text-align:center;font-size:17px;margin:4px 0 6px}
+.rcpt.qr{margin:14px 40px 18px;text-align:center;border-radius:14px 14px 0 0}.rcpt.qr .rc-t{font-size:42px}.qm{font-size:16px}.qraw{margin-top:10px;text-align:left;font-size:13px;line-height:1.45;color:var(--creamSub);background:rgba(23,38,46,.06);padding:10px;border-radius:10px;user-select:text;-webkit-user-select:text}
+.qq{text-align:center;font-size:19px;font-weight:600;margin:4px 0 14px}
+.qopts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qopts button{position:relative;display:flex;align-items:center;gap:14px;min-height:62px;padding:0 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-size:16.5px;text-align:left;color:var(--ink)}
+.qopts button.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}.qopts i{display:grid;place-items:center}
+.qopts em{margin-left:auto;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--onAccent);display:grid;place-items:center}
+.qlink{color:var(--accent);text-decoration:underline;font-size:15.5px;min-height:40px;margin:6px auto 0}.qlink.sm{text-decoration:none;font-size:14.5px;margin:6px auto 4px;color:var(--sub)}
+.qbody>.qbtn{margin-top:14px}
+.qfoot{display:flex;align-items:center;gap:14px;margin-top:18px;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card)}.qfoot>span{width:36px;height:36px;border-radius:50%;border:2px solid var(--accent);color:var(--accent);display:grid;place-items:center;flex:none}.qfoot div{flex:1}.qfoot b{display:block;font-size:15px;font-weight:600}.qfoot small{font-size:13.5px;color:var(--sub)}.qfoot>i{color:var(--accent)}
+.qend{align-items:center;text-align:center;padding-top:60px}.qbig{width:96px;height:96px;border-radius:50%;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);display:grid;place-items:center;animation:qpop .6s var(--spring) both}.qend h3{font-size:26px;margin:20px 0 6px}.qend p{color:var(--sub);font-size:16px;line-height:1.45;max-width:290px;margin-bottom:14px}.qend .qbtn{margin-top:22px}
+@keyframes qpop{from{transform:scale(.4);opacity:0}}
+
+/* ---- v2 design: Home, What changed, Quick review ---- */
+.mtx{display:inline-flex;align-items:center;gap:6px;font-size:16px;color:var(--ink);min-height:40px;padding:0 6px;margin-right:4px}
+.nh .pill{position:static;transform:none}
+.rcpt.ctr{text-align:center;padding:18px 18px 24px}.rcpt.ctr .rc-l{letter-spacing:.08em;color:var(--creamInk);font-weight:500;font-size:14px}.rcpt.ctr .rc-t{font-size:48px;margin-top:6px}.rcpt.ctr .rc-s{color:var(--creamInk);font-size:15.5px}.rcpt.ctr hr{margin:12px 0 10px}
+.rc-c2{font-size:16px;color:var(--creamInk)}.rc-c2 b,.rc-c2 .ar{font-weight:700;color:var(--up)}.rc-c2 b{font-size:19px}.rc-c2.dn b,.rc-c2.dn .ar{color:#1E9E86}
+.wch{padding:6px 2px 4px}.wch h2{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:12px}.wch .w1{font-size:18.5px;font-weight:600}.wch .w2{font-size:17px;color:var(--ink);opacity:.72;margin-top:6px;line-height:1.35}
+.wcmp{display:flex;align-items:center;justify-content:center;gap:12px;margin:18px 0 18px}.wcmp>div{display:flex;align-items:center;gap:10px}.wcmp i{color:var(--ink);display:grid}.wcmp small{display:block;font-size:13px;color:var(--ink);opacity:.75}.wcmp b{font-size:14.5px;font-weight:500}.wcmp em{color:var(--accent);display:flex;align-items:center;gap:4px;padding:0 2px}.wcmp em::before{content:"• • • •";letter-spacing:1px;font-style:normal;font-size:11px}
+.wch .qbtn{margin-bottom:14px}
+.qcard2{background:var(--card);border-radius:16px;padding:14px 16px;margin:6px 0 4px}
+.qh2{display:flex;justify-content:space-between;align-items:center}.qh2 b{font-size:13px;letter-spacing:.08em;color:var(--ink);opacity:.8;font-weight:500}.qh2 em{font-style:normal;font-size:13px;color:var(--sub)}
+.qm2{display:flex;align-items:center;gap:14px;margin:12px 0 14px}.qm2 i{color:var(--ink);display:grid}.qm2 b{display:block;font-size:17px;font-weight:600}.qm2 span{display:block;color:var(--ink);opacity:.72;font-size:14.5px;margin-top:2px}
+.qf2{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}.qmini{display:flex;gap:10px;color:var(--ink);opacity:.8}.qf2 small{display:block;font-size:13px;color:var(--ink);opacity:.75;margin-top:8px}
+.qob{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid var(--accent);color:var(--accent);font-size:15px;font-weight:600;flex:none}
+.hadd2{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-top:1px solid var(--line);margin:12px 0 8px;font-size:16px;color:var(--ink)}.hadd2 i{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);display:grid;place-items:center}
+/* What changed screen (shares the Quick review shell) */
+#wc{position:fixed;inset:0;z-index:76;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .4s var(--ease);visibility:hidden;overflow-y:auto}#wc.on{transform:none;visibility:visible}
+.qhd.wl{justify-content:flex-start}.qhd.wl>div{flex:1;padding-left:4px}.qhd.wl h2{text-align:left;font-size:22px}.qhd.wl small{display:block;color:var(--ink);opacity:.8;font-size:15px;margin-top:2px}
+.wbig{text-align:center;font-size:46px;font-weight:700;letter-spacing:-1.2px;margin-top:14px}.wsub{text-align:center;color:var(--ink);opacity:.72;font-size:16px;margin:4px 0 16px}
+.wrow{display:flex;gap:16px;padding:16px 4px;border-bottom:1px solid var(--line)}.wrow:last-child{border-bottom:0}.wrow>i{display:grid;place-items:center;width:32px;color:var(--ink);font-style:normal;font-size:13px;letter-spacing:1px;align-self:flex-start;margin-top:4px}.wrow>div{flex:1}
+.wr1{display:flex;justify-content:space-between;font-size:16px}.wr1 b{font-weight:600}.wrow small{display:block;font-size:14px;color:var(--ink);opacity:.72;margin:4px 0 10px}
+.wrow s{display:block;height:7px;border-radius:99px;background:var(--card2);overflow:hidden;text-decoration:none}.wrow u{display:block;height:100%;border-radius:99px;background:var(--accent);transform-origin:left;animation:cgrow .8s var(--ease) both}
+.wcard{background:var(--card);border-radius:16px;padding:14px 16px;margin-top:16px}.wch2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}.wch2 b{font-size:17px;font-weight:600}.wch2 small{font-size:13px;color:var(--sub)}
+.wm{display:flex;align-items:center;gap:14px;width:100%;padding:10px 0;border-bottom:1px solid var(--line);text-align:left;color:var(--ink)}.wm .ico{width:36px;height:36px;border-radius:50%}.wm .mn{flex:1;font-size:16px}.wm b{font-weight:500}.wm>svg{color:var(--sub)}
+.wall{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;color:var(--accent);font-size:15.5px;min-height:46px}
+.wq{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}.wq>i{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);flex:none}.wq b{display:block;font-size:16px;font-weight:600}.wq span{display:block;font-size:15px;color:var(--ink);opacity:.75;margin-top:4px}
+/* Quick review */
+.qn2{display:flex;align-items:center;gap:12px;margin:2px 0 0 44px;font-size:15.5px}.qn2 i{width:18px;height:22px;border:1.5px solid var(--faint);border-radius:3px}.qn2 i.c{background:var(--accent);border-color:var(--accent)}.qn2 i.d{border-color:var(--accent)}
+.rcpt.qr{margin:16px 34px 22px;-webkit-mask:conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) top/18px 9px repeat-x,linear-gradient(#000 0 0) center/100% calc(100% - 18px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/18px 9px repeat-x;mask:conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) top/18px 9px repeat-x,linear-gradient(#000 0 0) center/100% calc(100% - 18px) no-repeat,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/18px 9px repeat-x;border-radius:0;padding-top:26px}
+.qq2{font-size:26px;font-weight:700;letter-spacing:-.4px;margin:0 2px 14px}
+.qopts button{flex-direction:column;justify-content:center;gap:8px;min-height:88px;padding:12px;text-align:center;font-size:16px}.qopts em{position:absolute;top:8px;right:8px;margin:0}
+.qskip{color:var(--accent);font-size:16px;min-height:44px;margin:8px auto 0}
+.qinfo{text-align:center;font-size:14px;color:var(--ink);opacity:.72;margin-top:4px}
+.qfoot2{display:flex;align-items:center;gap:18px;margin-top:20px;padding:16px 18px;border-radius:16px;background:var(--card)}.qfoot2 i{color:var(--ink);display:grid}.qfoot2 span{font-size:15.5px;line-height:1.4}
+
+.rc-p{display:flex;justify-content:center;gap:18px;margin-top:10px;font-size:14.5px;color:var(--creamSub)}.rc-p span{display:flex;align-items:center;gap:6px}.rc-p i{width:9px;height:9px;border-radius:50%}.rc-p b{color:var(--creamInk);font-weight:600}
+.anet{display:block;width:100%;text-align:left;color:var(--ink)}.anet small{display:flex;justify-content:space-between;align-items:center}.anet em{font-style:normal;display:inline-flex;align-items:center;gap:2px;color:var(--accent);font-size:13.5px;font-weight:500}
+.wins{display:flex;gap:12px;width:100%;text-align:left;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,var(--card));margin-bottom:8px;color:var(--ink)}.wins>span{color:var(--accent);margin-top:2px}.wins small{display:block;font-size:12.5px;color:var(--accent);letter-spacing:.04em}.wins b{font-weight:500;font-size:15px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -625,12 +751,14 @@ button.hd1{text-align:left;background:none}.li.hrow.mute{opacity:.6}
   <div id="main"></div>
   <button id="fab" data-act="add" aria-label="Add expense"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
   <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></div>
-  <nav id="tabs2"><button class="t" data-act="tab" data-arg="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Home</button><button class="t" data-act="tab" data-arg="month"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Activity</button><button class="t ask" data-act="chat" aria-label="Ask Nest"><span><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15l.8 2 2 .7-2 .8-.8 2-.7-2-2-.8 2-.7z"/></svg></span>Ask Nest</button><button class="t" data-act="tab" data-arg="dues"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Dues</button></nav>
+  <nav id="tabs2"><button class="t" data-act="tab" data-arg="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>Home</button><button class="t" data-act="tab" data-arg="month"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>Activity</button><button class="t" data-act="chat"><svg viewBox="0 0 24 24"><path d="M12 4c4.97 0 9 3.36 9 7.5S16.97 19 12 19c-1.2 0-2.35-.2-3.4-.55L4 20l1.3-3.7C4.48 15.07 3 13.4 3 11.5 3 7.36 7.03 4 12 4z"/></svg>Ask Nest</button></nav>
 </div>
 <div id="scrim" data-act="close"></div>
 <div id="sheet" role="dialog" aria-modal="true"></div>
 <div id="toast" role="status" aria-live="polite"><span class="msg"></span><button data-act="toastUndo">Undo</button></div>
 <div id="chat" aria-hidden="true"></div>
+<div id="quest" aria-hidden="true" role="dialog" aria-label="Quick review"></div>
+<div id="wc" aria-hidden="true" role="dialog" aria-label="What changed"></div>
 <div id="ob"></div>
 <div id="splash">
   <div class="glow"></div>
@@ -927,6 +1055,21 @@ function canonMerchant(raw) {
 }
 const darkish = hex => { const n = parseInt(hex, 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) < 70; };
 const IC = {
+  receipt: '<path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  chat: '<path d="M4 5h16v11H9l-5 4z"/>',
+  chev: '<path d="M6 9l6 6 6-6"/>',
+  chevr: '<path d="M9 6l6 6-6 6"/>',
+  grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  arrowr: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  arrowu: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  arrowd: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  flag: '<path d="M6 21V4h9.5a4 4 0 0 1 0 8H6"/>',
   undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
   flame: '<path d="M12 3c1 3.2 4.5 5 4.5 9.2A4.5 4.5 0 0 1 12 17a4.5 4.5 0 0 1-4.5-4.8c0-1.6.7-2.8 1.7-3.8.2 1.2.8 1.9 1.6 2.2C10.5 7.5 10.8 5 12 3z"/><path d="M12 21c-2.8 0-4.5-1.5-4.5-3.5"/>',
   down: '<path d="M5 8l5 5 3-3 6 6M19 11v5h-5"/>',
@@ -1026,7 +1169,7 @@ function nudgeCard() {
   const notif = N && N.hasNotifAccess && !notifOn() && S.exp.length && !(S.notifHide && Date.now() - S.notifHide < 7 * 864e5) ? `<div class="gcard inv"><span class="gic" style="color:#3DDC97;background:#3DDC9726">${svgIc("spark", 26)}</span><div class="gtx"><span>Small UPI payments send no bank SMS</span><button class="lk" data-act="notif-access">Catch them from GPay, PhonePe &amp; bank emails</button></div><button class="xb" data-act="notif-hide" aria-label="Dismiss">✕</button></div>` : "";
   return notif || inv;
 }
-function renderMonth() {
+function monthPayments() {
   const m = U.month, isNow = m.getTime() === monthStart(new Date()).getTime();
   const mExp = S.exp.filter(e => inMonth(e.ts, m)), cExp = mExp.filter(counted), total = cExp.reduce((a, e) => a + e.amt, 0);
   const me = spentBy(cExp, "me"), pp = total - me, mStart = m.getTime(), lastD = new Date(periodEnd(m).getFullYear(), periodEnd(m).getMonth(), periodEnd(m).getDate()), mon = m.toLocaleDateString("en-GB", { month: "short" });
@@ -1061,18 +1204,6 @@ function renderMonth() {
   const share = total > 0 ? Math.min(100, Math.max(0, Math.round(me / total * 100))) : 0;
   const xferTot = mExp.filter(e => !counted(e)).reduce((a, e) => a + e.amt, 0), refTot = mExp.filter(e => e.cat === "refund").reduce((a, e) => a - e.amt, 0);
   return `
-  <div class="top"><div class="tl1"><button class="nv" data-act="mprev" aria-label="Previous month">‹</button><button class="mt2" data-act="monthpick" aria-label="Choose month">${monthLabel(m)}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><button class="nv" data-act="mnext" ${isNow ? "disabled" : ""} aria-label="Next month">›</button></div>
-    <div class="tr1"><button class="ib2" data-act="search" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg></button><button class="pr2" data-act="tab" data-arg="you" aria-label="Settings"><span class="avc" style="background:${S.me.color}">${esc((S.me.name.trim()[0] || "?").toUpperCase())}</span>${solo() ? "" : `<span class="avc" style="background:${S.p.color}">${esc((S.p.name.trim()[0] || "?").toUpperCase())}</span>`}</button></div></div>
-  <button class="hero2 cmp" data-act="breakdown" aria-label="Open month summary">
-    <div class="h2t"><div><small>${cExp.length} payment${cExp.length === 1 ? "" : "s"} in ${m.toLocaleDateString("en-GB", { month: "long" })}</small><div class="tot">${money(total, { round: true })}</div></div><span class="ms">Month summary <i>›</i></span></div>
-    ${spec}
-    ${solo() ? "" : `<div class="pbar"><i style="background:${S.me.color};width:${total ? Math.max(share, 2) : 0}%"></i>${pp > 0 ? `<i style="background:${S.p.color};width:${100 - share}%"></i>` : ""}</div>
-    <div class="hduo" style="margin-top:12px">${[[S.me, me, share], [S.p, pp, 100 - share]].map(([u, v, pc]) => `<span><i style="background:${u.color}"></i>${esc(first(u.name))} <b>${money(v, { round: true })}</b> <em style="color:var(--sub);font-style:normal">${total ? pc : 0}%</em></span>`).join("")}</div>`}
-  </button>
-  ${refTot > 0 ? `<div class="xl" style="padding-bottom:0">includes ${money(refTot, { round: true })} in refunds, already taken off</div>` : ""}
-  ${xferTot ? `<button class="xl" data-act="transfers">${money(xferTot, { round: true })} in transfers, investments &amp; cash withdrawals, not counted <i>›</i></button>` : ""}
-  ${!solo() && mExp.length ? `<div class="whoseg seg"><button class="${(U.who || "all") === "all" ? "on" : ""}" data-act="who" data-arg="all">Both</button><button class="${U.who === "me" ? "on" : ""}" data-act="who" data-arg="me"><i style="background:${S.me.color}"></i>${esc(first(S.me.name))}</button><button class="${U.who === "p" ? "on" : ""}" data-act="who" data-arg="p"><i style="background:${S.p.color}"></i>${esc(first(S.p.name))}</button></div>` : ""}
-  ${cats}
   ${mExp.length ? `<div class="weeks" role="tablist" aria-label="Weeks"><button class="wchip ${U.week == null ? "on" : ""}" data-act="week" data-arg="all">Month</button>${weeks.map(w => `<button class="wchip ${U.week === w.w ? "on" : ""} ${w.cur ? "cur" : ""}" data-act="week" data-arg="${w.w}">${w.cur ? "This week" : w.label}</button>`).join("")}</div>` : ""}
   ${tbar}
   ${sortBy === "new" ? `<div class="tl" id="tl">${tl}</div>` : flat}
@@ -1356,8 +1487,7 @@ function renderYou() {
   <div class="sec"><h2>Preferences</h2></div>
   <div class="card"><div class="lab">Currency</div>
     <div class="seg">${Object.keys(CUR).map(k => `<button class="${S.cur === k ? "on" : ""}" data-act="cur" data-arg="${k}">${CUR[k].sym} ${k}</button>`).join("")}</div>
-    <div class="lab" style="margin-top:18px">Appearance</div>
-    <div class="seg">${tg("auto", "Auto")}${tg("light", "Light")}${tg("dark", "Dark")}</div></div>
+</div>
   <div class="sec"><h2>Import & data</h2></div>
   <div class="list set">
     ${SMS_INBOX && window.Native ? `<div class="li"><div class="mid"><div class="t1">Add new payments automatically</div><div class="t2">Bank texts are added as they arrive</div></div><button class="sw2 ${S.auto !== false ? "on" : ""}" role="switch" aria-checked="${S.auto !== false}" data-act="auto-toggle" aria-label="Add new payments automatically"><i></i></button></div>` : ""}
@@ -1885,37 +2015,151 @@ function dupPairs() {
   for (let i = 0; i < l.length; i++) for (let j = i + 1; j < l.length && l[j].ts - l[i].ts < 24 * 36e5; j++) { const a = l[i], b = l[j]; if (Math.abs(a.amt - b.amt) < .01 && (a.src !== b.src || canonMerchant(a.title) === canonMerchant(b.title)) && !out.some(p => p.includes(a) || p.includes(b))) out.push([a, b]); }
   return out;
 }
+/* ================= HOME (receipt card · insight · quick quest) ================= */
+const MON_S = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const catIc = id => id === "other" ? "receipt" : CAT_IC[id] || "card";
+const rangeTxt = (a, b) => { const A = new Date(a), B = new Date(b), mo = d => MON_S[d.getMonth()]; return A.getMonth() === B.getMonth() ? `${A.getDate()}–${B.getDate()} ${mo(A)}` : `${A.getDate()} ${mo(A)} – ${B.getDate()} ${mo(B)}`; };
+const CAT_SHORT = { food: "Food", groc: "Groceries", move: "Transport", shop: "Shopping", home: "Home", fun: "Fun", trip: "Travel", care: "Health", subs: "Subscriptions", gift: "Gifts", bill: "Bills", other: "Other", xfer: "Transfer" };
+function monthNumbers(m) {
+  const isNow = m.getTime() === monthStart(new Date()).getTime(), end = isNow ? Date.now() : periodEnd(m).getTime();
+  const mo = S.exp.filter(e => inMonth(e.ts, m) && counted(e)), tot = mo.reduce((a, e) => a + e.amt, 0), refunds = mo.filter(e => e.amt < 0).reduce((a, e) => a - e.amt, 0);
+  const pm = addMonths(m, -1), el = end - m.getTime(), prev = S.exp.filter(e => inMonth(e.ts, pm) && counted(e) && e.ts - pm.getTime() <= el).reduce((a, e) => a + e.amt, 0);
+  const cats = {}; mo.filter(e => e.amt > 0).forEach(e => cats[e.cat] = (cats[e.cat] || 0) + e.amt);
+  return { isNow, end, mo, tot, refunds, pm, prev, cats: Object.entries(cats).sort((a, b) => b[1] - a[1]) };
+}
+function mysteries() { return S.exp.filter(e => counted(e) && e.amt > 0 && !e.ok && e.cat === "other" && Date.now() - e.ts < 120 * DAY).sort((a, b) => b.amt - a.amt); }
+const stepsHtml = (n, cur, done) => `<div class="qsteps">${Array.from({ length: n }, (_, i) => `${i ? "<i></i>" : ""}<span class="${i < done ? "d" : ""} ${i === cur ? "c" : ""}">${svgIc(i < done ? "check" : "receipt", 22)}</span>`).join("")}</div>`;
+/* what moved between this period and the same days last month */
+function changeOf(m) {
+  const N0 = monthNumbers(m), { isNow, tot, prev, pm } = N0, el = N0.end - m.getTime();
+  const cur = {}, old = {}; S.exp.filter(e => counted(e) && e.amt > 0).forEach(e => { if (inMonth(e.ts, m)) cur[e.cat] = (cur[e.cat] || 0) + e.amt; else if (inMonth(e.ts, pm) && e.ts - pm.getTime() <= el) old[e.cat] = (old[e.cat] || 0) + e.amt; });
+  const ids = [...new Set([...Object.keys(cur), ...Object.keys(old)])].map(c => ({ c, a: old[c] || 0, b: cur[c] || 0, d: (cur[c] || 0) - (old[c] || 0) }));
+  const up = tot >= prev, named = ids.filter(x => x.c !== "other").sort((x, y) => up ? y.d - x.d : x.d - y.d), lead = named[0], aw = ids.find(x => x.c === "other") || { c: "other", a: 0, b: 0, d: 0 };
+  const rest = ids.filter(x => x !== lead && x.c !== "other"), restR = { a: rest.reduce((s, x) => s + x.a, 0), b: rest.reduce((s, x) => s + x.b, 0) }; restR.d = restR.b - restR.a;
+  return { N0, isNow, tot, prev, pm, d: tot - prev, lead, aw, restR, curR: isNow ? rangeTxt(m.getTime(), Date.now()) : monthLabel(m), prevR: isNow ? rangeTxt(pm.getTime(), pm.getTime() + (Date.now() - m.getTime())) : monthLabel(pm) };
+}
+const sgn = v => (v >= 0 ? "+" : "−") + money(Math.abs(v), { round: true });
 function renderHome() {
-  const now = new Date(), m = monthStart(now), isNow = true;
-  const mo = S.exp.filter(e => inMonth(e.ts, m) && counted(e)), tot = mo.reduce((a, e) => a + e.amt, 0);
-  const me = mo.filter(e => e.paid === "me").reduce((a, e) => a + e.amt, 0);
-  const ins = (aiOk() && S.insight && S.insight.d === dkey(Date.now()) && isNow) ? { t: S.insight.t, s: "", ask: S.insight.ask || "Tell me more" } : isNow ? localInsight() : null;
-  const upd = Math.max(S.sync && S.sync.lastOk || 0, S.smsLast || 0, ...S.exp.slice(-20).map(e => e.u || 0));
-  const rows = homeTimeline();
-  const rv = reviewItems().length, ini = (S.me.name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
+  const m = U.month || monthStart(new Date()), C = changeOf(m), { N0, isNow, tot, prev, d } = C, refunds = N0.refunds;
+  const ini = (S.me.name.trim()[0] || "?").toUpperCase(), my = mysteries(), qn = Math.min(5, my.length), qDone = S.quest && S.quest.d === dkey(Date.now());
+  const label = (solo() ? (isNow ? "This month · " : "") : "Together · ") + (isNow ? C.curR : monthLabel(m));
+  const open = allDues().filter(x => !x.paid && !x.ignored && x.days <= 30), dueT = open.reduce((a, x) => a + (x.amt || 0), 0);
+  const L = C.lead, catN = c => CAT_SHORT[c] || CAT[c].n;
+  const headline = !L ? "" : d >= 0 ? (L.d > 0 ? `${catN(L.c)} rose by ${money(L.d, { round: true })}.` : "Spending is up across the board.") : (L.d < 0 ? `${catN(L.c)} fell by ${money(-L.d, { round: true })}.` : "Spending is down overall.");
+  const sub = d >= 0 && C.aw.d > 0 ? `Another ${money(C.aw.d, { round: true })} of the increase needs categorising.` : d < 0 ? `You spent ${money(-d, { round: true })} less than ${C.prevR}.` : C.restR.d > 0 ? `Everything else added ${money(C.restR.d, { round: true })}.` : "";
+  const ins = !prev ? ((aiOk() && S.insight && S.insight.d === dkey(Date.now())) ? { t: S.insight.t } : localInsight()) : null;
   return `
-  <div class="hh"><div><h1>Hi ${esc(first(S.me.name))}</h1><p>Let's check your spending.</p></div><button class="hav" data-act="tab" data-arg="you" aria-label="Settings">${esc(ini)}</button></div>
-  <div class="hstat" data-act="refresh-all" role="button" aria-label="Refresh"><i class="${S.exp.length ? "on" : ""}"></i>${S.exp.some(e => e.src === "sample") ? "Sample data" : S.exp.length ? "Your data" : "No data yet"}${upd ? " · Updated " + ago(upd) : ""}</div>
-  <div class="hm"><span class="lbl">${solo() ? "Spent this month" : "Spent together this month"}</span><button class="mt3" data-act="all-tx">${m.toLocaleDateString("en-GB", { month: "long" })} <span style="font-size:18px">›</span></button></div>
-  <div class="htot" id="bigbal" data-v="${tot}">${money(tot, { round: true })}</div>
-  ${(() => { const pm = addMonths(m, -1), el = isNow ? Date.now() - m.getTime() : periodEnd(m).getTime() - m.getTime(), prev = S.exp.filter(e => inMonth(e.ts, pm) && counted(e) && e.ts - pm.getTime() <= el).reduce((a, e) => a + e.amt, 0), d = tot - prev;
-    const days = Math.max(1, Math.ceil(((isNow ? Date.now() : periodEnd(m).getTime()) - m.getTime()) / DAY)), per = {}; mo.forEach(e => { const k = Math.floor((e.ts - m.getTime()) / DAY); per[k] = (per[k] || 0) + e.amt; }); const mx = Math.max(1, ...Object.values(per));
-    return `${prev && tot ? `<div class="hcmp ${d > 0 ? "up" : "dn"}">${d > 0 ? "▲" : "▼"} ${money(Math.abs(d), { round: true })} ${d > 0 ? "more" : "less"} than this time in ${pm.toLocaleDateString("en-GB", { month: "long" })}</div>` : ""}
-    <div class="hsp">${Array.from({ length: days }, (_, i) => `<i style="height:${Math.max(3, (per[i] || 0) / mx * 44)}px" class="${per[i] ? "" : "z"}"></i>`).join("")}</div>
-    <div class="hleft"><span>${mo.length} payment${mo.length === 1 ? "" : "s"} · ${days} day${days > 1 ? "s" : ""}</span><span>${isNow ? `${shortDate(m)} – ${shortDate(Date.now())}` : monthLabel(m)}</span></div>`; })()}
-  ${!solo() && tot ? `<div class="hduo"><span><i style="background:${S.me.color}"></i>${esc(first(S.me.name))} <b>${money(me, { round: true })}</b></span><span><i style="background:${S.p.color}"></i>${esc(first(S.p.name))} <b>${money(tot - me, { round: true })}</b></span></div>` : ""}
-  ${ins ? `<div class="hins"><span class="spk">${svgIc("spark", 26)}</span><div><b>${esc(ins.t)}</b>${ins.s ? `<p>${esc(ins.s)}</p>` : ""}<button data-act="ask-home" data-arg="${esc(ins.ask)}">Ask Nest why <span>→</span></button></div></div>` : ""}
-  ${dueSoon().slice(0, 2).map(d => `<div class="hdue ${d.days < 0 ? "late" : ""}">${dueIco(d)}<button class="hd1" data-act="due-open" data-arg="${esc(d.key)}"><b>${esc(d.title)}</b><span>${d.amt ? money(d.amt, { round: true }) + " · " : ""}${dueWhen(d)} · ${shortDate(d.due)}</span></button><div class="hd2"><button data-act="due-paid" data-arg="${esc(d.key)}">Paid</button><button data-act="due-ignore" data-arg="${esc(d.key)}">Ignore</button></div></div>`).join("")}
-  ${(() => { const m0 = monthStart(new Date()), w = S.exp.filter(e => e.cat === "cash" && inMonth(e.ts, m0)).reduce((a, e) => a + e.amt, 0), c = S.exp.filter(e => e.cash && inMonth(e.ts, m0)).reduce((a, e) => a + e.amt, 0); return w - c > 300 ? `<button class="hrev" data-act="add-cash"><span class="rdot2" style="background:#3DDC97">${CUR[S.cur].sym}</span><div><b>${money(w - c, { round: true })} cash not accounted for</b><span>You took out ${money(w, { round: true })} this month — add what you spent</span></div><span class="chev">›</span></button>` : ""; })()}
-  ${(() => { const o = S.exp.filter(e => e.cat === "iou" && !e.settled).reduce((a, e) => a - e.amt, 0); return o > 0 ? `<button class="hrev" data-act="people"><span class="rdot2" style="background:#4C8DFF;color:#fff">🤝</span><div><b>${money(o, { round: true })} owed to you</b><span>Request it on WhatsApp with a UPI link</span></div><span class="chev">›</span></button>` : ""; })()}
-  ${(() => { const L = largeOf(m); return L.big.length && L.share >= 0.3 ? `<button class="hrev" data-act="large"><span class="rdot2" style="background:#FFB340">!</span><div><b>${L.big.length} large payment${L.big.length > 1 ? "s" : ""} — ${Math.round(L.share * 100)}% of this month</b><span>Rent, gold, investments? Mark what isn't spending</span></div><span class="chev">›</span></button>` : ""; })()}
-  ${rv ? `<button class="hrev" data-act="review"><span class="rdot2">${rv}</span><div><b>${rv} payment${rv > 1 ? "s" : ""} need${rv > 1 ? "" : "s"} a look</b><span>Possible duplicates, investments or unclear names</span></div><span class="chev">›</span></button>` : ""}
+  <div class="nh"><h1>Nest</h1><button class="mtx" data-act="monthpick">${m.toLocaleDateString("en-GB", { month: "long" })}${m.getFullYear() !== new Date().getFullYear() ? " " + m.getFullYear() : ""}${svgIc("chev", 16)}</button><button class="nav2" data-act="tab" data-arg="you" aria-label="Settings">${esc(ini)}</button></div>
+  <div class="rcpt ctr">
+    <div class="rc-l">${esc(label.toUpperCase())}</div>
+    <div class="rc-t" id="bigbal" data-v="${tot}">${money(tot, { round: true })}</div>
+    <div class="rc-s">${refunds > 0 ? `Net spent · ${money(refunds, { round: true })} refunds deducted` : `Net spent · ${N0.mo.length} payment${N0.mo.length === 1 ? "" : "s"}`}</div>
+    ${!solo() && tot ? `<div class="rc-p">${(() => { const me = N0.mo.filter(e => e.paid === "me").reduce((a, e) => a + e.amt, 0); return `<span><i style="background:${S.me.color}"></i>${esc(first(S.me.name))} <b>${money(me, { round: true })}</b></span><span><i style="background:${S.p.color}"></i>${esc(first(S.p.name))} <b>${money(tot - me, { round: true })}</b></span>`; })()}</div>` : ""}
+    ${prev && tot ? `<hr><div class="rc-c2 ${d > 0 ? "up" : "dn"}"><span class="ar">${d > 0 ? "↑" : "↓"}</span> <b>${money(Math.abs(d), { round: true })}</b> ${d > 0 ? "more" : "less"} than ${C.prevR}</div>` : ""}
+  </div>
+  ${prev && tot && L ? `<section class="wch"><h2>What changed?</h2><p class="w1">${esc(headline)}</p>${sub ? `<p class="w2">${esc(sub)}</p>` : ""}
+    <div class="wcmp"><div><i>${svgIc("receipt", 44)}</i><span><small>${C.prevR}</small><b>${money(prev, { round: true })}</b></span></div><em>${svgIc("arrowr", 16)}</em><div><i>${svgIc("receipt", 44)}</i><span><small>${C.curR}</small><b>${money(tot, { round: true })}</b></span></div></div>
+    <button class="qbtn" data-act="changed">See the payments ${svgIc("arrowr", 18)}</button></section>`
+    : ins ? `<button class="hin2" data-act="ask-home" data-arg="${esc(ins.ask || "Tell me more")}"><span class="sp">${svgIc("spark", 26)}</span><div><b>${esc(ins.t)}</b><span>Ask Nest why →</span></div></button>` : ""}
+  ${qn ? `<div class="qcard2"><div class="qh2"><b>QUICK QUEST</b><em>Optional · ≈${qn > 3 ? 1 : "½"} min</em></div><div class="qm2"><i>${svgIc("receipt", 34)}</i><div><b>Solve ${qn} payment myster${qn > 1 ? "ies" : "y"}</b><span>Make your spending story clearer.</span></div></div>
+    <div class="qf2"><div><div class="qmini">${Array.from({ length: qn }, () => svgIc("receipt", 22)).join("")}</div><small>${my.length} payment${my.length > 1 ? "s" : ""} need${my.length > 1 ? "" : "s"} review</small></div><button class="qob" data-act="quest">Start review ${svgIc("arrowr", 16)}</button></div></div>`
+    : qDone ? `<div class="qcard2"><div class="qh2"><b>QUICK QUEST · DONE</b></div><div class="qm2"><i>${svgIc("check", 30)}</i><div><b>${S.quest.n} payment${S.quest.n > 1 ? "s" : ""} made clearer today</b><span>Every payment has a category now.</span></div></div></div>` : ""}
+  <button class="hadd2" data-act="add"><i>${svgIc("plus", 16)}</i>Add expense</button>
+  ${dueSoon().slice(0, 2).map(x => `<div class="hdue ${x.days < 0 ? "late" : ""}">${dueIco(x)}<button class="hd1" data-act="due-open" data-arg="${esc(x.key)}"><b>${esc(x.title)}</b><span>${x.amt ? money(x.amt, { round: true }) + " · " : ""}${dueWhen(x)} · ${shortDate(x.due)}</span></button><div class="hd2"><button data-act="due-paid" data-arg="${esc(x.key)}">Paid</button><button data-act="due-ignore" data-arg="${esc(x.key)}">Ignore</button></div></div>`).join("")}
+  <button class="hrow2" data-act="tab" data-arg="dues"><i>${svgIc("card", 20)}</i><div><b>Dues</b><span>${open.length ? `${money(dueT, { round: true })} in the next 30 days · ${open.length} item${open.length > 1 ? "s" : ""}` : "Card bills, EMIs and recharges"}</span></div>${svgIc("chevr", 18)}</button>
+  ${(() => { const m0 = monthStart(new Date()), w = S.exp.filter(e => e.cat === "cash" && inMonth(e.ts, m0)).reduce((a, e) => a + e.amt, 0), c = S.exp.filter(e => e.cash && inMonth(e.ts, m0)).reduce((a, e) => a + e.amt, 0); return w - c > 300 ? `<button class="hrow2" data-act="add-cash"><i>₹</i><div><b>${money(w - c, { round: true })} cash not accounted for</b><span>You took out ${money(w, { round: true })} — add what you spent</span></div>${svgIc("chevr", 18)}</button>` : ""; })()}
+  ${(() => { const o = S.exp.filter(e => e.cat === "iou" && !e.settled).reduce((a, e) => a - e.amt, 0); return o > 0 ? `<button class="hrow2" data-act="people"><i>${svgIc("people", 20)}</i><div><b>${money(o, { round: true })} owed to you</b><span>Request it on WhatsApp with a UPI link</span></div>${svgIc("chevr", 18)}</button>` : ""; })()}
+  ${(() => { const Lg = largeOf(m); return Lg.big.length && Lg.share >= 0.3 ? `<button class="hrow2" data-act="large"><i>!</i><div><b>${Lg.big.length} large payment${Lg.big.length > 1 ? "s" : ""} — ${Math.round(Lg.share * 100)}% of this month</b><span>Rent, gold, investments? Mark what isn't spending</span></div>${svgIc("chevr", 18)}</button>` : ""; })()}
+  ${(() => { const rv = reviewItems().filter(x => x.k !== "name").length; return rv ? `<button class="hrow2" data-act="review"><i>${rv}</i><div><b>${rv} item${rv > 1 ? "s" : ""} need${rv > 1 ? "" : "s"} a look</b><span>Possible duplicates, investments and texts Nest couldn't read</span></div>${svgIc("chevr", 18)}</button>` : ""; })()}
   ${nudgeCard()}
-  <div class="hqa"><button data-act="add"><span>${svgIc2("plus")}</span>Add expense</button><i></i><button data-act="receipt"><span>${svgIc2("scan")}</span>Scan receipt</button><i></i><button data-act="chat"><span class="ac">${svgIc("spark", 26)}</span>Ask Nest</button></div>
   <div class="hrec"><h2>Recent transactions</h2><button data-act="all-tx">View all</button></div>
-  ${rows || `<div class="empty"><b>No transactions yet</b>Add one, or tap your initials (top right) → Scan entire inbox.</div>`}
-  <div class="htry">Try “Where can I cut spending?”</div>
+  ${homeTimeline() || `<div class="empty"><b>No transactions yet</b>Add one, or tap your initial (top right) → Scan entire inbox.</div>`}
   <input type="file" id="rcpt" accept="image/*" hidden>`;
+}
+/* ================= WHAT CHANGED (full screen) ================= */
+function openChanged() { const el = $("#wc"); el.setAttribute("aria-hidden", "false"); renderChanged(); requestAnimationFrame(() => el.classList.add("on")); hap(1); }
+function closeChanged() { const el = $("#wc"); if (!el || !el.classList.contains("on")) return false; el.classList.remove("on"); el.setAttribute("aria-hidden", "true"); return true; }
+function renderChanged() {
+  const m = U.month || monthStart(new Date()), C = changeOf(m), L = C.lead, catN = c => CAT_SHORT[c] || CAT[c].n, my = mysteries();
+  const rows = [L && { ic: catIc(L.c), n: catN(L.c), ...L }, C.aw.a || C.aw.b ? { ic: "receipt", n: "Awaiting categories", ...C.aw } : null, C.restR.a || C.restR.b ? { ic: "dots", n: "Other changes", ...C.restR } : null].filter(Boolean);
+  const mx = Math.max(1, ...rows.map(r => Math.abs(r.d)));
+  const g = {}; if (L) S.exp.filter(e => counted(e) && e.cat === L.c && inMonth(e.ts, m)).forEach(e => { const k = canonMerchant(e.title); g[k] = g[k] || { t: 0, e }; g[k].t += e.amt; }); const ms = Object.entries(g).sort((a, b) => b[1].t - a[1].t).slice(0, 3);
+  $("#wc").innerHTML = `<header class="qhd wl"><button class="x" data-act="wc-close" aria-label="Back">${svgIc("back", 24)}</button><div><h2>What changed</h2><small>${C.curR} vs ${C.prevR}</small></div></header>
+  <div class="qbody">
+    <div class="wbig ${C.d >= 0 ? "" : "dn"}">${sgn(C.d)}</div><div class="wsub">Change in net spending</div>
+    ${aiOk() && S.insight && S.insight.d === dkey(Date.now()) ? `<button class="wins" data-act="ask-insight"><span>${svgIc("spark", 20)}</span><div><small>Nest noticed</small><b>${esc(S.insight.t)}</b></div></button>` : ""}
+    <div class="wrows">${rows.map(r => `<div class="wrow"><i>${r.ic === "dots" ? "•••" : svgIc(r.ic, 26)}</i><div><div class="wr1"><b>${esc(r.n)}</b><b>${sgn(r.d)}</b></div><small>${money(r.a, { round: true })} → ${money(r.b, { round: true })}</small><s><u style="width:${Math.max(3, Math.abs(r.d) / mx * 100)}%"></u></s></div></div>`).join("")}</div>
+    ${L && ms.length ? `<div class="wcard"><div class="wch2"><b>${esc(catN(L.c))} payments</b><small>Examples this month</small></div>${ms.map(([k, x]) => `<button class="wm" data-act="wc-cat" data-arg="${L.c}">${ico(x.e.cat, k)}<span class="mn">${esc(k)}</span><b>${money(x.t, { round: true })}</b>${svgIc("chevr", 16)}</button>`).join("")}<button class="wall" data-act="wc-cat" data-arg="${L.c}">View all ${esc(catN(L.c).toLowerCase())} ${svgIc("arrowr", 16)}</button></div>` : ""}
+    ${my.length ? `<div class="wcard"><div class="wq"><i>${svgIc("receipt", 24)}</i><div><b>${my.length} payment${my.length > 1 ? "s" : ""} still need${my.length > 1 ? "" : "s"} categories.</b><span>Reviewing them will clarify the ${C.d >= 0 ? "increase" : "change"}.</span></div></div><button class="qbtn" data-act="quest">Review ${Math.min(5, my.length)} payment${my.length > 1 ? "s" : ""} ${svgIc("arrowr", 18)}</button></div>` : ""}
+  </div>`;
+}
+/* ================= ACTIVITY (Story · Payments) ================= */
+function renderMonth() {
+  const m = U.month, av = U.av || "story", who = solo() ? "all" : (U.who || "all");
+  const whoL = who === "all" ? "Both" : first(person(who).name);
+  return `<div class="ah"><h1>Activity</h1><button class="ib3" data-act="search" aria-label="Search">${svgIc("search", 24)}</button></div>
+  <div class="apills"><button class="pill" data-act="monthpick">${m.toLocaleDateString("en-GB", { month: "long" })}${m.getFullYear() !== new Date().getFullYear() ? " " + m.getFullYear() : ""}${svgIc("chev", 16)}</button>${solo() ? "" : `<button class="pill" data-act="who-pick">${esc(whoL)}${svgIc("chev", 16)}</button>`}</div>
+  <div class="aseg" role="tablist"><button role="tab" aria-selected="${av === "story"}" class="${av === "story" ? "on" : ""}" data-act="av" data-arg="story">Story</button><button role="tab" aria-selected="${av !== "story"}" class="${av !== "story" ? "on" : ""}" data-act="av" data-arg="payments">Payments</button></div>
+  ${av === "story" ? monthStory(m, who) : monthPayments()}`;
+}
+function monthStory(m, who) {
+  const mExp = S.exp.filter(e => inMonth(e.ts, m) && (who === "all" || e.paid === who)), c = mExp.filter(counted), tot = c.reduce((a, e) => a + e.amt, 0), refunds = c.filter(e => e.amt < 0).reduce((a, e) => a - e.amt, 0);
+  if (!c.length) return `<div class="empty" style="padding:40px 20px"><b>No spending in ${m.toLocaleDateString("en-GB", { month: "long" })}</b>Payments from your texts and the ones you add show up here.</div>`;
+  const by = {}; c.filter(e => e.amt > 0).forEach(e => by[e.cat] = (by[e.cat] || 0) + e.amt); const cats = Object.entries(by).sort((a, b) => b[1] - a[1]), base = cats.reduce((a, x) => a + x[1], 0) || 1;
+  const nMy = mysteries().filter(e => inMonth(e.ts, m)).length;
+  const row = ([id, v]) => `<button class="acat" data-act="story-cat" data-arg="${id}"><i>${svgIc(catIc(id), 22)}</i><div class="ac1"><div class="ac2"><span>${esc(CAT_SHORT[id] || CAT[id].n)}</span><b>${money(v, { round: true })}</b></div><div class="ac3"><s><u style="width:${Math.max(2, v / base * 100)}%"></u></s><em>${Math.round(v / base * 100)}%</em></div></div>${id === "other" && nMy ? `<span class="arv" data-act="quest">Review ${svgIc("chevr", 14)}</span>` : svgIc("chevr", 18)}</button>`;
+  const head = cats.slice(0, 3), restC = cats.slice(3), restV = restC.reduce((a, x) => a + x[1], 0);
+  const topC = cats.filter(x => x[0] !== "other")[0] || cats[0], g = {}; c.filter(e => e.cat === topC[0]).forEach(e => { const k = canonMerchant(e.title); g[k] = g[k] || { t: 0, e }; g[k].t += e.amt; }); const ms = Object.entries(g).sort((a, b) => b[1].t - a[1].t);
+  const xferTot = mExp.filter(e => !counted(e)).reduce((a, e) => a + e.amt, 0);
+  const me = c.filter(e => e.paid === "me").reduce((a, e) => a + e.amt, 0);
+  return `<button class="anet" data-act="breakdown"><small>Net spent <em>Month summary ${svgIc("chevr", 14)}</em></small><b>${money(tot, { round: true })}</b>${refunds > 0 ? `<span>after ${money(refunds, { round: true })} refunds</span>` : ""}</button>
+  <div class="acats">${head.map(row).join("")}${restC.length ? (U.moreCats ? restC.map(row).join("") : `<button class="acat" data-act="more-cats"><i>${svgIc("grid", 22)}</i><div class="ac1"><div class="ac2"><span>More categories</span><b>${money(restV, { round: true })}</b></div><div class="ac3"><s><u style="width:${Math.max(2, restV / base * 100)}%"></u></s><em>${Math.round(restV / base * 100)}%</em></div></div>${svgIc("chevr", 18)}</button>`) : ""}</div>
+  <div class="ash"><h2>${esc(CAT_SHORT[topC[0]] || CAT[topC[0]].n)}</h2><span>${ms.length} merchant${ms.length > 1 ? "s" : ""}</span></div>
+  <div class="amer">${ms.slice(0, 4).map(([k, x]) => `<button data-act="story-cat" data-arg="${topC[0]}">${ico(x.e.cat, k)}<span class="mn">${esc(k)}</span><b>${money(x.t, { round: true })}</b>${svgIc("chevr", 16)}</button>`).join("")}</div>
+  ${xferTot ? `<button class="axl" data-act="transfers">${money(xferTot, { round: true })} in transfers &amp; cash, not counted ${svgIc("chevr", 14)}</button>` : ""}
+  ${!solo() && who === "all" ? `<div class="apeople">${svgIc("people", 20)}<span>${esc(first(S.me.name))} <b>${money(me, { round: true })}</b></span><i>·</i><span>${esc(first(S.p.name))} <b>${money(tot - me, { round: true })}</b></span></div>` : ""}`;
+}
+
+/* ================= QUICK QUEST: payment mysteries ================= */
+let QS = null;
+function openQuest() {
+  const L = mysteries().slice(0, 5).map(e => e.id); if (!L.length) { toast("Every payment already has a category"); return; }
+  closeSheet(); QS = { ids: L, i: 0, done: 0, cleared: 0, pick: null, raw: false, more: false, extra: 0 };
+  const q = $("#quest"); q.setAttribute("aria-hidden", "false"); renderQuest(); requestAnimationFrame(() => q.classList.add("on")); hap(1);
+}
+function closeQuest() { const q = $("#quest"); if (!q || !q.classList.contains("on")) return false; q.classList.remove("on"); q.setAttribute("aria-hidden", "true"); QS = null; refresh(); return true; }
+function questOpts(e) {
+  const guess = catOf(e.title), mine = {}; S.exp.filter(x => counted(x) && x.amt > 0 && !["other", "refund"].includes(x.cat)).forEach(x => mine[x.cat] = (mine[x.cat] || 0) + 1);
+  const L = [...new Set([guess !== "other" ? guess : null, ...Object.entries(mine).sort((a, b) => b[1] - a[1]).map(x => x[0]), "shop", "groc", "food"].filter(Boolean))].filter(c => CAT[c] && !["cash", "iou", "refund", "xfer", "other"].includes(c)).slice(0, 3);
+  return [...L, "xfer"];
+}
+function renderQuest() {
+  const el = $("#quest"); if (!el || !QS) return; const n = QS.ids.length;
+  const head = `<header class="qhd wl"><button class="x" data-act="q-back" aria-label="Back">${svgIc("back", 24)}</button><div><h2>Quick review</h2></div><button class="x" data-act="q-close" aria-label="Close">${svgIc("close", 24)}</button></header>`;
+  if (QS.i >= n) {
+    return void (el.innerHTML = `${head}<div class="qbody qend"><div class="qbig">${svgIc("check", 46)}</div><h3>Quest complete</h3><p>${QS.cleared} payment${QS.cleared === 1 ? "" : "s"} now ${QS.cleared === 1 ? "has" : "have"} a category${QS.extra ? `, plus ${QS.extra} more from the same merchants` : ""}.</p>${stepsHtml(n, -1, n)}<button class="qbtn" data-act="q-close">Done</button>${mysteries().length ? `<button class="qlink" data-act="quest">Solve ${Math.min(5, mysteries().length)} more</button>` : ""}</div>`);
+  }
+  const e = S.exp.find(x => x.id === QS.ids[QS.i]); if (!e || e.ok || e.cat !== "other") { QS.i++; QS.done++; return renderQuest(); } // already sorted (e.g. same merchant as an earlier answer)
+  const opts = QS.more ? CATS.map(c => c.id).filter(c => !["cash", "iou", "refund", "other"].includes(c)) : questOpts(e);
+  el.innerHTML = `${head}<div class="qbody">
+    <div class="qn2"><span>${QS.i + 1} of ${n}</span>${Array.from({ length: n }, (_, i) => `<i class="${i < QS.done ? "d" : ""} ${i === QS.i ? "c" : ""}"></i>`).join("")}</div>
+    <div class="rcpt qr"><div class="rc-l">UNCLEAR PAYMENT</div><div class="rc-t">${money(e.amt, { round: e.amt >= 100 })}</div><div class="rc-s">${new Date(e.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · ${esc(first(person(e.paid).name))}</div><hr>
+      <div class="qm">${esc(e.title)}</div>${e.raw ? `<button class="rc-x" data-act="q-raw">${QS.raw ? "Hide original SMS" : "View original SMS"} ${svgIc("arrowr", 16)}</button>${QS.raw ? `<div class="qraw">${esc(e.raw)}</div>` : ""}` : ""}</div>
+    <h3 class="qq2">What was this payment for?</h3>
+    <div class="qopts">${opts.map(c => `<button class="${QS.pick === c ? "on" : ""}" data-act="q-pick" data-arg="${c}" aria-pressed="${QS.pick === c}"><i>${svgIc(catIc(c), 24)}</i><span>${esc(CAT_SHORT[c] || CAT[c].n)}</span>${QS.pick === c ? `<em>${svgIc("check", 14)}</em>` : ""}</button>`).join("")}</div>
+    ${QS.more ? "" : `<button class="qlink sm" data-act="q-more">More categories</button>`}
+    <button class="qbtn" data-act="q-next" ${QS.pick ? "" : "disabled"}>Confirm &amp; next ${svgIc("arrowr", 18)}</button>
+    <button class="qskip" data-act="q-skip">Skip for now</button>
+    <div class="qinfo">ⓘ Transfers are excluded from spending.</div>
+    <div class="qfoot2"><i>${svgIc("user", 34)}</i><span>Finish ${n} review${n > 1 ? "s" : ""} to reveal a clearer breakdown.</span></div>
+  </div>`;
+}
+function questConfirm() {
+  const e = QS && S.exp.find(x => x.id === QS.ids[QS.i]); if (!e || !QS.pick) return;
+  if (QS.pick === "xfer" && e.cat !== "xfer") e.prevCat = e.cat; e.cat = QS.pick; e.ok = 1; touch(e);
+  QS.extra += learnName(e, false, true) || 0; QS.cleared++; QS.done++; QS.i++; QS.pick = null; QS.raw = false; QS.more = false; save(); hap(1);
+  if (QS.i >= QS.ids.length) { S.quest = { d: dkey(Date.now()), n: ((S.quest && S.quest.d === dkey(Date.now())) ? S.quest.n : 0) + QS.cleared }; persist(); hap(2); }
+  renderQuest();
 }
 /* Home timeline: today in "min / hr ago", earlier days grouped under This week / Last week / date range */
 const relTime = ts => { const m = Math.floor((Date.now() - ts) / 60e3); if (dkey(ts) !== dkey(Date.now()) || m < 0) return new Date(ts).toLocaleTimeString("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase(); return m < 1 ? "Just now" : m < 60 ? `${m} min ago` : `${Math.floor(m / 60)} hr ago`; };
@@ -1962,7 +2206,7 @@ function renderDues() {
   const c = DCFG(), L = allDues(), open = L.filter(d => !d.paid && !d.ignored), month = open.filter(d => d.days <= 31);
   const grp = (t, l) => l.length ? `<div class="lab">${t}</div><div class="list">${l.map(d => `<button class="li" data-act="due-open" data-arg="${esc(d.key)}">${dueIco(d)}<div class="mid"><div class="t1">${esc(d.title)}</div><div class="t2" style="${d.days < 0 ? "color:var(--owe)" : ""}">${dueWhen(d)} · ${shortDate(d.due)}${d.auto ? " · detected" : ""}</div></div><div class="amt">${d.amt ? money(d.amt, { round: true }) : "—"}</div></button>`).join("")}</div>` : "";
   const done = L.filter(d => d.paid || d.ignored).slice(0, 6);
-  return `<div class="large"><h1>Dues</h1></div>
+  return `<button class="bk" data-act="tab" data-arg="home">${svgIc("back", 20)} Home</button><div class="large"><h1>Dues</h1></div>
   <div class="card"><div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="muted" style="font-size:13px">Due in the next 30 days</div><b style="font-size:28px;letter-spacing:-.6px">${money(month.reduce((a, d) => a + (d.amt || 0), 0), { round: true })}</b><div class="muted" style="font-size:13px">${month.length} item${month.length === 1 ? "" : "s"} · reminders ${c.lead} day${c.lead > 1 ? "s" : ""} before at ${c.hour > 12 ? c.hour - 12 + " pm" : c.hour + " am"}</div></div><button class="btn soft" data-act="due-cfg">Reminders</button></div></div>
   ${grp("Overdue", open.filter(d => d.days < 0))}${grp("Next 7 days", open.filter(d => d.days >= 0 && d.days <= 7))}${grp("Later", open.filter(d => d.days > 7))}
   ${!open.length ? `<div class="empty" style="padding:30px 20px"><b>Nothing due</b>Card bills, phone and electricity bills, recharges, insurance and loan EMIs show up here automatically from your texts. Add rent, school fees or anything else yourself.</div>` : ""}
@@ -2452,9 +2696,9 @@ const A = {
   breakdown: () => openBreakdown(),
   today: () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; hap(1); show("month"); },
   monthpick: () => openMonthPick(), "inv-hide": () => { S.invHide = Date.now(); persist(); refresh(); },
-  "month-go": a => { U.month = new Date(+a); U.cat = "all"; U.week = null; closeSheet(); setTimeout(() => show("month"), 200); },
+  "month-go": a => { U.month = new Date(+a); U.cat = "all"; U.week = null; closeSheet(); setTimeout(() => show(U.tab === "home" ? "home" : "month"), 200); },
   "refresh-all": () => { hap(1); refreshAll(true); },
-  "all-tx": () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; hap(1); show("month"); },
+  "all-tx": () => { U.month = monthStart(new Date()); U.cat = "all"; U.week = null; U.av = "payments"; hap(1); show("month"); },
   grp: a => openGroup(a), large: () => openLarge(),
   "wk-more": a => { const el = $("#mr-" + a), b = $("#mb-" + a); if (el) { const on = el.classList.toggle("on"); b.textContent = on ? "Show less" : "Show " + el.children.length + " more"; hap(1); } },
   "toggle-xfer": a => { const e = S.exp.find(x => x.id === a); if (!e) return; if (e.cat === "xfer") { e.cat = e.prevCat && CAT[e.prevCat] && !["xfer", "cash"].includes(e.prevCat) ? e.prevCat : catOf(e.title); e.ok = true; } else { e.prevCat = e.cat; e.cat = "xfer"; } touch(e); save(); closeSheet(); refresh(); toast(e.cat === "xfer" ? "Won't be counted" : "Counted as spending"); },
@@ -2466,6 +2710,23 @@ const A = {
   "month-ok": a => { S.okM = S.okM || {}; S.okM[a] = Date.now(); persist(); hap(2); const b = $("#bd"); if (b) b.innerHTML = renderSummary(); toast("Thanks — marked as right"); },
   "month-missing": () => openMissing(),
   who: a => { U.who = a; hap(0); refresh(); },
+  "who-pick": () => { const o = [["all", "Both"], ["me", first(S.me.name)], ["p", first(S.p.name)]], cur = U.who || "all"; openSheet("Show spending by", `<div class="list set">${o.map(([k, t]) => `<button class="li" data-act="who-set" data-arg="${k}"><div class="mid"><div class="t1">${esc(t)}</div></div>${k === cur ? `<span style="color:var(--accent);font-size:20px">✓</span>` : ""}</button>`).join("")}</div>`); },
+  "who-set": a => { U.who = a; closeSheet(); hap(0); setTimeout(() => show(U.tab, true), 150); },
+  av: a => { U.av = a; hap(0); if (a === "story") U.cat = "all"; show("month"); },
+  explore: () => { U.av = "story"; hap(1); show("month"); },
+  "story-cat": a => { U.cat = a; U.av = "payments"; U.sort = "new"; hap(1); show("month"); },
+  "more-cats": () => { U.moreCats = true; show("month", true); },
+  quest: () => { closeChanged(); openQuest(); },
+  changed: () => openChanged(),
+  "wc-close": () => closeChanged(),
+  "wc-cat": a => { closeChanged(); U.cat = a; U.av = "payments"; U.sort = "new"; U.week = null; show("month"); },
+  "q-close": () => closeQuest(),
+  "q-back": () => { if (QS && QS.i > 0 && QS.i < QS.ids.length) { QS.i--; QS.done = Math.max(0, QS.done - 1); QS.pick = null; renderQuest(); } else closeQuest(); },
+  "q-pick": a => { if (!QS) return; QS.pick = a; hap(0); renderQuest(); },
+  "q-next": () => questConfirm(),
+  "q-skip": () => { if (!QS) return; QS.i++; QS.pick = null; QS.raw = false; QS.more = false; hap(0); renderQuest(); },
+  "q-raw": () => { if (!QS) return; QS.raw = !QS.raw; renderQuest(); },
+  "q-more": () => { if (!QS) return; QS.more = true; renderQuest(); },
   "lock-toggle": () => { if (S.lock) { S.lock = false; persist(); refresh(); toast("App lock off"); return; } lockPending = true; try { N.authenticate(); } catch (e) { } },
   "weekly-toggle": () => { S.weeklyOff = !S.weeklyOff; persist(); try { N.setWeekly(!S.weeklyOff); } catch (e) { } refresh(); toast(S.weeklyOff ? "Sunday summary off" : "Sunday summary on — every Sunday at 9 pm"); },
   unlock: () => { try { N.authenticate(); } catch (e) { } },
@@ -2572,7 +2833,7 @@ document.addEventListener("input", ev => {
   if (ev.target.id === "nm-me" || ev.target.id === "nm-p") { const k = ev.target.id.slice(3); person(k).name = ev.target.value.trim() || (k === "me" ? "You" : "Partner"); if (k === "me") S.mu = Date.now(); save(); const a = ev.target.previousElementSibling; if (a) a.textContent = (person(k).name[0] || "?").toUpperCase(); }
 });
 document.addEventListener("keydown", ev => { if ((ev.key === "Enter" || ev.key === " ") && ev.target.classList && ev.target.classList.contains("rv")) { ev.preventDefault(); A["ob-tog"](ev.target.dataset.arg); } });
-window.__back = () => { if (closeSheet()) return true; if (closeChat()) return true; const ob = $("#ob"); if (ob.classList.contains("on")) { if (OB.step === 1 || OB.step === 2) { OB.step--; renderOb(); return true; } return OB.step === 0 ? false : true; } if (U.tab !== "home") { show("home"); return true; } return false; };
+window.__back = () => { if (closeSheet()) return true; if (QS && QS.i > 0 && QS.i < QS.ids.length) { QS.i--; QS.done = Math.max(0, QS.done - 1); QS.pick = null; renderQuest(); return true; } if (closeQuest()) return true; if (closeChanged()) return true; if (closeChat()) return true; const ob = $("#ob"); if (ob.classList.contains("on")) { if (OB.step === 1 || OB.step === 2) { OB.step--; renderOb(); return true; } return OB.step === 0 ? false : true; } if (U.tab !== "home") { show("home"); return true; } return false; };
 
 /* ---------- boot ---------- */
 function smartMonth() {

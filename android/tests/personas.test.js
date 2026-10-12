@@ -63,7 +63,7 @@ const ds = n => { const d = new Date(Date.now() - n * D); return `${String(d.get
     const want = await p.evaluate(() => { const m = monthStart(new Date()); const t = [[1, 450], [2, 1299], [3, 640], [5, 649], [6, -799]].filter(([d]) => Date.now() - d * 864e5 - 3 * 36e5 >= m.getTime()).reduce((a, x) => a + x[1], 0); return t; });
     ok(Math.abs(exp - want) < 1, `this month total is exact (${exp} vs ${want})`);
     const home = await txt(p);
-    ok(/Spent this month/i.test(home) && !/budget/i.test(home), 'home: spend this month, no budget language');
+    ok(/Net spent/i.test(home) && /this month/i.test(home) && !/budget/i.test(home), 'home: spend this month, no budget language');
     ok(/HDFC Bank card ••4321 bill/.test(home), 'home: HDFC card bill due in 2 days with Paid / Ignore');
     await p.screenshot({ path: SHOTS + 'priya_home.png' });
     await p.evaluate(() => show('dues')); await p.waitForTimeout(300); const dues = await txt(p);
@@ -98,10 +98,10 @@ const ds = n => { const d = new Date(Date.now() - n * D); return `${String(d.get
     ok(await A.evaluate(() => !!document.querySelector('#code-in') && !!document.querySelector('[data-act=get-code]')), 'after turning on Together: "Get my code" + enter partner code');
     await A.evaluate(() => { S.mode = 'duo'; S.p.name = 'Meera'; S.exp.push({ id: 'm1', amt: 1200, title: 'Nykaa', cat: 'shop', paid: 'p', sm: 50, ts: Date.now() - 5e6, src: 'manual', u: Date.now() }); show('home'); }); await A.waitForTimeout(300);
     const h = await txt(A);
-    ok(/Spent together/i.test(h) && /Meera/.test(h) && /Arjun/.test(h), 'Together home shows both people side by side');
+    ok(/Together/i.test(h) && /Meera/.test(h) && /Arjun/.test(h), 'Together home shows both people side by side');
     await A.screenshot({ path: SHOTS + 'couple_home.png' });
-    await A.evaluate(() => show('month')); await A.waitForTimeout(300);
-    ok(await A.evaluate(() => document.querySelectorAll('.whoseg button').length === 3 && !!document.querySelector('.tn-m.sbs')), 'Activity: Both / Arjun / Meera filter + per-week split');
+    await A.evaluate(() => { U.av = 'payments'; show('month'); }); await A.waitForTimeout(300);
+    ok(await A.evaluate(() => !!document.querySelector('[data-act=who-pick]') && !!document.querySelector('.tn-m.sbs')), 'Activity: Both / Arjun / Meera filter + per-week split');
     await A.screenshot({ path: SHOTS + 'couple_activity.png' });
     ok(!A.errs.length && !B.errs.length, 'no JS errors ' + A.errs.concat(B.errs).join(';'));
     await A.context().close(); await B.context().close();
