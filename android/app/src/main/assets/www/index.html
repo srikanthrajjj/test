@@ -745,6 +745,45 @@ hr{border:0;border-top:1.5px dashed rgba(23,38,46,.22);margin:14px 0}
 .anet{display:block;width:100%;text-align:left;color:var(--ink)}.anet small{display:flex;justify-content:space-between;align-items:center}.anet em{font-style:normal;display:inline-flex;align-items:center;gap:2px;color:var(--accent);font-size:13.5px;font-weight:500}
 .wins{display:flex;gap:12px;width:100%;text-align:left;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,var(--card));margin-bottom:8px;color:var(--ink)}.wins>span{color:var(--accent);margin-top:2px}.wins small{display:block;font-size:12.5px;color:var(--accent);letter-spacing:.04em}.wins b{font-weight:500;font-size:15px;line-height:1.4}
 .qsug{font-size:11.5px;color:var(--accent);margin-top:-4px}
+
+/* =================== motion =================== */
+:root{--spring2:cubic-bezier(.34,1.56,.64,1);--out:cubic-bezier(.16,1,.3,1)}
+.page{animation:none}
+.page.in-r{animation:pgr .42s var(--out) both}.page.in-l{animation:pgl .42s var(--out) both}.page.in-u{animation:pgu .42s var(--out) both}
+@keyframes pgr{from{opacity:0;transform:translateX(28px)}}@keyframes pgl{from{opacity:0;transform:translateX(-28px)}}@keyframes pgu{from{opacity:0;transform:translateY(10px)}}
+.stg{animation:stg .55s var(--out) both;animation-delay:calc(var(--i) * 45ms + 40ms)}
+@keyframes stg{from{opacity:0;transform:translateY(14px)}}
+.rcpt.stg{animation:print .8s var(--out) both;animation-delay:60ms}
+@keyframes print{from{opacity:.3;clip-path:inset(0 0 100% 0);transform:translateY(-6px)}to{opacity:1;clip-path:inset(0 0 -20px 0);transform:none}}
+/* press feedback on everything tappable */
+.rcpt .rc-x,.qcard2,.hrow2,.acat,.amer button,.wm,.qopts button,.hadd2,.pill,.mtx,.qbtn,.qob,.aseg button,.hrec button,.li,.hdue,.anet,.sortb,.wchip,.hin2,.nav2,.ib3,.bk,.qskip,.qlink,.wall,.btn,.cacts button,.sugg button,#tabs2 .t{transition:transform .25s var(--spring2),background-color .2s,border-color .2s,opacity .2s,color .2s}
+.qcard2:active,.hrow2:active,.acat:active,.amer button:active,.wm:active,.hadd2:active,.anet:active,.hdue:active,.hin2:active{transform:scale(.975)}
+.qopts button:active,.pill:active,.mtx:active,.qbtn:active,.qob:active,.sortb:active,.wchip:active,.nav2:active,.ib3:active,.btn:active,.cacts button:active,.sugg button:active{transform:scale(.95)}
+.li:active{transform:scale(.985)}#tabs2 .t:active{transform:scale(.9)}
+/* tab bar: gliding indicator + icon bounce */
+#tabs2{position:fixed}#tabs2::before{content:"";position:absolute;top:0;left:calc(var(--ti,0) * 33.333% + 16.666% - 18px);width:36px;height:3px;border-radius:0 0 3px 3px;background:var(--accent);transition:left .45s var(--spring2),opacity .2s}
+#tabs2.noind::before{opacity:0}
+#tabs2 .t.on svg{animation:tbounce .45s var(--spring2)}@keyframes tbounce{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:none}}
+/* Story / Payments sliding thumb */
+.aseg{position:relative;isolation:isolate}.aseg button{position:relative;z-index:1;background:none!important;transition:color .3s}
+.aseg::before{content:"";position:absolute;z-index:0;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:9px;background:var(--accent);transition:transform .42s var(--spring2)}.aseg.p::before{transform:translateX(100%)}
+/* sheets, overlays, toast */
+#sheet{transition:transform .5s var(--out)!important}#chat,#quest,#wc{transition:transform .48s var(--out),visibility 0s .48s!important}#chat.on,#quest.on,#wc.on{transition:transform .48s var(--out),visibility 0s!important}
+#toast{transition:transform .45s var(--spring2),opacity .25s!important}
+/* Quick review */
+.rcpt.qr.enter{animation:qin .5s var(--out) both}@keyframes qin{from{opacity:0;transform:translateX(40px) rotate(2deg)}}
+.rcpt.qr.fly{animation:qfly .28s cubic-bezier(.5,0,.75,0) both}@keyframes qfly{to{opacity:0;transform:translateY(-60px) scale(.92) rotate(-3deg)}}
+.qopts button.on{animation:qpick .35s var(--spring2)}@keyframes qpick{40%{transform:scale(1.05)}}
+.qopts button.on em{animation:qpick .35s var(--spring2)}
+.qn2 i{transition:background-color .3s,border-color .3s,transform .3s var(--spring2)}.qn2 i.c{transform:scale(1.12)}
+.qend .qbig{position:relative}.qend .qbig::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 50%,transparent);animation:ring 1.4s var(--out) .2s both}@keyframes ring{to{box-shadow:0 0 0 26px transparent}}
+/* chat */
+.bub.u.new{animation:msgin .32s var(--out) both;transform-origin:right bottom}.arow.new{animation:msgin .4s var(--out) both;transform-origin:left bottom}
+@keyframes msgin{from{opacity:0;transform:translateY(12px) scale(.97)}}
+.acard,.ans{animation:none}.arow.new .ans,.arow.new .acard{animation:stg .5s var(--out) .12s both}
+/* What changed rows */
+#wc.on .wrow{animation:stg .5s var(--out) both}#wc.on .wrow:nth-child(2){animation-delay:.07s}#wc.on .wrow:nth-child(3){animation-delay:.14s}
+@media (prefers-reduced-motion:reduce){.stg,.page,.rcpt.qr.enter,.rcpt.qr.fly,.arow.new,.bub.u.new{animation:none!important}#tabs2::before,.aseg::before{transition:none!important}}
 </style>
 </head>
 <body>
@@ -1697,9 +1736,10 @@ function reviewHtml(r, mi) {
 function renderChat(scroll = true) {
   const el = $("#msgs"); if (!el) return;
   el.innerHTML = CH.msgs.map((m, i) => {
-    if (m.role === "user") return `<div class="bub u">${esc(m.content)}</div><div class="tsu">${tm(m.t)} <svg viewBox="0 0 24 24"><path d="M2 13l4 4 8-9M10 15l2 2 9-10"/></svg></div>`;
+    const fresh = m.t && Date.now() - m.t < 1200 ? " new" : "";
+    if (m.role === "user") return `<div class="bub u${fresh}">${esc(m.content)}</div><div class="tsu">${tm(m.t)} <svg viewBox="0 0 24 24"><path d="M2 13l4 4 8-9M10 15l2 2 9-10"/></svg></div>`;
     const body = m.card ? cardHtml(m.card, i) : `<div class="atxt">${md(m.content)}</div>`;
-    return `<div class="arow"><span class="aspk">${svgIc("spark", 22)}</span><div class="abody">${body}${m.review ? reviewHtml(m.review, i) : ""}${(m.actions || []).map((a, j) => actionCard(a, i, j)).join("")}${m.recat && m.recat.length ? recatHtml(m.recat, i) : ""}</div></div>`
+    return `<div class="arow${m.role === "assistant" && m.t && Date.now() - m.t < 1200 ? " new" : ""}"><span class="aspk">${svgIc("spark", 22)}</span><div class="abody">${body}${m.review ? reviewHtml(m.review, i) : ""}${(m.actions || []).map((a, j) => actionCard(a, i, j)).join("")}${m.recat && m.recat.length ? recatHtml(m.recat, i) : ""}</div></div>`
       + (i === CH.msgs.length - 1 && (m.chips || (m.sugg && CH.msgs.length === 1)) ? `<div class="sugg">${(m.chips || SUGG()).map(q => `<button data-act="ask" data-arg="${esc(q)}">${esc(q)}</button>`).join("")}</div>` : "");
   }).join("") + (CH.busy ? `<div class="arow"><span class="aspk">${svgIc("spark", 22)}</span><div class="typing"><i></i><i></i><i></i></div></div>` : "");
   if (scroll) el.scrollTop = el.scrollHeight;
@@ -2152,7 +2192,7 @@ function renderMonth() {
   const whoL = who === "all" ? "Both" : first(person(who).name);
   return `<div class="ah"><h1>Activity</h1><button class="ib3" data-act="search" aria-label="Search">${svgIc("search", 24)}</button></div>
   <div class="apills"><button class="pill" data-act="monthpick">${m.toLocaleDateString("en-GB", { month: "long" })}${m.getFullYear() !== new Date().getFullYear() ? " " + m.getFullYear() : ""}${svgIc("chev", 16)}</button>${solo() ? "" : `<button class="pill" data-act="who-pick">${esc(whoL)}${svgIc("chev", 16)}</button>`}</div>
-  <div class="aseg" role="tablist"><button role="tab" aria-selected="${av === "story"}" class="${av === "story" ? "on" : ""}" data-act="av" data-arg="story">Story</button><button role="tab" aria-selected="${av !== "story"}" class="${av !== "story" ? "on" : ""}" data-act="av" data-arg="payments">Payments</button></div>
+  <div class="aseg ${(U.avPrev || av) === "story" ? "" : "p"}" data-to="${av}" role="tablist"><button role="tab" aria-selected="${av === "story"}" class="${av === "story" ? "on" : ""}" data-act="av" data-arg="story">Story</button><button role="tab" aria-selected="${av !== "story"}" class="${av !== "story" ? "on" : ""}" data-act="av" data-arg="payments">Payments</button></div>
   ${av === "story" ? monthStory(m, who) : monthPayments()}`;
 }
 function monthStory(m, who) {
@@ -2187,7 +2227,7 @@ function questOpts(e) {
   return [...L, "xfer"];
 }
 function renderQuest() {
-  const el = $("#quest"); if (!el || !QS) return; const n = QS.ids.length;
+  const el = $("#quest"); if (!el || !QS) return; const n = QS.ids.length; setTimeout(() => { if (QS) QS.anim = 0; }, 0);
   const head = `<header class="qhd wl"><button class="x" data-act="q-back" aria-label="Back">${svgIc("back", 24)}</button><div><h2>Quick review</h2></div><button class="x" data-act="q-close" aria-label="Close">${svgIc("close", 24)}</button></header>`;
   if (QS.i >= n) {
     return void (el.innerHTML = `${head}<div class="qbody qend"><div class="qbig">${svgIc("check", 46)}</div><h3>Quest complete</h3><p>${QS.cleared} payment${QS.cleared === 1 ? "" : "s"} now ${QS.cleared === 1 ? "has" : "have"} a category${QS.extra ? `, plus ${QS.extra} more from the same merchants` : ""}.</p>${stepsHtml(n, -1, n)}<button class="qbtn" data-act="q-close">Done</button>${mysteries().length ? `<button class="qlink" data-act="quest">Solve ${Math.min(5, mysteries().length)} more</button>` : ""}</div>`);
@@ -2198,7 +2238,7 @@ function renderQuest() {
   if (e.aiCat && !opts.includes(e.aiCat) && CAT[e.aiCat]) opts = [e.aiCat, ...opts.slice(0, 3)];
   el.innerHTML = `${head}<div class="qbody">
     <div class="qn2"><span>${QS.i + 1} of ${n}</span>${Array.from({ length: n }, (_, i) => `<i class="${i < QS.done ? "d" : ""} ${i === QS.i ? "c" : ""}"></i>`).join("")}</div>
-    <div class="rcpt qr"><div class="rc-l">UNCLEAR PAYMENT</div><div class="rc-t">${money(e.amt, { round: e.amt >= 100 })}</div><div class="rc-s">${new Date(e.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · ${esc(first(person(e.paid).name))}</div><hr>
+    <div class="rcpt qr ${QS.anim ? "enter" : ""}"><div class="rc-l">UNCLEAR PAYMENT</div><div class="rc-t">${money(e.amt, { round: e.amt >= 100 })}</div><div class="rc-s">${new Date(e.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · ${esc(first(person(e.paid).name))}</div><hr>
       <div class="qm">${esc(e.title)}</div>${e.raw ? `<button class="rc-x" data-act="q-raw">${QS.raw ? "Hide original SMS" : "View original SMS"} ${svgIc("arrowr", 16)}</button>${QS.raw ? `<div class="qraw">${esc(e.raw)}</div>` : ""}` : ""}</div>
     <h3 class="qq2">What was this payment for?</h3>
     <div class="qopts">${opts.map(c => `<button class="${QS.pick === c ? "on" : ""}" data-act="q-pick" data-arg="${c}" aria-pressed="${QS.pick === c}"><i>${svgIc(catIc(c), 24)}</i><span>${esc(CAT_SHORT[c] || CAT[c].n)}</span>${e.aiCat === c ? `<small class="qsug">✦ Suggested</small>` : ""}${QS.pick === c ? `<em>${svgIc("check", 14)}</em>` : ""}</button>`).join("")}</div>
@@ -2213,6 +2253,7 @@ function questConfirm() {
   const e = QS && S.exp.find(x => x.id === QS.ids[QS.i]); if (!e || !QS.pick) return;
   if (QS.pick === "xfer" && e.cat !== "xfer") e.prevCat = e.cat; e.cat = QS.pick; e.ok = 1; touch(e);
   QS.extra += learnName(e, false, true) || 0; QS.cleared++; QS.done++; QS.i++; QS.pick = null; QS.raw = false; QS.more = false; save(); hap(1);
+  const card = $("#quest .rcpt.qr"); if (card && !matchMedia("(prefers-reduced-motion: reduce)").matches) { card.classList.add("fly"); QS.anim = 1; setTimeout(() => { if (QS && QS.i >= QS.ids.length) { S.quest = { d: dkey(Date.now()), n: ((S.quest && S.quest.d === dkey(Date.now())) ? S.quest.n : 0) + QS.cleared }; persist(); hap(2); } renderQuest(); }, 260); return; }
   if (QS.i >= QS.ids.length) { S.quest = { d: dkey(Date.now()), n: ((S.quest && S.quest.d === dkey(Date.now())) ? S.quest.n : 0) + QS.cleared }; persist(); hap(2); }
   renderQuest();
 }
@@ -2321,11 +2362,15 @@ function recurringList() {
   return out.sort((a, b) => a.next - b.next);
 }
 const RENDER = { home: renderHome, month: renderMonth, dues: renderDues, you: renderYou };
+const TAB_ORDER = { home: 0, dues: 0.5, month: 1, you: 2 };
 function show(tab, keepScroll) {
-  if (tab === "you" && U.tab !== "you") U.prevTab = U.tab; U.tab = tab; const main = $("#main"), prev = $(".page", main), sc = prev && keepScroll ? prev.scrollTop : 0;
+  const from = U.tab; if (tab === "you" && U.tab !== "you") U.prevTab = U.tab; U.tab = tab; const main = $("#main"), prev = $(".page", main), sc = prev && keepScroll ? prev.scrollTop : 0;
   main.innerHTML = `<div class="page" id="page-${tab}">${RENDER[tab]()}</div>`;
-  const pg = $(".page", main); pg.scrollTop = sc; if (keepScroll) pg.style.animation = "none";
+  const pg = $(".page", main); pg.scrollTop = sc;
+  if (keepScroll) pg.style.animation = "none";
+  else { pg.classList.add(from && from !== tab ? ((TAB_ORDER[tab] || 0) >= (TAB_ORDER[from] || 0) ? "in-r" : "in-l") : "in-u"); [...pg.children].slice(0, 14).forEach((c, i) => { if (c.tagName === "INPUT") return; c.style.setProperty("--i", i); c.classList.add("stg"); }); }
   $$("#tabs2 .t").forEach(b => b.classList.toggle("on", b.dataset.arg === tab)); document.body.dataset.tab = tab;
+  const ti = tab === "month" ? 1 : tab === "home" || tab === "dues" ? 0 : -1, tb = $("#tabs2"); if (tb) { tb.style.setProperty("--ti", Math.max(0, ti)); tb.classList.toggle("noind", ti < 0); }
   requestAnimationFrame(() => animateIn(pg, keepScroll));
   if (tab === "month") bindSwipe(pg);
   if (tab === "home" || tab === "month" || tab === "dues") bindPull(pg);
@@ -2356,6 +2401,7 @@ function bindSwipe(pg) {
 }
 function animateIn(root, keepScroll) {
   requestAnimationFrame(() => {
+    $$(".aseg[data-to]", root).forEach(a => { a.classList.toggle("p", a.dataset.to !== "story"); }); U.avPrev = U.av || "story";
     const big = $("#bigbal", root); if (big && !keepScroll && +big.dataset.v) countUp(big, +big.dataset.v, 1000);
     $$("[data-count]", root).forEach(el => { if (!keepScroll) countUp(el, +el.dataset.count, 900); });
     $$(".seg-c", root).forEach(c => c.setAttribute("stroke-dasharray", `${c.dataset.len} ${c.dataset.c}`));
@@ -2767,7 +2813,7 @@ const A = {
   who: a => { U.who = a; hap(0); refresh(); },
   "who-pick": () => { const o = [["all", "Both"], ["me", first(S.me.name)], ["p", first(S.p.name)]], cur = U.who || "all"; openSheet("Show spending by", `<div class="list set">${o.map(([k, t]) => `<button class="li" data-act="who-set" data-arg="${k}"><div class="mid"><div class="t1">${esc(t)}</div></div>${k === cur ? `<span style="color:var(--accent);font-size:20px">✓</span>` : ""}</button>`).join("")}</div>`); },
   "who-set": a => { U.who = a; closeSheet(); hap(0); setTimeout(() => show(U.tab, true), 150); },
-  av: a => { U.av = a; hap(0); if (a === "story") U.cat = "all"; show("month"); },
+  av: a => { U.avPrev = U.av || "story"; U.av = a; hap(0); if (a === "story") U.cat = "all"; show("month"); },
   explore: () => { U.av = "story"; hap(1); show("month"); },
   "story-cat": a => { U.cat = a; U.av = "payments"; U.sort = "new"; hap(1); show("month"); },
   "more-cats": () => { U.moreCats = true; show("month", true); },
@@ -2779,7 +2825,7 @@ const A = {
   "q-back": () => { if (QS && QS.i > 0 && QS.i < QS.ids.length) { QS.i--; QS.done = Math.max(0, QS.done - 1); QS.pick = null; renderQuest(); } else closeQuest(); },
   "q-pick": a => { if (!QS) return; QS.pick = a; hap(0); renderQuest(); },
   "q-next": () => questConfirm(),
-  "q-skip": () => { if (!QS) return; QS.i++; QS.pick = null; QS.raw = false; QS.more = false; hap(0); renderQuest(); },
+  "q-skip": () => { if (!QS) return; QS.anim = 1; QS.i++; QS.pick = null; QS.raw = false; QS.more = false; hap(0); renderQuest(); },
   "q-raw": () => { if (!QS) return; QS.raw = !QS.raw; renderQuest(); },
   "q-more": () => { if (!QS) return; QS.more = true; renderQuest(); },
   "lock-toggle": () => { if (S.lock) { S.lock = false; persist(); refresh(); toast("App lock off"); return; } lockPending = true; try { N.authenticate(); } catch (e) { } },
