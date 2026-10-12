@@ -744,6 +744,7 @@ hr{border:0;border-top:1.5px dashed rgba(23,38,46,.22);margin:14px 0}
 .rc-p{display:flex;justify-content:center;gap:18px;margin-top:10px;font-size:14.5px;color:var(--creamSub)}.rc-p span{display:flex;align-items:center;gap:6px}.rc-p i{width:9px;height:9px;border-radius:50%}.rc-p b{color:var(--creamInk);font-weight:600}
 .anet{display:block;width:100%;text-align:left;color:var(--ink)}.anet small{display:flex;justify-content:space-between;align-items:center}.anet em{font-style:normal;display:inline-flex;align-items:center;gap:2px;color:var(--accent);font-size:13.5px;font-weight:500}
 .wins{display:flex;gap:12px;width:100%;text-align:left;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,var(--card));margin-bottom:8px;color:var(--ink)}.wins>span{color:var(--accent);margin-top:2px}.wins small{display:block;font-size:12.5px;color:var(--accent);letter-spacing:.04em}.wins b{font-weight:500;font-size:15px;line-height:1.4}
+.qsug{font-size:11.5px;color:var(--accent);margin-top:-4px}
 </style>
 </head>
 <body>
@@ -952,7 +953,7 @@ window.__unlock = ok => {
   if (ok) { const d = $("#lock"); d && d.remove(); }
 };
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") hiddenAt = Date.now(); else if (S.lock && hiddenAt && Date.now() - hiddenAt > 30000) showLock(); });
-window.__resume = () => { if (Date.now() - lastResume < 800) return; lastResume = Date.now(); syncNow(); autoImport(); importNotifs(); checkClipInvite(); setTimeout(() => { smartNames(); dailyInsight(); scheduleReminders(); }, 4000); };
+window.__resume = () => { if (Date.now() - lastResume < 800) return; lastResume = Date.now(); syncNow(); autoImport(); importNotifs(); checkClipInvite(); setTimeout(() => { smartNames(); smartSort(); dailyInsight(); scheduleReminders(); }, 4000); };
 setInterval(() => { if (document.visibilityState === "visible") { if (syncOn()) syncNow(); autoImport(); importNotifs(); } }, 15000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") window.__resume(); });
 addEventListener("focus", () => window.__resume());
@@ -1148,7 +1149,7 @@ const spentBy = (list, k) => list.filter(e => e.paid === k).reduce((a, e) => a +
 let GRP = {};
 function solo() { return S.mode === "solo" && !syncOn(); }
 const multiPeople = () => !solo() && ((S.exp.some(e => e.paid === "p") && S.exp.some(e => e.paid === "me")) || syncOn());
-const shortDate = ts => new Date(ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+const shortDate = ts => { const d = new Date(ts); return d.getDate() + " " + ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()]; };
 function largeOf(m) {
   const mo = S.exp.filter(e => inMonth(e.ts, m) && counted(e)), tot = mo.reduce((a, e) => a + e.amt, 0), lim = Math.max(20000, 6 * median(mo.map(e => e.amt)));
   const big = mo.filter(e => e.amt >= lim && !e.ok); return { big, share: tot ? big.reduce((a, e) => a + e.amt, 0) / tot : 0, tot };
@@ -1481,7 +1482,7 @@ function renderYou() {
   <div class="sec"><h2>Privacy & reminders</h2></div>
   <div class="list set">
     ${N && N.lockAvailable && N.lockAvailable() ? `<button class="li" data-act="lock-toggle"><span class="ib" style="background:#5B5BD622">🔒</span><div class="mid"><div class="t1">App lock</div><div class="t2">Fingerprint, face or screen lock</div></div><span class="tgl ${S.lock ? "on" : ""}"><i></i></span></button>` : ""}
-    <button class="li" data-act="smart-toggle"><span class="ib" style="background:#8B7CFF22">✦</span><div class="mid"><div class="t1">Smart names &amp; insights</div><div class="t2">AI sees totals, places &amp; recent payments — never your SMS or balances</div></div><span class="tgl ${S.smartOff ? "" : "on"}"><i></i></span></button>
+    <button class="li" data-act="smart-toggle"><span class="ib" style="background:#8B7CFF22">✦</span><div class="mid"><div class="t1">Smart AI (Gemini)</div><div class="t2">Reads your payments to answer questions, and the bank text of unclear ones (account numbers hidden) to sort them. Never balances.</div></div><span class="tgl ${S.smartOff ? "" : "on"}"><i></i></span></button>${!S.smartOff && aiOk() ? `<button class="li" data-act="smart-sort"><span class="ib" style="background:#6FE3CF22">✦</span><div class="mid"><div class="t1">Sort my payments with AI</div><div class="t2">Names and categorises payments Nest couldn't read</div></div></button>` : ""}
     ${N && N.setWeekly ? `<button class="li" data-act="weekly-toggle"><span class="ib" style="background:#F5A52422">🗓</span><div class="mid"><div class="t1">Sunday summary</div><div class="t2">Your week in 10 seconds, Sundays at 9 pm</div></div><span class="tgl ${S.weeklyOff ? "" : "on"}"><i></i></span></button>` : ""}
   </div>
   <div class="sec"><h2>Preferences</h2></div>
@@ -1650,17 +1651,20 @@ function aiContext() {
     weekly_totals: weeks, top_places_90d: Object.entries(places).sort((a, b) => b[1].t - a[1].t).slice(0, 15).map(([k, v]) => ({ place: k, times: v.n, total: f(v.t) })),
     recurring_90d: Object.entries(places).filter(([k, v]) => v.n >= 3).sort((a, b) => b[1].n - a[1].n).slice(0, 10).map(([k, v]) => ({ place: k, times: v.n, avg: f(v.t / v.n) })),
     upcoming_dues: allDues().filter(d => !d.paid && !d.ignored && d.days <= 30).slice(0, 10).map(d => ({ title: d.title, amount: d.amt, due: dkey(d.due) })),
-    recent: [...S.exp].sort((a, b) => b.ts - a.ts).slice(0, 60).map(e => ({ d: dkey(e.ts), place: e.title, amt: Math.round(e.amt * 100) / 100, cat: CAT[e.cat].n, who: who(e) }))
+    months: Array.from({ length: 6 }, (_, i) => { const d = addMonths(m, -i), l = inM(d); return { month: monthLabel(d), total: f(l.reduce((a, e) => a + e.amt, 0)), by_category: by(l, e => e.cat).slice(0, 8) }; }),
+    unclear_payments: S.exp.filter(e => counted(e) && e.cat === "other" && !e.ok).length,
+    ledger: [...S.exp].filter(e => Date.now() - e.ts < 200 * DAY).sort((a, b) => b.ts - a.ts).slice(0, 600).map(e => [e.id, dkey(e.ts), Math.round(e.amt * 100) / 100, e.title.replace(/\|/g, "/"), e.cat, solo() ? "" : (e.paid === "me" ? first(S.me.name) : first(S.p.name)), e.src].join("|"))
   };
 }
 let CH = { msgs: [], busy: false };
 const md = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 const SUGG = () => solo() ? ["Where did I spend most this month?", "How does this month compare to last?", "What's due this week?", `Log ${CUR[S.cur].sym}500 groceries`] : ["Where did we spend most this month?", `What did ${first(S.p.name)} spend this week?`, "Which places do we visit most?", `Log ${CUR[S.cur].sym}500 groceries I paid`];
 function openChat() {
+  closeChanged(); if (!S.smartOff && N) aiCheck();
   const c = $("#chat"); c.setAttribute("aria-hidden", "false");
   if (!CH.msgs.length && S.chatLog && S.chatLog.length) CH.msgs = S.chatLog.slice();
   c.innerHTML = `<header><button class="x" data-act="chat-close" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><span class="spk">${svgIc("spark", 26)}</span><div style="flex:1"><b>Nest</b><small>Your money assistant</small></div><button class="x hist" data-act="chat-hist" aria-label="Conversation history"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg></button></header>
-  <div class="cstat"><i class="${aiOk() ? "on" : ""}"></i>${S.exp.some(e => e.src === "sample") ? "Sample data" : "Your data"} · ${aiOk() ? "Smart insights on" : "On-device"}</div>
+  <div class="cstat"><i class="${aiOk() ? "on" : ""}"></i>${S.exp.some(e => e.src === "sample") ? "Sample data" : "Your data"} · ${aiOk() ? "Gemini AI on" : "On-device"}</div>
   <div id="msgs" aria-live="polite"></div>
   <form class="composer" id="cform"><button type="button" class="cadd" data-act="add" aria-label="Add an expense"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M12 12v6M9 15h6"/></svg></button><div class="cin"><input id="chat-in" placeholder="Ask or add an expense…" autocomplete="off" aria-label="Message">${N && N.voice ? `<button type="button" class="mic" data-act="chat-voice" aria-label="Speak"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>` : ""}</div><button type="submit" class="send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button></form>`;
   requestAnimationFrame(() => c.classList.add("on")); hap(0);
@@ -1695,7 +1699,7 @@ function renderChat(scroll = true) {
   el.innerHTML = CH.msgs.map((m, i) => {
     if (m.role === "user") return `<div class="bub u">${esc(m.content)}</div><div class="tsu">${tm(m.t)} <svg viewBox="0 0 24 24"><path d="M2 13l4 4 8-9M10 15l2 2 9-10"/></svg></div>`;
     const body = m.card ? cardHtml(m.card, i) : `<div class="atxt">${md(m.content)}</div>`;
-    return `<div class="arow"><span class="aspk">${svgIc("spark", 22)}</span><div class="abody">${body}${m.review ? reviewHtml(m.review, i) : ""}${(m.actions || []).map((a, j) => actionCard(a, i, j)).join("")}</div></div>`
+    return `<div class="arow"><span class="aspk">${svgIc("spark", 22)}</span><div class="abody">${body}${m.review ? reviewHtml(m.review, i) : ""}${(m.actions || []).map((a, j) => actionCard(a, i, j)).join("")}${m.recat && m.recat.length ? recatHtml(m.recat, i) : ""}</div></div>`
       + (i === CH.msgs.length - 1 && (m.chips || (m.sugg && CH.msgs.length === 1)) ? `<div class="sugg">${(m.chips || SUGG()).map(q => `<button data-act="ask" data-arg="${esc(q)}">${esc(q)}</button>`).join("")}</div>` : "");
   }).join("") + (CH.busy ? `<div class="arow"><span class="aspk">${svgIc("spark", 22)}</span><div class="typing"><i></i><i></i><i></i></div></div>` : "");
   if (scroll) el.scrollTop = el.scrollHeight;
@@ -1785,17 +1789,66 @@ async function sendChat(text) {
   if (CH.busy) return; CH.msgs.push({ role: "user", content: text, t: Date.now() }); hap(1);
   CH.busy = true; renderChat();
   try {
-    const loc = OPEN_Q.test(text) && !/^(help|what can you do)\b/i.test(text.trim()) ? null : answer(text);
+    const isLog = /^(?:add|log|spent|paid)?\s*(?:rs\.?|₹)?\s*[\d,]+(?:\.\d+)?\s*(?:rs|₹)?\s+\D|^(?:add|log|spent|paid)?\s*[a-z][\w ]*?\s+(?:rs\.?|₹)?\s*[\d,]+(?:\.\d+)?\s*(?:cash)?$/i.test(text.trim()) && !/\b(where|how|what|why|which|compare|show|anything|over|above|below|under|more than|less than)\b/i.test(text);
+    const loc = aiOk() && !isLog ? null : OPEN_Q.test(text) && !/^(help|what can you do)\b/i.test(text.trim()) ? null : answer(text);
     if (loc) { await new Promise(r => setTimeout(r, 350)); CH.msgs.push(Object.assign({ role: "assistant", content: loc.content || (loc.card ? loc.card.head : ""), local: true, t: Date.now() }, loc)); hap(1); return; }
     if (!aiOk() && !S.smartOff && (!S.aiAt || Date.now() - S.aiAt > 10 * 60e3)) await aiCheck(true);
     if (!aiOk()) { CH.msgs.push({ role: "assistant", content: S.smartOff ? "That needs Smart insights, which you've turned off in Settings. Here's what I can answer on your phone:" : "I can't answer open questions right now — Smart insights aren't connected yet. Here's what I can answer on your phone:", local: true, t: Date.now(), chips: SUGG() }); hap(1); return; }
     if (syncOn()) { await syncNow(); while (syncing) await new Promise(r => setTimeout(r, 150)); }
-    const history = CH.msgs.filter(m => !m.local || m.role === "user").slice(-12).map(m => ({ role: m.role, content: m.content }));
-    const r = await aiApi("/v1/ai/chat", { messages: history, ctx: aiContext() }, 60000);
-    CH.msgs.push({ role: "assistant", content: r.reply, t: Date.now(), actions: (r.actions || []).map(a => Object.assign({}, a)) }); hap(1);
+    const history = CH.msgs.filter(m => !m.sugg && (m.content || m.card)).slice(-16).map(m => ({ role: m.role, content: m.content || (m.card ? m.card.head + " " + (m.card.sub || "") : "") }));
+    let r; try { r = await aiApi("/v1/ai/chat", { messages: history, ctx: aiContext() }, 60000); } catch (e) { const fb = answer(text); if (fb) { CH.msgs.push(Object.assign({ role: "assistant", content: fb.content || (fb.card ? fb.card.head : ""), local: true, t: Date.now() }, fb)); return; } throw e; }
+    const msg = { role: "assistant", content: r.reply, t: Date.now(), ai: 1, actions: (r.actions || []).map(a => Object.assign({}, a)) };
+    if (r.show) { const c = cardFromShow(r.show); if (c) msg.card = Object.assign(c, { head: r.reply }); }
+    if (r.recat && r.recat.length) msg.recat = r.recat.filter(x => S.exp.some(e => e.id === x.id && e.cat !== x.cat));
+    CH.msgs.push(msg); hap(1);
   } catch (e) {
     CH.msgs.push({ role: "assistant", content: e.status === 429 ? "We've hit today's AI limit — I'll be back tomorrow. Quick questions still work on-device." : "I couldn't reach the AI just now — try a simpler question, I can answer those on-device.", local: true, t: Date.now() });
   } finally { CH.busy = false; renderChat(); }
+}
+function showFilter(sh) {
+  const a = sh.from ? new Date(sh.from + "T00:00:00").getTime() : 0, b = sh.to ? new Date(sh.to + "T23:59:59").getTime() : Date.now() + DAY, q = (sh.merchant || "").toLowerCase().trim();
+  const catOk = e => sh.category ? e.cat === sh.category : (e.cat !== "xfer" || !!sh.min); // transfers only show when asked for, or in "anything over ₹X"
+  return e => e.ts >= a && e.ts <= b && catOk(e) && (!q || (e.title + " " + (e.note || "") + " " + (e.raw || "")).toLowerCase().includes(q) || canonMerchant(e.title).toLowerCase().includes(q))
+    && (!sh.person || e.paid === (sh.person === "partner" ? "p" : "me")) && (!sh.min || e.amt >= sh.min) && (!sh.max || e.amt <= sh.max);
+}
+function cardFromShow(sh) {
+  const L = S.exp.filter(showFilter(sh)).sort(sh.sort === "high" ? (x, y) => y.amt - x.amt : (x, y) => y.ts - x.ts); if (!L.length) return null;
+  const tot = L.filter(counted).reduce((x, e) => x + e.amt, 0), per = sh.from || sh.to ? `${sh.from ? shortDate(new Date(sh.from + "T12:00").getTime()) : "Start"} – ${sh.to ? shortDate(new Date(sh.to + "T12:00").getTime()) : "today"}` : "All time";
+  const g = groupBy(L, e => canonMerchant(e.title)), useRows = L.length <= 4 || sh.min || sh.sort === "high";
+  return { period: per, sub: `${money(tot, { round: true })} across ${L.length} payment${L.length > 1 ? "s" : ""}${L.some(e => !counted(e)) ? " · transfers not counted" : ""}`, bars: useRows ? L.slice(0, 5).map(e => [`${e.title} · ${shortDate(e.ts)}`, e.amt]) : g.slice(0, 4).map(x => [x[0], x[1].t]), foot: "Exact totals from your payments", acts: [["View transactions", "chat-list", JSON.stringify({ show: sh }), "list"]] };
+}
+function recatHtml(r, mi) {
+  const L = r.filter(x => S.exp.some(e => e.id === x.id)); if (!L.length) return "";
+  const done = L.every(x => (S.exp.find(e => e.id === x.id) || {}).cat === x.cat);
+  return `<div class="acard ${done ? "done" : ""}">${L.slice(0, 6).map(x => { const e = S.exp.find(y => y.id === x.id); return `<div class="t" style="margin-bottom:6px">${ico(x.cat, e.title)}<div><b>${esc(e.title)} · ${money(e.amt)}</b><span class="s">${esc(CAT[e.cat].n)} → ${esc(CAT[x.cat].n)} · ${shortDate(e.ts)}</span></div></div>`; }).join("")}${L.length > 6 ? `<div class="s" style="margin:4px 0">+${L.length - 6} more</div>` : ""}
+    ${done ? `<div class="pos" style="font-weight:600;margin-top:8px">Updated</div>` : `<div class="r" style="margin-top:10px"><button class="btn soft" data-act="recat-no" data-arg="${mi}">Dismiss</button><button class="btn prime" data-act="recat-yes" data-arg="${mi}">Apply ${L.length > 1 ? "all " + L.length : ""}</button></div>`}</div>`;
+}
+/* ✦ smart sort: Gemini reads the bank / app text of unclear payments (numbers masked) and names + categorises them */
+const maskText = t => { const keep = []; return String(t || "")
+  .replace(/(?:avl|avail(?:able)?|total|new)?\.?\s*(?:bal(?:ance)?|avlbl amt)\.?\s*(?:is|:|-)?\s*(?:rs\.?|inr|₹)?\s*:?\s*[\d,]+(?:\.\d+)?\s*(?:cr|dr)?/gi, "")
+  .replace(/(?:rs\.?|inr|₹)\s*:?\s*[\d,]+(?:\.\d{1,2})?/gi, m => (keep.push(m), "\u0000" + (keep.length - 1) + "\u0000"))
+  .replace(/\d{4,}/g, "XXXX").replace(/[\w.+-]+@(?:gmail|yahoo|outlook|hotmail)\.\w+/gi, "[email]")
+  .replace(/\u0000(\d+)\u0000/g, (_, i) => keep[+i]).replace(/\s{2,}/g, " ").trim().slice(0, 300); };
+let sortBusy = false;
+async function smartSort(manual) {
+  if (sortBusy || !aiOk() || S.smartOff) return 0; sortBusy = true; let n = 0; const undo = [];
+  try {
+    for (let round = 0; round < 4; round++) {
+      const todo = S.exp.filter(e => !e.aiS && !e.ok && e.raw && (e.src === "sms" || e.src === "app") && Date.now() - e.ts < 200 * DAY && (e.cat === "other" || GENERIC_NM.test(e.title) || GENERIC_T.test(e.title))).sort((a, b) => b.ts - a.ts).slice(0, 40);
+      if (!todo.length) break;
+      const r = await aiApi("/v1/ai/sort", { items: todo.map(e => ({ id: e.id, amt: e.amt, title: e.title, text: maskText(e.raw) })) }, 60000);
+      todo.forEach(e => { e.aiS = 1; });
+      (r.items || []).forEach(x => { const e = S.exp.find(y => y.id === x.id); if (!e || e.ok) return;
+        if (!x.sure) { if (x.cat !== "other") e.aiCat = x.cat; return; }
+        const before = { id: e.id, title: e.title, cat: e.cat }, rename = x.name && (GENERIC_NM.test(e.title) || GENERIC_T.test(e.title)) && x.name.length > 1, recat = x.cat !== e.cat && x.cat !== "other";
+        if (!rename && !recat) return; undo.push(before);
+        if (rename) e.title = x.name; if (recat) { if (x.cat === "xfer") e.prevCat = e.cat; e.cat = x.cat; }
+        touch(e); n++; n += learnName(e, rename, recat) || 0; });
+    }
+  } catch (e) { if (manual) toast("Couldn't reach AI just now"); } finally { sortBusy = false; }
+  if (n) { save(); refresh(); toast(`✦ Sorted ${n} payment${n > 1 ? "s" : ""} from your texts`, () => { undo.forEach(b => { const e = S.exp.find(x => x.id === b.id); if (e) { e.title = b.title; e.cat = b.cat; touch(e); } }); save(); refresh(); toast("Undone"); }); }
+  else { persist(); if (manual) toast("Everything is already sorted"); }
+  return n;
 }
 const GENERIC_NM = /^(upi payment|card payment|local store \(qr\)|upi to a person|refund|atm withdrawal)$/i;
 let namesBusy = false;
@@ -1803,12 +1856,12 @@ async function smartNames() {
   if (namesBusy || !aiOk() || S.smartOff) return; namesBusy = true;
   try {
     S.askedMk = S.askedMk || {}; const todo = {};
-    S.exp.forEach(e => { if ((e.src !== "sms" && e.src !== "app") || e.cat === "xfer") return; const k = mkOf(e); if (!k || k.length < 3 || S.askedMk[k] || (S.names && S.names[k]) || /^\d+$/.test(k)) return; if (!(e.cat === "other" || GENERIC_NM.test(e.title) || !brandOf(e.title))) return; if (/^\+?\d{10}/.test(k)) return; todo[k] = e.title; });
+    S.exp.forEach(e => { if ((e.src !== "sms" && e.src !== "app") || e.cat === "xfer" || e.aiS || e.ok) return; const k = mkOf(e); if (!k || k.length < 3 || S.askedMk[k] || (S.names && S.names[k]) || /^\d+$/.test(k)) return; if (!(e.cat === "other" || GENERIC_NM.test(e.title) || !brandOf(e.title))) return; if (/^\+?\d{10}/.test(k)) return; todo[k] = e.title; });
     const items = Object.entries(todo).slice(0, 30).map(([k, t]) => ({ k, t })); if (!items.length) return;
     const r = await aiApi("/v1/ai/names", { items }); let n = 0; S.names = S.names || {};
     items.forEach(i => S.askedMk[i.k] = 1);
     (r.names || []).forEach(x => { if (!x.sure || x.name === "Person" || !todo[x.k]) return; S.names[x.k] = { t: x.name, c: CAT[x.cat] ? x.cat : undefined, ai: 1 };
-      S.exp.forEach(e => { if (mkOf(e) !== x.k) return; let ch = false; if (e.title !== x.name) { e.title = x.name; ch = true; } if (x.cat && CAT[x.cat] && e.cat === "other") { e.cat = x.cat; ch = true; } if (ch) { touch(e); n++; } }); });
+      S.exp.forEach(e => { if (mkOf(e) !== x.k || e.aiS || e.ok) return; let ch = false; if (e.title !== x.name) { e.title = x.name; ch = true; } if (x.cat && CAT[x.cat] && e.cat === "other") { e.cat = x.cat; ch = true; } if (ch) { touch(e); n++; } }); });
     if (n) { save(); refresh(); toast(`✦ Smart names: tidied ${n} payment${n > 1 ? "s" : ""}`); } else persist();
   } catch (e) { } finally { namesBusy = false; }
 }
@@ -2140,13 +2193,15 @@ function renderQuest() {
     return void (el.innerHTML = `${head}<div class="qbody qend"><div class="qbig">${svgIc("check", 46)}</div><h3>Quest complete</h3><p>${QS.cleared} payment${QS.cleared === 1 ? "" : "s"} now ${QS.cleared === 1 ? "has" : "have"} a category${QS.extra ? `, plus ${QS.extra} more from the same merchants` : ""}.</p>${stepsHtml(n, -1, n)}<button class="qbtn" data-act="q-close">Done</button>${mysteries().length ? `<button class="qlink" data-act="quest">Solve ${Math.min(5, mysteries().length)} more</button>` : ""}</div>`);
   }
   const e = S.exp.find(x => x.id === QS.ids[QS.i]); if (!e || e.ok || e.cat !== "other") { QS.i++; QS.done++; return renderQuest(); } // already sorted (e.g. same merchant as an earlier answer)
-  const opts = QS.more ? CATS.map(c => c.id).filter(c => !["cash", "iou", "refund", "other"].includes(c)) : questOpts(e);
+  if (QS.pick == null && QS.sugFor !== e.id) { QS.sugFor = e.id; if (e.aiCat && e.aiCat !== "other") QS.pick = e.aiCat; }
+  let opts = QS.more ? CATS.map(c => c.id).filter(c => !["cash", "iou", "refund", "other"].includes(c)) : questOpts(e);
+  if (e.aiCat && !opts.includes(e.aiCat) && CAT[e.aiCat]) opts = [e.aiCat, ...opts.slice(0, 3)];
   el.innerHTML = `${head}<div class="qbody">
     <div class="qn2"><span>${QS.i + 1} of ${n}</span>${Array.from({ length: n }, (_, i) => `<i class="${i < QS.done ? "d" : ""} ${i === QS.i ? "c" : ""}"></i>`).join("")}</div>
     <div class="rcpt qr"><div class="rc-l">UNCLEAR PAYMENT</div><div class="rc-t">${money(e.amt, { round: e.amt >= 100 })}</div><div class="rc-s">${new Date(e.ts).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · ${esc(first(person(e.paid).name))}</div><hr>
       <div class="qm">${esc(e.title)}</div>${e.raw ? `<button class="rc-x" data-act="q-raw">${QS.raw ? "Hide original SMS" : "View original SMS"} ${svgIc("arrowr", 16)}</button>${QS.raw ? `<div class="qraw">${esc(e.raw)}</div>` : ""}` : ""}</div>
     <h3 class="qq2">What was this payment for?</h3>
-    <div class="qopts">${opts.map(c => `<button class="${QS.pick === c ? "on" : ""}" data-act="q-pick" data-arg="${c}" aria-pressed="${QS.pick === c}"><i>${svgIc(catIc(c), 24)}</i><span>${esc(CAT_SHORT[c] || CAT[c].n)}</span>${QS.pick === c ? `<em>${svgIc("check", 14)}</em>` : ""}</button>`).join("")}</div>
+    <div class="qopts">${opts.map(c => `<button class="${QS.pick === c ? "on" : ""}" data-act="q-pick" data-arg="${c}" aria-pressed="${QS.pick === c}"><i>${svgIc(catIc(c), 24)}</i><span>${esc(CAT_SHORT[c] || CAT[c].n)}</span>${e.aiCat === c ? `<small class="qsug">✦ Suggested</small>` : ""}${QS.pick === c ? `<em>${svgIc("check", 14)}</em>` : ""}</button>`).join("")}</div>
     ${QS.more ? "" : `<button class="qlink sm" data-act="q-more">More categories</button>`}
     <button class="qbtn" data-act="q-next" ${QS.pick ? "" : "disabled"}>Confirm &amp; next ${svgIc("arrowr", 18)}</button>
     <button class="qskip" data-act="q-skip">Skip for now</button>
@@ -2745,7 +2800,7 @@ const A = {
   "nest-delete": async () => { try { await api("/v1/nest/delete", {}); S.sync = null; S.digest = null; S.tomb = []; persist(); closeSheet(); show("you", true); toast("Server data deleted"); } catch (e) { toast(e.message); } },
   "disconnect-go": () => { S.sync = null; S.digest = null; persist(); closeSheet(); show("you", true); toast("Disconnected"); },
   chat: () => openChat(), "chat-close": () => closeChat(), ask: a => sendChat(a),
-  "chat-list": a => { try { const o = JSON.parse(a), items = S.exp.filter(e => e.ts >= o.a && e.ts < o.b && counted(e) && (!o.focus || (o.focus.cat ? e.cat === o.focus.cat : e.title === o.focus.place))).sort((x, y) => y.ts - x.ts); openSheet("Transactions", `<div class="list">${items.slice(0, 150).map(e => rowHtml(e, true)).join("")}</div>`); } catch (e) { } },
+  "chat-list": a => { try { const o = JSON.parse(a); if (o.show) { const L = S.exp.filter(showFilter(o.show)).sort(o.show.sort === "high" ? (x, y) => y.amt - x.amt : (x, y) => y.ts - x.ts); openSheet("Transactions", `<div class="list">${L.slice(0, 200).map(e => rowHtml(e, true)).join("")}</div>`); return; } const items = S.exp.filter(e => e.ts >= o.a && e.ts < o.b && counted(e) && (!o.focus || (o.focus.cat ? e.cat === o.focus.cat : e.title === o.focus.place))).sort((x, y) => y.ts - x.ts); openSheet("Transactions", `<div class="list">${items.slice(0, 150).map(e => rowHtml(e, true)).join("")}</div>`); } catch (e) { } },
   "chat-hist": () => openSheet("Conversation", `<p class="muted" style="margin:2px 2px 14px">Your last ${CH.msgs.length} messages are saved on this phone.</p><button class="btn danger block" data-act="chat-clear">Clear conversation</button>`),
   "chat-clear": () => { CH.msgs = []; CH.last = null; S.chatLog = []; persist(); closeSheet(); openChat(); },
   "chat-voice": () => { try { N.voice(); } catch (e) { } },
@@ -2797,7 +2852,10 @@ const A = {
   "ask-home": a => { openChat(); setTimeout(() => sendChat(a), 300); },
   receipt: () => { const i = $("#rcpt"); if (!i) return; i.value = ""; i.onchange = () => i.files[0] && readReceipt(i.files[0]); i.click(); },
   "ask-insight": () => { openChat(); const q = (S.insight && S.insight.ask) || "Tell me more about this"; CH.msgs.push({ role: "assistant", content: S.insight.t }); renderChat(); setTimeout(() => sendChat(q), 200); },
-  "smart-toggle": () => { S.smartOff = !S.smartOff; persist(); refresh(); toast(S.smartOff ? "Smart features off" : "Smart features on"); if (!S.smartOff) { aiCheck(true).then(() => { smartNames(); dailyInsight(); }); } },
+  "recat-yes": a => { const m = CH.msgs[+a]; if (!m || !m.recat) return; let n = 0; m.recat.forEach(x => { const e = S.exp.find(y => y.id === x.id); if (!e || e.cat === x.cat) return; if (x.cat === "xfer") e.prevCat = e.cat; e.cat = x.cat; e.ok = 1; touch(e); n++; n += learnName(e, false, true) || 0; }); save(); hap(2); renderChat(false); pendingRefresh = true; toast(`Updated ${n} payment${n === 1 ? "" : "s"}`); },
+  "recat-no": a => { const m = CH.msgs[+a]; if (!m) return; m.recat = []; renderChat(false); },
+  "smart-sort": () => { S.exp.forEach(e => { if (e.cat === "other") delete e.aiS; }); smartSort(true); },
+  "smart-toggle": () => { S.smartOff = !S.smartOff; persist(); refresh(); toast(S.smartOff ? "Smart features off" : "Smart features on"); if (!S.smartOff) { aiCheck(true).then(() => { smartNames(); smartSort(true); dailyInsight(); }); } },
   "set-mode": a => { if (a === "duo") return duoOn(); if (syncOn()) return; S.mode = "solo"; persist(); hap(1); refresh(); },
   "duo-on": () => duoOn(),
   "promo-hide": () => { S.promoHide = Date.now(); persist(); refresh(); },
@@ -2849,7 +2907,7 @@ function boot() {
     else { OB.step = 0; renderOb(); done(); }
     ready = true; if (queuedInvite) { const q = queuedInvite; queuedInvite = null; handleInvite(q.code, q.server); } else window.__invite();
     window.__shared(); importNotifs(); setTimeout(autoImport, 700);
-    setTimeout(() => aiCheck().then(() => { smartNames(); dailyInsight(); }), 3500); setTimeout(scheduleReminders, 5000);
+    setTimeout(() => aiCheck().then(() => { smartNames(); smartSort(); dailyInsight(); }), 3500); setTimeout(scheduleReminders, 5000);
     if (S.onboarded && (S.pv || 0) < 3) { S.pv = 3; persist(); setTimeout(() => deepScan(false), 4000); } setTimeout(checkClipInvite, 1200);
   }, window.__fast ? 50 : 2300);
 }

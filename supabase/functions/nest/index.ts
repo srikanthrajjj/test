@@ -142,9 +142,29 @@ async function chat(env, rows, member, history) {
 
 
 
-// ================= AI layer (OpenAI-compatible gateway, e.g. Haimaker) =================
-// The phone sends a compact, already-aggregated context (totals, categories, places, recent rows) - never raw SMS or balances.
+// ================= AI layer: Google Gemini (GEMINI_API_KEY) or any OpenAI-compatible gateway (HAIMAKER_API_KEY / AI_API_KEY) =================
+// The phone sends its payment list (dates, amounts, merchants, categories). Bank texts are only sent for payments it couldn't
+// name, with account / card / reference numbers masked on the phone. Balances are never sent.
 const AI = { key: Deno.env.get("HAIMAKER_API_KEY") || Deno.env.get("AI_API_KEY") || "", base: (Deno.env.get("AI_BASE_URL") || "https://api.haimaker.ai/v1").replace(/\/+$/, ""), model: Deno.env.get("AI_MODEL") || "haimaker/auto" };
+const GEM = { key: Deno.env.get("GEMINI_API_KEY") || "", model: Deno.env.get("GEMINI_MODEL") || "gemini-flash-latest", fallback: Deno.env.get("GEMINI_FALLBACK_MODEL") || "gemini-flash-lite-latest" };
+const aiOn = () => !!(GEM.key || AI.key);
+async function gemini(messages, { json: wantJson = false, max = 700, temperature = 0.3, think = 0 } = {}) {
+  const sys = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
+  const contents = messages.filter((m) => m.role !== "system").map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: Array.isArray(m.parts) ? m.parts : [{ text: String(m.content) }] }));
+  // models may think past the budget, so leave generous room for the answer itself
+  const req = { contents, generationConfig: { temperature, maxOutputTokens: max + think + 4096, thinkingConfig: { thinkingBudget: think }, ...(wantJson ? { responseMimeType: "application/json" } : {}) } };
+  if (sys) req.systemInstruction = { parts: [{ text: sys }] };
+  for (const mdl of [GEM.model, GEM.model, GEM.fallback]) { // busy (503/429) -> one retry, then the lighter model
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mdl}:generateContent`, { method: "POST", headers: { "x-goog-api-key": GEM.key, "content-type": "application/json" }, body: JSON.stringify(req) });
+    const t = await r.text();
+    if (r.ok) { const j = JSON.parse(t), parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []; return parts.filter((x) => !x.thought).map((x) => x.text || "").join("").trim(); }
+    console.error("gemini", mdl, r.status, t.slice(0, 300));
+    if (r.status === 401 || r.status === 403) throw Object.assign(new Error("AI key rejected"), { status: 502 });
+    await new Promise((ok) => setTimeout(ok, 700));
+  }
+  throw Object.assign(new Error("AI unavailable"), { status: 502 });
+}
+const parseJson = (out) => { const m = String(out || "").match(/\{[\s\S]*\}/); try { return JSON.parse(m ? m[0] : out); } catch { const r = /"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(String(out || "")); return r ? { reply: JSON.parse('"' + r[1] + '"') } : {}; } };
 const AI_CATS = ["food", "groc", "move", "shop", "home", "bill", "fun", "trip", "care", "subs", "gift", "other"];
 const meterMem = new Map();
 function devOk(dev, cap) {
@@ -152,7 +172,8 @@ function devOk(dev, cap) {
   if (meterMem.size > 5000) meterMem.clear();
   return n <= cap;
 }
-async function llm(messages, { json: wantJson = false, max = 700, temperature = 0.3 } = {}) {
+async function llm(messages, { json: wantJson = false, max = 700, temperature = 0.3, think = 0 } = {}) {
+  if (GEM.key) { const out = await gemini(messages, { json: wantJson, max, temperature, think }); return wantJson ? parseJson(out) : out; }
   const r = await fetch(AI.base + "/chat/completions", {
     method: "POST", headers: { authorization: "Bearer " + AI.key, "content-type": "application/json" },
     body: JSON.stringify({ model: AI.model, messages, max_tokens: max, temperature, ...(wantJson ? { response_format: { type: "json_object" } } : {}) })
@@ -163,27 +184,45 @@ async function llm(messages, { json: wantJson = false, max = 700, temperature = 
   if (!wantJson) return out.trim();
   const m = out.match(/\{[\s\S]*\}/); try { return JSON.parse(m ? m[0] : out); } catch { return {}; }
 }
-const ctxStr = (c) => JSON.stringify(c || {}).slice(0, 24000);
+const ctxStr = (c) => { const t = JSON.stringify(c || {}); return t.length <= 300000 ? t : JSON.stringify(Object.assign({}, c, { ledger: (c.ledger || []).slice(0, 400) })).slice(0, 300000); };
+const ALL_CATS = [...AI_CATS, "xfer"];
 function aiPersona(ctx) {
-  const solo = ctx && ctx.mode === "solo";
-  return `You are Nest, a warm, sharp money companion inside an Indian expense tracker${solo ? "" : " shared by a couple"}. You only see the data below (built on the user's phone from bank SMS and payment apps).
-Rules:
-- Every number you state must come from the data. If the data can't answer, say what's missing. Never invent figures, merchants or dates.
-- Be brief: 1-4 short sentences, or a short list when comparing. Use the currency symbol "${(ctx && ctx.sym) || "₹"}" and Indian digit grouping. At most one emoji.
-- Be specific and useful: name the place, the amount, the change vs last month, and one practical next step when it helps. No lectures, no generic finance advice, no disclaimers.
-${solo ? "" : "- This is a shared tracker that records who spent what. Never talk about owing, splitting or settling. Be fair to both partners.\n"}- "Transfers" are money moves (NEFT, SIP, card bills), not spending. Refunds are already subtracted.
-- If the user asks you to log/add an expense, fill "add" with {amount, title, category (one of ${AI_CATS.join("/")}), paid_by ("me"${solo ? "" : " or \"partner\""}), date YYYY-MM-DD}. It's only a proposal the user confirms - never say it's saved.
-Reply ONLY as JSON: {"reply": string, "add": object|null}.
-DATA (JSON): ${ctxStr(ctx)}`;
+  const solo = ctx && ctx.mode === "solo", sym = (ctx && ctx.sym) || "₹";
+  return `You are Nest, the money assistant inside an Indian expense tracker${solo ? ` used by ${ctx.me || "one person"}` : ` shared by a couple, ${ctx.me} (the user, "me") and ${ctx.partner} ("partner")`}. Today is ${ctx && ctx.today}.
+You can see the user's payments below: DATA.ledger has one line per payment "id|date|amount|merchant|category|who|source" (newest first; negative = refund; category "xfer" = transfer/investment/cash, not spending). DATA also has monthly totals, categories, dues and the people.
+How to answer:
+- Treat ANY message as a question about this data: a merchant ("swiggy"), a person, a date ("last saturday", "diwali week"), an amount ("anything over 5000?"), a category, a habit, or a plain-language question. Search the ledger yourself and answer.
+- Every number must come from the data. Never invent merchants, dates or amounts. If the data can't answer, say exactly what's missing.
+- Be brief and specific: 1-3 short sentences. Name places, amounts, dates and the change vs before. Use "${sym}" with Indian digit grouping. At most one emoji. No lectures, no generic finance advice, no disclaimers.
+${solo ? "" : "- It's a shared tracker of who spent what. Answer for both, either or each as asked. Never talk about owing, splitting or settling up.\n"}- When your answer is about a set of payments, also fill "show" so the app can list them with exact totals: {"from":"YYYY-MM-DD","to":"YYYY-MM-DD","category":one of ${ALL_CATS.join("/")} or null,"merchant":text or null,"person":${solo ? "null" : '"me"|"partner"|null'},"min":number or null,"max":number or null,"sort":"new"|"high"}.
+- If the user wants an expense logged, fill "add": {"amount","title","category","paid_by":"me"${solo ? "" : '|"partner"'},"date":"YYYY-MM-DD"}. It's a proposal the user confirms - never say it's saved.
+- If the user asks to fix categories (or you notice payments that are clearly in the wrong category and the user asked about them), fill "recat": [{"id","cat"}] using ids from the ledger. The user confirms first.
+Reply ONLY as JSON: {"reply": string, "show": object|null, "add": object|null, "recat": array|null}.
+DATA: ${ctxStr(ctx)}`;
 }
 async function aiChat(ctx, history) {
-  const msgs = history.slice(-12).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 2000) }));
+  const msgs = history.slice(-16).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content).slice(0, 2000) }));
   if (!msgs.length || msgs[msgs.length - 1].role !== "user") throw Object.assign(new Error("last message must be from the user"), { status: 400 });
-  const o = await llm([{ role: "system", content: aiPersona(ctx) }, ...msgs], { json: true, max: 600 });
-  const actions = [];
-  const a = o && o.add;
-  if (a && a.amount > 0) actions.push({ type: "add_expense", amount: Math.round(+a.amount * 100) / 100, title: String(a.title || "Expense").slice(0, 40), category: AI_CATS.includes(a.category) ? a.category : "other", paid: a.paid_by === "partner" ? "p" : "me", date: /^\d{4}-\d{2}-\d{2}$/.test(a.date || "") ? a.date : null });
-  return { reply: String((o && o.reply) || "Sorry, I couldn't work that out - try asking another way.").slice(0, 1500), actions };
+  const o = await llm([{ role: "system", content: aiPersona(ctx || {}) }, ...msgs], { json: true, max: 900, think: 1024 });
+  const actions = [], a = o && o.add, day = (x) => (/^\d{4}-\d{2}-\d{2}$/.test(x || "") ? x : null);
+  if (a && a.amount > 0) actions.push({ type: "add_expense", amount: Math.round(+a.amount * 100) / 100, title: String(a.title || "Expense").slice(0, 40), category: AI_CATS.includes(a.category) ? a.category : "other", paid: a.paid_by === "partner" ? "p" : "me", date: day(a.date) });
+  const sh = o && o.show && typeof o.show === "object" ? o.show : null;
+  const show = sh ? { from: day(sh.from), to: day(sh.to), category: ALL_CATS.includes(sh.category) ? sh.category : null, merchant: sh.merchant ? String(sh.merchant).slice(0, 40) : null, person: sh.person === "me" || sh.person === "partner" ? sh.person : null, min: +sh.min > 0 ? +sh.min : null, max: +sh.max > 0 ? +sh.max : null, sort: sh.sort === "high" ? "high" : "new" } : null;
+  const recat = Array.isArray(o && o.recat) ? o.recat.filter((x) => x && x.id && ALL_CATS.includes(x.cat)).slice(0, 50).map((x) => ({ id: String(x.id).slice(0, 64), cat: x.cat })) : [];
+  return { reply: String((o && o.reply) || "Sorry, I couldn't work that out - try asking another way.").slice(0, 1500), actions, show, recat };
+}
+/* sort unclear payments from their (masked) bank / payment-app text */
+async function aiSort(items) {
+  const list = items.slice(0, 40).map((x) => ({ id: String(x.id || "").slice(0, 64), amt: +x.amt || 0, title: String(x.title || "").slice(0, 40), text: String(x.text || "").slice(0, 300) })).filter((x) => x.id);
+  if (!list.length) return { items: [] };
+  const o = await llm([{ role: "system", content: `You sort payments for an Indian expense tracker. Each item is one payment: amount, the app's current name guess (title) and the bank SMS or payment-app text (account and reference numbers are masked).
+For each item decide:
+- "name": who was paid, as a person would say it: a brand ("Swiggy", "Amazon", "Indian Oil") or a shop name from the text ("Sri Balaji Stores"), or a person's name ("Rahul Kumar") for a payment to an individual. Never return codes, UPI ids or reference numbers. If you can't tell, return the title unchanged.
+- "cat": one of ${AI_CATS.join("/")}, or "xfer" when it is NOT spending: transfer to own account, credit-card bill payment, investment/SIP/stocks/mutual fund, wallet top-up, loan or EMI to a lender should be "bill". Food delivery/restaurants/cafes = food, supermarkets/quick commerce/kirana = groc, cabs/fuel/metro/parking = move, phone/electricity/rent-like bills = bill.
+- "sure": true only if the text makes it clear.
+Reply ONLY JSON: {"items":[{"id","name","cat","sure"}]}` }, { role: "user", content: JSON.stringify(list) }], { json: true, max: 2500, temperature: 0 });
+  const out = (o && Array.isArray(o.items) ? o.items : []).filter((x) => x && x.id && list.some((y) => y.id === x.id)).map((x) => ({ id: String(x.id), name: String(x.name || "").slice(0, 28), cat: ALL_CATS.includes(x.cat) ? x.cat : "other", sure: x.sure === true }));
+  return { items: out };
 }
 async function aiNames(items) {
   const list = items.slice(0, 30).map((x) => ({ k: String(x.k || "").slice(0, 40), t: String(x.t || "").slice(0, 40) })).filter((x) => x.k);
@@ -194,6 +233,12 @@ async function aiNames(items) {
 }
 async function aiReceipt(img) {
   if (!/^data:image\/(jpeg|png|webp);base64,/.test(img || "") || img.length > 1_400_000) throw Object.assign(new Error("Send a JPEG/PNG photo under 1 MB"), { status: 400 });
+  if (GEM.key) {
+    const [, mime, data] = /^data:(image\/\w+);base64,(.*)$/.exec(img);
+    const o = parseJson(await gemini([{ role: "system", content: `Read this shop receipt or bill. Reply ONLY JSON: {"merchant": string, "total": number (the final amount paid, after tax/discount), "date": "YYYY-MM-DD" or null, "category": one of ${AI_CATS.join("/")}, "items": [up to 5 short item names]}. If it isn't a receipt, reply {"error":"not a receipt"}.` }, { role: "user", parts: [{ text: "Extract the receipt." }, { inline_data: { mime_type: mime, data } }] }], { json: true, max: 400, temperature: 0 }));
+    if (o.error || !(+o.total > 0)) return { error: "Couldn't read a total from that photo." };
+    return { merchant: String(o.merchant || "Receipt").slice(0, 40), total: Math.round(+o.total * 100) / 100, date: /^\d{4}-\d{2}-\d{2}$/.test(o.date || "") ? o.date : null, category: AI_CATS.includes(o.category) ? o.category : "other", items: Array.isArray(o.items) ? o.items.slice(0, 5).map(String) : [] };
+  }
   const r = await fetch(AI.base + "/chat/completions", {
     method: "POST", headers: { authorization: "Bearer " + AI.key, "content-type": "application/json" },
     body: JSON.stringify({ model: Deno.env.get("AI_VISION_MODEL") || AI.model, max_tokens: 300, temperature: 0, response_format: { type: "json_object" }, messages: [
@@ -261,15 +306,16 @@ async function handle(req) {
   const url = new URL(req.url);
   const path = url.pathname.replace(/^\/(?:functions\/v1\/)?nest/, "").replace(/\/+$/, "");
   try {
-    if (path === "" || path === "/v1/health") return json({ ok: true, agent: !!ENV.ANTHROPIC_API_KEY, ai: !!AI.key });
+    if (path === "" || path === "/v1/health") return json({ ok: true, agent: !!ENV.ANTHROPIC_API_KEY, ai: aiOn() });
     if (req.method === "POST" && path.startsWith("/v1/ai/")) {
-      if (!AI.key) return err(503, "AI isn't switched on yet - add HAIMAKER_API_KEY to the function secrets.");
+      if (!aiOn()) return err(503, "AI isn't switched on yet - add GEMINI_API_KEY to the function secrets.");
       const dev = req.headers.get("x-nest-device") || req.headers.get("x-forwarded-for") || "anon";
       if (!devOk(dev, 120)) return err(429, "Daily AI limit reached - try again tomorrow.");
-      const b = await body(req, path === "/v1/ai/receipt" ? 1_500_000 : 64 * 1024);
+      const b = await body(req, path === "/v1/ai/receipt" ? 1_500_000 : path === "/v1/ai/chat" || path === "/v1/ai/sort" ? 600 * 1024 : 64 * 1024);
       if (path === "/v1/ai/receipt") return json(await aiReceipt(b.image));
       if (path === "/v1/ai/chat") { if (!Array.isArray(b.messages) || !b.messages.length) return err(400, "messages required"); return json(await aiChat(b.ctx, b.messages)); }
       if (path === "/v1/ai/names") return json(await aiNames(Array.isArray(b.items) ? b.items : []));
+      if (path === "/v1/ai/sort") return json(await aiSort(Array.isArray(b.items) ? b.items : []));
       if (path === "/v1/ai/insight") return json(await aiInsight(b.ctx));
       return err(404, "Not found");
     }
@@ -295,7 +341,7 @@ async function handle(req) {
       if (r.error === "expired") return err(410, "That code has expired - ask for a new one.");
       return json({ couple: r.couple, member: r.member, token });
     }
-    if (req.method === "GET" && path === "/privacy") return plain("Nest privacy: your expenses, names and settlements are stored on a private database only to sync you and your partner. Bank SMS are read on your phone and never uploaded. Delete everything in the app: You > Sync > Disconnect > Delete our Nest data.");
+    if (req.method === "GET" && path === "/privacy") return plain("Nest privacy: your expenses, names and settlements are stored on a private database only to sync you and your partner. Bank SMS are read on your phone and never stored on our servers. If you turn on Smart AI, your payment list (and, for payments Nest couldn't name, the bank text with account, card, reference and balance numbers removed) is sent to Google Gemini only to answer your questions and sort payments; it is not stored. Delete everything in the app: You > Sync > Disconnect > Delete our Nest data.");
     const who = await auth(req);
     if (!who) return err(401, "Not signed in to a Nest.");
     if (req.method === "POST" && path === "/v1/sync") {
