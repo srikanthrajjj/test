@@ -20,6 +20,19 @@ android {
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${project.findProperty("SUPABASE_ANON_KEY") ?: ""}\"")
     }
 
+    // Fixed debug keystore, committed to the repo. Without this, a CI-built debug
+    // APK is signed with a fresh random key on every build, so installing a newer
+    // one on top of an older one looks like a different app to Android ("package
+    // conflicts with an existing package") instead of a normal update.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("../debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
