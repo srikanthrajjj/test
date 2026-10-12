@@ -3,6 +3,9 @@ on:
   workflow_dispatch:
   push:
     paths: ['safeguard/**', '.github/workflows/safeguard-apk.yml']
+    branches-ignore: []
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,3 +24,12 @@ jobs:
         with:
           name: SafeGuard-debug-apk
           path: safeguard/app/build/outputs/apk/debug/*.apk
+      - name: Commit APK to dist/
+        run: |
+          mkdir -p dist
+          cp safeguard/app/build/outputs/apk/debug/app-debug.apk dist/SafeGuard.apk
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add dist/SafeGuard.apk
+          git commit -m "Add built SafeGuard.apk" || exit 0
+          git push
