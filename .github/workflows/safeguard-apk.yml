@@ -1,0 +1,22 @@
+name: Build SafeGuard APK
+on:
+  workflow_dispatch:
+  push:
+    paths: ['safeguard/**', '.github/workflows/safeguard-apk.yml']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Build debug APK
+        working-directory: safeguard
+        run: ./gradlew --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SafeGuard-debug-apk
+          path: safeguard/app/build/outputs/apk/debug/*.apk
