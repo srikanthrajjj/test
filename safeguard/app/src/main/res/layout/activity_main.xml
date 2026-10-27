@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:fillViewport="true"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="32dp"
+    android:paddingBottom="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_round"
+            android:backgroundTint="@color/primary"
+            android:padding="14dp"
+            android:src="@drawable/ic_pin"
+            android:contentDescription="@null" />
+
+        <TextView
+            style="@style/Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="SafeGuard"
+            android:textSize="28sp" />
+
+        <TextView
+            style="@style/Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Know your family got home safe. No more asking."
+            android:textSize="16sp" />
+
+        <!-- Step 1: choose -->
+        <LinearLayout
+            android:id="@+id/chooseStep"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/cardShare"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_option"
+                android:orientation="vertical"
+                android:padding="20dp">
+                <TextView style="@style/Title" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="I'll share my location" android:textSize="18sp" />
+                <TextView style="@style/Body" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp" android:text="Family gets an alert when I leave office or reach home." />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/cardWatch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_option"
+                android:orientation="vertical"
+                android:padding="20dp">
+                <TextView style="@style/Title" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="I want to see family" android:textSize="18sp" />
+                <TextView style="@style/Body" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp" android:text="Enter the family code they share with you." />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Step 2a: sharer -->
+        <LinearLayout
+            android:id="@+id/sharerStep"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView android:id="@+id/backFromSharer" style="@style/Body" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:padding="4dp" android:text="‹  Back" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Your name (family sees this)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputMyName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName|textCapWords" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button android:id="@+id/btnStartSharing" style="@style/Btn" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="Continue" />
+        </LinearLayout>
+
+        <!-- Step 2b: viewer -->
+        <LinearLayout
+            android:id="@+id/viewerStep"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView android:id="@+id/backFromViewer" style="@style/Body" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:padding="4dp" android:text="‹  Back" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Family code (ABCD-EFGH-JKLM)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapCharacters|textNoSuggestions" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Their name (optional)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/inputTheirName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName|textCapWords" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button android:id="@+id/btnConnect" style="@style/Btn" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="Connect" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

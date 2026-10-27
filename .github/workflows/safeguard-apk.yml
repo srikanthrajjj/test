@@ -1,0 +1,46 @@
+name: Build SafeGuard APK
+
+on:
+  push:
+    branches: [ ccr-2f0a339a-5uk69o ]
+    paths: [ "safeguard/**", ".github/workflows/safeguard-apk.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: safeguard
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk SafeGuard.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SafeGuard-apk
+          path: safeguard/SafeGuard.apk
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: safeguard-build-${{ github.run_number }}
+          name: SafeGuard build ${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          files: safeguard/SafeGuard.apk

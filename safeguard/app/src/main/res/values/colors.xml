@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#4F46E5</color>
+    <color name="primary_soft">#EEF2FF</color>
+    <color name="ink">#111827</color>
+    <color name="muted">#6B7280</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="bg">#F6F7FB</color>
+    <color name="line">#E5E7EB</color>
+    <color name="sos">#DC2626</color>
+    <color name="home">#059669</color>
+</resources>
