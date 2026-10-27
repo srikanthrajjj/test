@@ -6,8 +6,14 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.location.Location
@@ -18,6 +24,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -32,6 +40,7 @@ import java.util.concurrent.Executors
  * - Sends location only when she moves 150 m+, or every 30 min (saves battery and free-tier quota).
  * - Sends an alert when she leaves or reaches Office / Home (each can be turned off).
  * - SOS: sends live location every 30 s for 15 min, until she taps "I'm safe".
+ * - Hands-free SOS: shake the phone hard, or press the power button 5 times.
  */
 class LocationService : Service(), LocationListener {
 
@@ -58,6 +67,60 @@ class LocationService : Service(), LocationListener {
         }
     }
 
+    // ---------- Hands-free SOS ----------
+
+    private val shakes = ArrayDeque<Long>()
+    private var lastPeak = 0L
+    private val shakeListener = object : SensorEventListener {
+        override fun onSensorChanged(e: SensorEvent) {
+            if (!prefs.shakeSos) return
+            val (x, y, z) = e.values
+            val g = Math.sqrt((x * x + y * y + z * z).toDouble()) / SensorManager.GRAVITY_EARTH
+            if (g < SHAKE_G) return
+            val now = System.currentTimeMillis()
+            if (now - lastPeak < 250) return   // same jolt
+            lastPeak = now
+            shakes.addLast(now)
+            while (now - shakes.first() > SHAKE_WINDOW_MS) shakes.removeFirst()
+            if (shakes.size >= SHAKE_COUNT) { shakes.clear(); handsFreeSos() }
+        }
+        override fun onAccuracyChanged(s: Sensor?, a: Int) {}
+    }
+
+    private val presses = ArrayDeque<Long>()
+    private val powerReceiver = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) {
+            if (!prefs.powerSos) return
+            val now = System.currentTimeMillis()
+            presses.addLast(now)   // every screen on / off is one press
+            while (now - presses.first() > POWER_WINDOW_MS) presses.removeFirst()
+            if (presses.size >= POWER_COUNT) { presses.clear(); handsFreeSos() }
+        }
+    }
+
+    private fun startTriggers() {
+        val sm = getSystemService(SensorManager::class.java)
+        sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let {
+            sm.registerListener(shakeListener, it, SensorManager.SENSOR_DELAY_UI)
+        }
+        val f = IntentFilter().apply { addAction(Intent.ACTION_SCREEN_ON); addAction(Intent.ACTION_SCREEN_OFF) }
+        ContextCompat.registerReceiver(this, powerReceiver, f, ContextCompat.RECEIVER_NOT_EXPORTED)
+    }
+
+    private fun stopTriggers() {
+        getSystemService(SensorManager::class.java).unregisterListener(shakeListener)
+        try { unregisterReceiver(powerReceiver) } catch (_: Exception) {}
+    }
+
+    private fun handsFreeSos() {
+        if (prefs.sosActive) return
+        // Long buzz so she knows it went out
+        try {
+            getSystemService(Vibrator::class.java)?.vibrate(VibrationEffect.createOneShot(800, VibrationEffect.DEFAULT_AMPLITUDE))
+        } catch (_: Exception) {}
+        sendSos()
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -78,6 +141,7 @@ class LocationService : Service(), LocationListener {
             started = true
             startUpdates()
             handler.postDelayed(heartbeat, HEARTBEAT_MS)
+            startTriggers()
             if (prefs.sosActive) handler.post(sosTick)   // service restarted mid-SOS
         }
         if (intent?.action == ACTION_SOS_STOP) {
@@ -278,6 +342,7 @@ class LocationService : Service(), LocationListener {
     override fun onDestroy() {
         handler.removeCallbacks(heartbeat)
         handler.removeCallbacks(sosTick)
+        stopTriggers()
         try { lm.removeUpdates(this) } catch (_: Exception) {}
         io.shutdown()
         super.onDestroy()
@@ -288,6 +353,11 @@ class LocationService : Service(), LocationListener {
         const val ACTION_SOS_STOP = "com.safeguard.family.SOS_STOP"
         const val SOS_MS = 15 * 60_000L
         private const val SOS_TICK_MS = 30_000L
+        private const val SHAKE_G = 2.7            // hard shake, not walking or a bumpy ride
+        private const val SHAKE_COUNT = 4
+        private const val SHAKE_WINDOW_MS = 2_000L
+        private const val POWER_COUNT = 5
+        private const val POWER_WINDOW_MS = 4_000L
         private const val CHANNEL_SHARING = "sharing"
         private const val NOTIF_ID = 7
         private const val HEARTBEAT_MS = 30 * 60_000L

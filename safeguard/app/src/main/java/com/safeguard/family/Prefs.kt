@@ -41,6 +41,14 @@ class Prefs(context: Context) {
     fun setAlert(p: String, leaving: Boolean, on: Boolean) = sp.edit().putBoolean(alertKey(p, leaving), on).apply()
     private fun alertKey(p: String, leaving: Boolean) = "alert_${p}_${if (leaving) "leave" else "arrive"}"
 
+    // Hands-free SOS triggers. On by default.
+    var shakeSos: Boolean
+        get() = sp.getBoolean("trigger_shake", true)
+        set(v) = sp.edit().putBoolean("trigger_shake", v).apply()
+    var powerSos: Boolean
+        get() = sp.getBoolean("trigger_power", true)
+        set(v) = sp.edit().putBoolean("trigger_power", v).apply()
+
     // Live SOS tracking runs until this time. 0 = off.
     var sosUntil: Long
         get() = sp.getLong("sos_until", 0L)

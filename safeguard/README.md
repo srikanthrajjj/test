@@ -5,6 +5,8 @@ Family safety app. No more "share your location?" messages.
 ## What it does
 
 - **Her phone:** shares location. Sends an alert when she **leaves or reaches** Home or Office (200 m circle). Each alert can be turned off in **Alert settings**.
+- **Hands-free SOS:** shake the phone hard, or press power 5 times. The phone buzzes when SOS goes out. Either can be turned off in **Alerts & SOS settings**.
+- **Route:** your phone can show where she went today (up to the last 12 h).
 - **SOS:** urgent alert, then live location every 30 s for 15 min. **"I'm safe"** (on screen or in the notification) stops it and tells family.
 - **Your phone:** shows her on the map, battery level, last update. **Directions** opens Google Maps or any map app.
 - Map: **OpenStreetMap** (free, no API key).

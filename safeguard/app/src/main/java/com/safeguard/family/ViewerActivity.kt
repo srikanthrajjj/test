@@ -17,7 +17,10 @@ import androidx.core.content.ContextCompat
 import org.json.JSONObject
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
+import java.util.Calendar
 import java.util.concurrent.Executors
 
 /** YOUR screen: see her on the map, get directions, turn on instant alerts. */
@@ -28,6 +31,7 @@ class ViewerActivity : AppCompatActivity() {
     private lateinit var nameView: TextView
     private lateinit var sub: TextView
     private var marker: Marker? = null
+    private var route: Polyline? = null
     private var lastLat: Double? = null
     private var lastLon: Double? = null
     private var lastTime = 0L
@@ -57,6 +61,7 @@ class ViewerActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnDirections).setOnClickListener { directions() }
         findViewById<Button>(R.id.btnAlerts).setOnClickListener { setupAlerts() }
+        findViewById<Button>(R.id.btnRoute).setOnClickListener { toggleRoute() }
         findViewById<TextView>(R.id.btnReset).setOnClickListener { confirmReset() }
         findViewById<android.view.View>(R.id.btnCenter).setOnClickListener {
             val la = lastLat; val lo = lastLon
@@ -115,6 +120,37 @@ class ViewerActivity : AppCompatActivity() {
         if (sos) parts.add(0, "SOS: LIVE")
         sub.text = parts.joinToString("  ·  ")
         sub.setTextColor(if (sos) ContextCompat.getColor(this, R.color.sos) else subColor)
+    }
+
+    /** Draws where she went today (since midnight, up to the last 12 h). Tap again to hide. */
+    private fun toggleRoute() {
+        val btn = findViewById<Button>(R.id.btnRoute)
+        route?.let { map.overlays.remove(it); route = null; map.invalidate(); btn.text = "Route"; return }
+        val code = prefs.code ?: return
+        val midnight = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis / 1000
+        btn.text = "Loading…"
+        io.execute {
+            val pts = Ntfy.history(Ntfy.locTopic(code), midnight).mapNotNull {
+                try {
+                    val o = JSONObject(it)
+                    if (o.optInt("acc", 0) > 200) null else GeoPoint(o.getDouble("lat"), o.getDouble("lon"))
+                } catch (_: Exception) { null }
+            }
+            runOnUiThread {
+                if (pts.size < 2) { btn.text = "Route"; toast("No route yet today"); return@runOnUiThread }
+                val line = Polyline(map).apply {
+                    setPoints(pts)
+                    outlinePaint.color = ContextCompat.getColor(this@ViewerActivity, R.color.primary)
+                    outlinePaint.strokeWidth = 10f
+                }
+                map.overlays.add(0.coerceAtLeast(map.overlays.size - 1), line)   // under her pin
+                route = line
+                btn.text = "Hide route"
+                map.zoomToBoundingBox(BoundingBox.fromGeoPoints(pts).increaseByScale(1.3f), true)
+            }
+        }
     }
 
     /** Opens Google Maps, or any map app the phone has. */

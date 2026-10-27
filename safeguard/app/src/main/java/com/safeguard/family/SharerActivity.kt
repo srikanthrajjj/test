@@ -210,17 +210,20 @@ class SharerActivity : AppCompatActivity() {
         map.invalidate()
     }
 
-    /** Choose which leave / arrive alerts family gets. */
+    /** Choose which leave / arrive alerts family gets, and the hands-free SOS triggers. */
     private fun alertSettings() {
         val items = listOf(Prefs.HOME to true, Prefs.HOME to false, Prefs.OFFICE to true, Prefs.OFFICE to false)
-        val labels = arrayOf("Left home", "Reached home", "Left office", "Reached office")
-        val checked = items.map { (p, leaving) -> prefs.alertOn(p, leaving) }.toBooleanArray()
+        val labels = arrayOf("Left home", "Reached home", "Left office", "Reached office",
+            "SOS: shake phone hard", "SOS: press power 5 times")
+        val checked = (items.map { (p, leaving) -> prefs.alertOn(p, leaving) } + prefs.shakeSos + prefs.powerSos).toBooleanArray()
         AlertDialog.Builder(this)
-            .setTitle("Alerts family gets")
+            .setTitle("Alerts and SOS")
             .setMultiChoiceItems(labels, checked) { _, i, on -> checked[i] = on }
             .setPositiveButton("Save") { _, _ ->
                 items.forEachIndexed { i, (p, leaving) -> prefs.setAlert(p, leaving, checked[i]) }
-                toast("Alerts saved")
+                prefs.shakeSos = checked[4]
+                prefs.powerSos = checked[5]
+                toast("Saved")
             }
             .setNegativeButton("Cancel", null)
             .show()

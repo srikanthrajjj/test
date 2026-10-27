@@ -43,6 +43,24 @@ object Ntfy {
         false
     }
 
+    /** All message bodies since a unix time (seconds), oldest first. ntfy.sh keeps 12 h. */
+    fun history(topic: String, sinceSec: Long): List<String> = try {
+        val c = URL("$BASE/$topic/json?poll=1&since=$sinceSec").openConnection() as HttpURLConnection
+        c.connectTimeout = 15000
+        c.readTimeout = 20000
+        val out = ArrayList<String>()
+        c.inputStream.bufferedReader().useLines { lines ->
+            lines.filter { it.isNotBlank() }.forEach { line ->
+                val o = JSONObject(line)
+                if (o.optString("event") == "message") out.add(o.optString("message"))
+            }
+        }
+        c.disconnect()
+        out
+    } catch (e: Exception) {
+        emptyList()
+    }
+
     /** Returns the newest message body on a topic, or null. */
     fun latest(topic: String): String? = try {
         val c = URL("$BASE/$topic/json?poll=1&since=latest").openConnection() as HttpURLConnection
