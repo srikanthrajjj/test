@@ -11,7 +11,7 @@ class Prefs(context: Context) {
         get() = sp.getString("role", null)
         set(v) = sp.edit().putString("role", v).apply()
 
-    var code: String?                       // family code, 12 letters, no dashes
+    var code: String?                       // family code, 4 digits
         get() = sp.getString("code", null)
         set(v) = sp.edit().putString("code", v).apply()
 
@@ -65,15 +65,11 @@ class Prefs(context: Context) {
         const val HOME = "home"
         const val RADIUS_M = 200.0
 
-        private const val ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
-
-        fun newCode(): String {
-            val r = SecureRandom()
-            return (1..12).map { ALPHABET[r.nextInt(ALPHABET.length)] }.joinToString("")
-        }
+        // 4 digits is easy to share but easy to guess: anyone who tries it sees the location.
+        fun newCode(): String = "%04d".format(SecureRandom().nextInt(10_000))
 
         fun pretty(code: String) = code.chunked(4).joinToString("-")
 
-        fun normalize(input: String) = input.uppercase().filter { it.isLetterOrDigit() }
+        fun normalize(input: String) = input.filter { it.isDigit() }
     }
 }

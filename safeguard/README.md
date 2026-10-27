@@ -50,7 +50,7 @@ Her phone (GPS) --> ntfy.sh --> Your phone
 
 ## Good to know
 
-- The 12-letter family code is the only key. Anyone with the code can see the location. Keep it private.
+- The 4-digit family code is the only key. Anyone with the code, or who guesses it, can see the location. Keep it private.
   To change it: Reset app on both phones.
 - ntfy.sh free use has daily limits. Normal use (one person) stays well under. For many users (Play Store), run your own ntfy server or move to Firebase/Supabase.
 - Play Store: background location apps need a Google review and a privacy policy. Fine for personal use now.

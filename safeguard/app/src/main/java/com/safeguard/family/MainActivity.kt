@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnConnect).setOnClickListener {
             val code = Prefs.normalize(findViewById<EditText>(R.id.inputCode).text.toString())
             val name = findViewById<EditText>(R.id.inputTheirName).text.toString().trim()
-            if (code.length != 12) { toast("Family code has 12 letters, like ABCD-EFGH-JKLM"); return@setOnClickListener }
+            if (code.length != 4) { toast("Family code has 4 digits, like 4821"); return@setOnClickListener }
             prefs.code = code
             prefs.name = name.ifEmpty { "Family" }
             prefs.role = "viewer"
