@@ -35,6 +35,11 @@ class SharerActivity : AppCompatActivity() {
     private var me: MyLocationNewOverlay? = null
     private val placeCircles = HashMap<String, Polygon>()
     private var centered = false
+    private lateinit var btnSos: Button
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val sosRefresh = object : Runnable {
+        override fun run() { updateSosButton(); handler.postDelayed(this, 15_000L) }
+    }
 
     private val askLocation = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         if (hasFine()) { showMe(); askNotificationsThenBackground() }
@@ -78,7 +83,9 @@ class SharerActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnShareCode).setOnClickListener { shareCode() }
         findViewById<Button>(R.id.btnOffice).setOnClickListener { setPlaceHere(Prefs.OFFICE) }
         findViewById<Button>(R.id.btnHome).setOnClickListener { setPlaceHere(Prefs.HOME) }
-        findViewById<Button>(R.id.btnSos).setOnClickListener { confirmSos() }
+        btnSos = findViewById(R.id.btnSos)
+        btnSos.setOnClickListener { if (prefs.sosActive) confirmSafe() else confirmSos() }
+        findViewById<TextView>(R.id.btnAlerts).setOnClickListener { alertSettings() }
         findViewById<TextView>(R.id.btnReset).setOnClickListener { confirmReset() }
         findViewById<View>(R.id.btnCenter).setOnClickListener {
             me?.myLocation?.let { map.controller.animateTo(it, 17.0, 600L) } ?: toast("Finding your location…")
@@ -93,7 +100,7 @@ class SharerActivity : AppCompatActivity() {
         if (!hasFine()) {
             AlertDialog.Builder(this)
                 .setTitle("Share your location")
-                .setMessage("Your family will see where you are and get an alert when you leave office or reach home.\n\nYou can pause anytime. A notification always shows while sharing.")
+                .setMessage("Your family will see where you are and get an alert when you leave or reach home or office.\n\nYou can pause anytime. A notification always shows while sharing.")
                 .setPositiveButton("Continue") { _, _ ->
                     askLocation.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                 }
@@ -139,8 +146,8 @@ class SharerActivity : AppCompatActivity() {
     private fun updateStatus() {
         status.text = when {
             !prefs.sharing -> "Paused. Family can't see you."
-            !prefs.hasPlace(Prefs.OFFICE) -> "On. Set your Office below to get leave alerts."
-            else -> "On. Family gets an alert when you leave office."
+            !prefs.hasPlace(Prefs.OFFICE) && !prefs.hasPlace(Prefs.HOME) -> "On. Set Home or Office below to get alerts."
+            else -> "On. Family gets an alert when you leave or reach a place."
         }
     }
 
@@ -203,6 +210,22 @@ class SharerActivity : AppCompatActivity() {
         map.invalidate()
     }
 
+    /** Choose which leave / arrive alerts family gets. */
+    private fun alertSettings() {
+        val items = listOf(Prefs.HOME to true, Prefs.HOME to false, Prefs.OFFICE to true, Prefs.OFFICE to false)
+        val labels = arrayOf("Left home", "Reached home", "Left office", "Reached office")
+        val checked = items.map { (p, leaving) -> prefs.alertOn(p, leaving) }.toBooleanArray()
+        AlertDialog.Builder(this)
+            .setTitle("Alerts family gets")
+            .setMultiChoiceItems(labels, checked) { _, i, on -> checked[i] = on }
+            .setPositiveButton("Save") { _, _ ->
+                items.forEachIndexed { i, (p, leaving) -> prefs.setAlert(p, leaving, checked[i]) }
+                toast("Alerts saved")
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     // ---------- Map dot ----------
 
     private fun showMe() {
@@ -230,18 +253,39 @@ class SharerActivity : AppCompatActivity() {
     private fun confirmSos() {
         AlertDialog.Builder(this)
             .setTitle("Send SOS?")
-            .setMessage("Your family gets an urgent alert with your location.")
+            .setMessage("Your family gets an urgent alert and sees your live location every 30 s for 15 minutes.")
             .setPositiveButton("Send SOS") { _, _ ->
                 if (!hasFine()) { toast("Location permission needed"); return@setPositiveButton }
                 prefs.sharing = true
                 sw.isChecked = true
                 val l = me?.myLocation
                 LocationService.sos(this, l?.latitude, l?.longitude)
+                prefs.sosUntil = System.currentTimeMillis() + LocationService.SOS_MS   // button updates now
                 updateStatus()
+                updateSosButton()
                 toast("SOS sent")
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun confirmSafe() {
+        AlertDialog.Builder(this)
+            .setTitle("Stop SOS?")
+            .setMessage("Your family gets an \"I'm safe\" alert. Normal sharing continues.")
+            .setPositiveButton("I'm safe") { _, _ ->
+                LocationService.stopSos(this)   // service clears the SOS and sends the alert
+                btnSos.text = "SOS"
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun updateSosButton() {
+        btnSos.text = if (prefs.sosActive) {
+            val min = (prefs.sosUntil - System.currentTimeMillis()) / 60_000 + 1
+            "SOS on ($min min) · Tap when safe"
+        } else "SOS"
     }
 
     private fun confirmReset() {
@@ -261,6 +305,6 @@ class SharerActivity : AppCompatActivity() {
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 
-    override fun onResume() { super.onResume(); map.onResume(); me?.enableMyLocation() }
-    override fun onPause() { super.onPause(); map.onPause(); me?.disableMyLocation() }
+    override fun onResume() { super.onResume(); map.onResume(); me?.enableMyLocation(); handler.post(sosRefresh) }
+    override fun onPause() { super.onPause(); map.onPause(); me?.disableMyLocation(); handler.removeCallbacks(sosRefresh) }
 }

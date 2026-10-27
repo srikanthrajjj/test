@@ -4,7 +4,8 @@ Family safety app. No more "share your location?" messages.
 
 ## What it does
 
-- **Her phone:** shares location. Sends an alert when she **leaves office** or **reaches home**. Has an **SOS** button.
+- **Her phone:** shares location. Sends an alert when she **leaves or reaches** Home or Office (200 m circle). Each alert can be turned off in **Alert settings**.
+- **SOS:** urgent alert, then live location every 30 s for 15 min. **"I'm safe"** (on screen or in the notification) stops it and tells family.
 - **Your phone:** shows her on the map, battery level, last update. **Directions** opens Google Maps or any map app.
 - Map: **OpenStreetMap** (free, no API key).
 - Alerts: **ntfy** (free, open-source push app, no account).
@@ -34,7 +35,7 @@ Or: open this folder in **Android Studio** > Build > Build APK(s).
 **Your phone**
 1. Install SafeGuard.apk. Tap "I want to see family". Enter the code.
 2. Install **ntfy** from Play Store. Back in SafeGuard tap **Alerts > Subscribe**.
-3. Done. You get "Priya left office" automatically.
+3. Done. You get "Priya left office", "Priya reached home" and SOS alerts automatically.
 
 ## How it works
 

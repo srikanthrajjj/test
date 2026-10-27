@@ -31,6 +31,9 @@ class ViewerActivity : AppCompatActivity() {
     private var lastLat: Double? = null
     private var lastLon: Double? = null
     private var lastTime = 0L
+    private var lastBat = -1
+    private var sos = false
+    private var subColor = 0
     private val io = Executors.newSingleThreadExecutor()
     private val handler = Handler(Looper.getMainLooper())
     private val poll = object : Runnable {
@@ -48,6 +51,7 @@ class ViewerActivity : AppCompatActivity() {
         Ui.setupMap(this, map)
         nameView = findViewById(R.id.personName)
         sub = findViewById(R.id.personStatus)
+        subColor = sub.currentTextColor
         nameView.text = prefs.name.ifBlank { "Family" }
         sub.text = "Looking for location…"
 
@@ -85,7 +89,9 @@ class ViewerActivity : AppCompatActivity() {
             val lat = o.getDouble("lat"); val lon = o.getDouble("lon")
             val first = lastLat == null
             lastLat = lat; lastLon = lon; lastTime = o.optLong("t", System.currentTimeMillis())
-            val bat = o.optInt("bat", -1)
+            lastBat = o.optInt("bat", -1)
+            // Ignore an old SOS flag if updates stopped (phone off, no signal)
+            sos = o.optBoolean("sos") && System.currentTimeMillis() - lastTime < 3 * 60_000L
             val name = o.optString("name").ifBlank { prefs.name }
             nameView.text = name
 
@@ -99,14 +105,16 @@ class ViewerActivity : AppCompatActivity() {
             m.title = name
             if (first) map.controller.animateTo(p, 16.0, 800L)
             map.invalidate()
-            updateSub(bat)
+            updateSub()
         } catch (_: Exception) {}
     }
 
-    private fun updateSub(bat: Int = -1) {
+    private fun updateSub() {
         val parts = mutableListOf("Updated ${Ui.ago(lastTime)}")
-        if (bat >= 0) parts.add("Battery $bat%")
+        if (lastBat >= 0) parts.add("Battery $lastBat%")
+        if (sos) parts.add(0, "SOS: LIVE")
         sub.text = parts.joinToString("  ·  ")
+        sub.setTextColor(if (sos) ContextCompat.getColor(this, R.color.sos) else subColor)
     }
 
     /** Opens Google Maps, or any map app the phone has. */
@@ -129,7 +137,7 @@ class ViewerActivity : AppCompatActivity() {
         val code = prefs.code ?: return
         AlertDialog.Builder(this)
             .setTitle("Get instant alerts")
-            .setMessage("You'll get a notification when ${prefs.name.ifBlank { "they" }} leaves office, reaches home, or sends SOS.\n\n" +
+            .setMessage("You'll get a notification when ${prefs.name.ifBlank { "they" }} leaves or reaches home or office, or sends SOS.\n\n" +
                 "1. Install the free \"ntfy\" app.\n2. Come back and tap \"Subscribe\".")
             .setPositiveButton("Subscribe") { _, _ -> subscribe(code) }
             .setNeutralButton("Install ntfy") { _, _ -> openStore() }

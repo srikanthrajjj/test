@@ -36,6 +36,17 @@ class Prefs(context: Context) {
     fun placeState(p: String) = sp.getInt("${p}_state", 0)
     fun setPlaceState(p: String, s: Int) = sp.edit().putInt("${p}_state", s).apply()
 
+    // Which leave / arrive alerts to send. All on by default.
+    fun alertOn(p: String, leaving: Boolean) = sp.getBoolean(alertKey(p, leaving), true)
+    fun setAlert(p: String, leaving: Boolean, on: Boolean) = sp.edit().putBoolean(alertKey(p, leaving), on).apply()
+    private fun alertKey(p: String, leaving: Boolean) = "alert_${p}_${if (leaving) "leave" else "arrive"}"
+
+    // Live SOS tracking runs until this time. 0 = off.
+    var sosUntil: Long
+        get() = sp.getLong("sos_until", 0L)
+        set(v) = sp.edit().putLong("sos_until", v).apply()
+    val sosActive get() = sosUntil > System.currentTimeMillis()
+
     // Last location sent, so we only send when she actually moves.
     var lastSentLat: Double
         get() = sp.getFloat("ls_lat", Float.NaN).toDouble()
