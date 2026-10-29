@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <org.osmdroid.views.MapView
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
+            android:id="@+id/topBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:padding="16dp">
+            <ImageButton
+                android:id="@+id/btnCenter"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_round"
+                android:elevation="4dp"
+                android:src="@drawable/ic_my_location"
+                android:contentDescription="Show them" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="8dp"
+            android:text="© OpenStreetMap contributors"
+            android:textSize="10sp" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-24dp"
+        android:background="@drawable/bg_card"
+        android:elevation="8dp"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="16dp">
+
+        <View android:layout_width="36dp" android:layout_height="5dp" android:layout_gravity="center_horizontal"
+            android:background="@drawable/bg_handle" />
+
+        <TextView android:id="@+id/personName" style="@style/Title" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginTop="14dp" android:textSize="24sp" />
+        <TextView android:id="@+id/personStatus" style="@style/Body" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_marginTop="2dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/btnDirections" style="@style/Btn" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="Directions" />
+            <Space android:layout_width="10dp" android:layout_height="1dp" />
+            <Button android:id="@+id/btnAlerts" style="@style/BtnSoft" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="Alerts" />
+        </LinearLayout>
+
+        <TextView android:id="@+id/btnReset" style="@style/Body" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp" android:padding="6dp" android:text="Reset app" android:textSize="12sp" />
+    </LinearLayout>
+</LinearLayout>
