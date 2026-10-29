@@ -2,6 +2,8 @@ package com.safeguard.family
 
 import android.Manifest
 import android.content.Intent
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
@@ -74,8 +76,7 @@ class SharerActivity : AppCompatActivity() {
         }
         updateStatus()
 
-        findViewById<TextView>(R.id.codeText).text = Prefs.pretty(prefs.code ?: "")
-        findViewById<Button>(R.id.btnShareCode).setOnClickListener { shareCode() }
+        findViewById<Button>(R.id.btnPair).setOnClickListener { startPairing() }
         findViewById<Button>(R.id.btnOffice).setOnClickListener { setPlaceHere(Prefs.OFFICE) }
         findViewById<Button>(R.id.btnHome).setOnClickListener { setPlaceHere(Prefs.HOME) }
         findViewById<Button>(R.id.btnSos).setOnClickListener { confirmSos() }
@@ -229,11 +230,29 @@ class SharerActivity : AppCompatActivity() {
 
     // ---------- Code, SOS, reset ----------
 
-    private fun shareCode() {
-        val text = "I'm sharing my location with you on SafeGuard.\n\n" +
-            "1. Install SafeGuard and choose \"I want to see family\".\n" +
-            "2. Enter this family code: ${Prefs.pretty(prefs.code ?: "")}"
-        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), "Send code"))
+    /**
+     * Shows a 4-digit code and broadcasts the real secret key live while the
+     * dialog is open. The 4 digits work only during this window, so they are
+     * useless to anyone afterwards.
+     */
+    private fun startPairing() {
+        val secret = prefs.code ?: return
+        val pin = Prefs.newPin()
+        val view = layoutInflater.inflate(R.layout.dialog_pair, null)
+        view.findViewById<TextView>(R.id.pinText).text = pin
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(view)
+            .setNegativeButton("Done", null)
+            .create()
+
+        val pub = Executors.newSingleThreadScheduledExecutor()
+        pub.scheduleWithFixedDelay(
+            { Ntfy.publish(Ntfy.pairTopic(pin), secret, priority = 1, noCache = true) },
+            0, 3, TimeUnit.SECONDS
+        )
+        dialog.setOnDismissListener { pub.shutdownNow() }
+        dialog.show()
     }
 
     private fun confirmSos() {

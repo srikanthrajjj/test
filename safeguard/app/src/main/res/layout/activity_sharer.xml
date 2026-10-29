@@ -96,29 +96,9 @@
                 android:layout_marginTop="6dp" android:text="Not there now? Long-press the map to pick the spot."
                 android:textSize="12sp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_code"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="14dp"
-                android:paddingEnd="6dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp">
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:orientation="vertical">
-                    <TextView style="@style/Body" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Family code" android:textSize="12sp" />
-                    <TextView android:id="@+id/codeText" android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" android:fontFamily="monospace"
-                        android:textColor="@color/ink" android:textSize="17sp" android:textStyle="bold" />
-                </LinearLayout>
-                <Button android:id="@+id/btnShareCode" style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Send" android:textAllCaps="false" />
-            </LinearLayout>
+            <Button android:id="@+id/btnPair" style="@style/BtnSoft" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                android:text="Pair a family phone" />
 
             <LinearLayout
                 android:layout_width="match_parent"

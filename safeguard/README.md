@@ -29,10 +29,10 @@ Or: open this folder in **Android Studio** > Build > Build APK(s).
 3. Turn sharing on. Allow location **"All the time"**.
 4. Set battery to **Unrestricted** for SafeGuard (Settings > Apps > SafeGuard > Battery).
 5. At office tap **Set Office here** (or long-press the map on the office). Same for Home.
-6. Tap **Send** next to the family code. Send it to you on WhatsApp.
+6. Tap **Pair a family phone**. A 4-digit code shows. Keep it open.
 
 **Your phone**
-1. Install SafeGuard.apk. Tap "I want to see family". Enter the code.
+1. Install SafeGuard.apk. Tap "I want to see family". Enter the 4-digit code while her phone shows it.
 2. Install **ntfy** from Play Store. Back in SafeGuard tap **Alerts > Subscribe**.
 3. Done. You get "Priya left office" automatically.
 
@@ -49,8 +49,8 @@ Her phone (GPS) --> ntfy.sh --> Your phone
 
 ## Good to know
 
-- The 12-letter family code is the only key. Anyone with the code can see the location. Keep it private.
-  To change it: Reset app on both phones.
+- Pairing uses a one-time 4-digit code shown only while "Pair a family phone" is open. The real key is a long secret the phones swap during pairing, so the 4 digits are useless afterwards.
+  To unpair: Reset app on both phones and pair again.
 - ntfy.sh free use has daily limits. Normal use (one person) stays well under. For many users (Play Store), run your own ntfy server or move to Firebase/Supabase.
 - Play Store: background location apps need a Google review and a privacy policy. Fine for personal use now.
 

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="28dp"
+    android:gravity="center_horizontal">
+
+    <TextView style="@style/Title" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="Pairing code" />
+
+    <TextView android:id="@+id/pinText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:fontFamily="monospace"
+        android:letterSpacing="0.3"
+        android:textColor="@color/primary"
+        android:textSize="48sp"
+        android:textStyle="bold" />
+
+    <TextView style="@style/Body" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:text="On the family phone, open SafeGuard, choose &quot;I want to see family&quot;, and enter this code.\n\nKeep this screen open until it connects." />
+</LinearLayout>

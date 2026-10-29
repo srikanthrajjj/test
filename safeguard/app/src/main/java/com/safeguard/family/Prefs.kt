@@ -67,6 +67,11 @@ class Prefs(context: Context) {
 
         fun pretty(code: String) = code.chunked(4).joinToString("-")
 
+        fun newPin(): String {
+            val r = SecureRandom()
+            return (1..4).map { r.nextInt(10) }.joinToString("")
+        }
+
         fun normalize(input: String) = input.uppercase().filter { it.isLetterOrDigit() }
     }
 }
