@@ -54,6 +54,7 @@ class ViewerActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnDirections).setOnClickListener { directions() }
         findViewById<Button>(R.id.btnAlerts).setOnClickListener { setupAlerts() }
         findViewById<TextView>(R.id.btnReset).setOnClickListener { confirmReset() }
+        findViewById<TextView>(R.id.btnReset).setOnLongClickListener { Updater.check(this, manual = true); true }
         findViewById<android.view.View>(R.id.btnCenter).setOnClickListener {
             val la = lastLat; val lo = lastLon
             if (la != null && lo != null) map.controller.animateTo(GeoPoint(la, lo), 16.0, 600L) else refresh()
@@ -64,6 +65,7 @@ class ViewerActivity : AppCompatActivity() {
             sp.edit().putBoolean("alerts_intro", true).apply()
             setupAlerts()
         }
+        Updater.check(this)
     }
 
     private fun refresh() {

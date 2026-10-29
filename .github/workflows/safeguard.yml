@@ -28,6 +28,9 @@ jobs:
         run: yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
 
       - name: Build APK
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: "1.${{ github.run_number }}"
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace

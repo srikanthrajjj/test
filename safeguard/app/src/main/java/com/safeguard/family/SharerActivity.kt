@@ -87,11 +87,13 @@ class SharerActivity : AppCompatActivity() {
             toast("Sent: you're safe")
         }
         findViewById<TextView>(R.id.btnReset).setOnClickListener { confirmReset() }
+        findViewById<TextView>(R.id.btnReset).setOnLongClickListener { Updater.check(this, manual = true); true }
         findViewById<View>(R.id.btnCenter).setOnClickListener {
             me?.myLocation?.let { map.controller.animateTo(it, 17.0, 600L) } ?: toast("Finding your location…")
         }
 
         if (prefs.sharing && hasFine()) LocationService.start(this)
+        Updater.check(this)
     }
 
     // ---------- Sharing on / off ----------
