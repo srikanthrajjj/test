@@ -51,6 +51,7 @@ class ViewerActivity : AppCompatActivity() {
         nameView.text = prefs.name.ifBlank { "Family" }
         sub.text = "Looking for location…"
 
+        findViewById<android.view.View>(R.id.btnRefresh).setOnClickListener { refreshNow() }
         findViewById<Button>(R.id.btnDirections).setOnClickListener { directions() }
         findViewById<Button>(R.id.btnAlerts).setOnClickListener { setupAlerts() }
         findViewById<TextView>(R.id.btnReset).setOnClickListener { confirmReset() }
@@ -74,6 +75,16 @@ class ViewerActivity : AppCompatActivity() {
             val msg = Ntfy.latest(Ntfy.locTopic(code))
             runOnUiThread { show(msg) }
         }
+    }
+
+    /** Asks the other phone to send its current location right now, then re-reads a few times. */
+    private fun refreshNow() {
+        val code = prefs.code ?: return
+        sub.text = "Asking for a fresh location…"
+        io.execute { Ntfy.publish(Ntfy.reqTopic(code), "ping", priority = 1, noCache = true) }
+        refresh()
+        // Her phone answers in a few seconds, so re-read a few times to catch it.
+        for (delay in listOf(3000L, 6000L, 10000L, 15000L)) handler.postDelayed({ refresh() }, delay)
     }
 
     private fun show(msg: String?) {

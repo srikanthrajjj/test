@@ -40,6 +40,7 @@ class LocationService : Service(), LocationListener {
     private val handler = Handler(Looper.getMainLooper())
     private var lastFix: Location? = null
     private var started = false
+    @Volatile private var listening = true
     private val pendingCount = HashMap<String, Int>()
 
     private val heartbeat = object : Runnable {
@@ -69,6 +70,7 @@ class LocationService : Service(), LocationListener {
             started = true
             startUpdates()
             handler.postDelayed(heartbeat, HEARTBEAT_MS)
+            startRequestListener()
         }
         when (intent?.action) {
             ACTION_SOS -> {
@@ -83,6 +85,35 @@ class LocationService : Service(), LocationListener {
             ACTION_CHECKIN -> sendCheckIn()
         }
         return START_STICKY
+    }
+
+    /** Listens for "refresh now" pings from the viewer and answers with a fresh fix. */
+    private fun startRequestListener() {
+        val code = prefs.code ?: return
+        Thread {
+            Ntfy.listen(Ntfy.reqTopic(code), { listening }) { msg ->
+                if (msg.startsWith("ping")) handler.post { requestFreshNow() }
+            }
+        }.also { it.isDaemon = true; it.start() }
+    }
+
+    private fun requestFreshNow() {
+        // Send the last known spot straightaway, so the viewer sees it with no delay.
+        lastFix?.let { maybeSend(it, force = true) }
+        // Then grab a brand-new fix and send that too.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
+        try {
+            val provider = if (lm.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                LocationManager.GPS_PROVIDER else LocationManager.NETWORK_PROVIDER
+            if (Build.VERSION.SDK_INT >= 30) {
+                lm.getCurrentLocation(provider, null, mainExecutor) { loc -> loc?.let { onLocationChanged(it) } }
+            } else {
+                @Suppress("DEPRECATION")
+                lm.requestSingleUpdate(provider, { loc -> onLocationChanged(loc) }, Looper.getMainLooper())
+            }
+        } catch (_: Exception) {}
     }
 
     private fun startUpdates() {
@@ -250,6 +281,7 @@ class LocationService : Service(), LocationListener {
     }
 
     override fun onDestroy() {
+        listening = false
         handler.removeCallbacks(heartbeat)
         try { lm.removeUpdates(this) } catch (_: Exception) {}
         io.shutdown()

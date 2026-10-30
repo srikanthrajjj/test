@@ -21,6 +21,31 @@ object Ntfy {
     // Short-lived channel used only while pairing. Carries the real secret key.
     fun pairTopic(pin: String) = "sg-pair-$pin"
 
+    // Viewer -> sharer: "please send a fresh location now".
+    fun reqTopic(code: String) = "sg-${code.lowercase()}-req"
+
+    /** Holds an open connection and calls [onMessage] for each message, until [alive] is false. */
+    fun listen(topic: String, alive: () -> Boolean, onMessage: (String) -> Unit) {
+        while (alive()) {
+            try {
+                val c = URL("$BASE/$topic/json").openConnection() as HttpURLConnection
+                c.connectTimeout = 15000
+                c.readTimeout = 0   // block waiting for live messages
+                c.inputStream.bufferedReader().use { r ->
+                    while (alive()) {
+                        val line = r.readLine() ?: break
+                        if (line.isBlank()) continue
+                        val o = JSONObject(line)
+                        if (o.optString("event") == "message") onMessage(o.optString("message"))
+                    }
+                }
+                c.disconnect()
+            } catch (e: Exception) {
+                try { Thread.sleep(5000) } catch (_: Exception) {}
+            }
+        }
+    }
+
     fun publish(
         topic: String,
         body: String,
