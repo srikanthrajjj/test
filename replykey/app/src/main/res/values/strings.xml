@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11y_desc">Lets the ReplyKey keyboard read the message on screen when you tap the AI button, so it can draft a reply. Screen text is held in memory only and is sent to Claude only when you tap the AI button.</string>
+</resources>
