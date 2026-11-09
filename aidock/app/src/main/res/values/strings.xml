@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI Dock</string>
+    <string name="share_label">Ask AI</string>
+    <string name="tile_label">Speak to AI</string>
+    <string name="w_dock">AI Dock · all chats</string>
+    <string name="w_actions">AI Dock · quick actions</string>
+    <string name="w_voice">AI Dock · voice</string>
+    <string name="d_dock">One tap into every AI chat app. Resizable.</string>
+    <string name="d_actions">Type, speak, or send your clipboard to your AI.</string>
+    <string name="d_voice">Phone assistant and speak-to-AI.</string>
+</resources>

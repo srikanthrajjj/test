@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical"
+    android:background="@drawable/widget_bg" android:padding="10dp">
+    <GridView android:id="@+id/grid" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:numColumns="auto_fit" android:columnWidth="66dp" android:stretchMode="columnWidth"
+        android:verticalSpacing="6dp" android:horizontalSpacing="4dp" android:gravity="center" />
+    <TextView android:id="@+id/empty" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:gravity="center" android:text="Open AI Dock to pick your apps" android:textColor="@color/muted" />
+</LinearLayout>
