@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@android:id/background"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical"
+    android:background="@drawable/widget_bg" android:padding="8dp">
+    <TextView android:id="@+id/title" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:paddingStart="6dp" android:paddingBottom="2dp" android:text="Ask ChatGPT" android:textColor="@color/muted"
+        android:textSize="12sp" android:maxLines="1" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:id="@+id/a_type" android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:layout_margin="3dp" android:background="@drawable/tile_bg"
+            android:orientation="vertical" android:gravity="center">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_keyboard" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:text="Type" android:textColor="@color/text" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/a_speak" android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:layout_margin="3dp" android:background="@drawable/tile_bg"
+            android:orientation="vertical" android:gravity="center">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_mic" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:text="Speak" android:textColor="@color/text" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/a_clip" android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:layout_margin="3dp" android:background="@drawable/tile_bg"
+            android:orientation="vertical" android:gravity="center">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_clip" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:text="Clipboard" android:textColor="@color/text" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/a_lens" android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:layout_margin="3dp" android:background="@drawable/tile_bg"
+            android:orientation="vertical" android:gravity="center">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_lens" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:text="Lens" android:textColor="@color/text" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:id="@+id/a_sum" android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:layout_margin="3dp" android:background="@drawable/tile_bg"
+            android:orientation="vertical" android:gravity="center">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_summary" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:text="Summarise" android:textColor="@color/text" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/a_explain" android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:layout_margin="3dp" android:background="@drawable/tile_bg"
+            android:orientation="vertical" android:gravity="center">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_bulb" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:text="Explain" android:textColor="@color/text" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/a_trans" android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:layout_margin="3dp" android:background="@drawable/tile_bg"
+            android:orientation="vertical" android:gravity="center">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_translate" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:text="Translate" android:textColor="@color/text" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/a_fix" android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:layout_margin="3dp" android:background="@drawable/tile_bg"
+            android:orientation="vertical" android:gravity="center">
+            <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_edit" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                android:text="Fix text" android:textColor="@color/text" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

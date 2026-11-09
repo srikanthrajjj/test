@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.aidock">
+
+    <!-- Android 11+ package visibility: the AI apps we launch / share to, plus voice + Lens. -->
+    <queries>
+        <package android:name="com.openai.chatgpt" />
+        <package android:name="com.anthropic.claude" />
+        <package android:name="com.google.android.apps.bard" />
+        <package android:name="ai.perplexity.app.android" />
+        <package android:name="com.microsoft.copilot" />
+        <package android:name="com.facebook.stella" />
+        <package android:name="com.deepseek.chat" />
+        <package android:name="ai.x.grok" />
+        <package android:name="ai.mistral.chat" />
+        <package android:name="com.google.android.apps.labs.language.tailwind" />
+        <package android:name="com.google.ar.lens" />
+        <package android:name="com.google.android.googlequicksearchbox" />
+        <intent><action android:name="android.intent.action.SEND" /><data android:mimeType="text/plain" /></intent>
+        <intent><action android:name="android.speech.action.RECOGNIZE_SPEECH" /></intent>
+        <intent><action android:name="android.intent.action.VOICE_COMMAND" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>
+    </queries>
+
+    <application android:label="@string/app_name" android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher" android:theme="@style/AppTheme" android:allowBackup="true">
+
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Invisible trampoline every widget tap goes through; also the "Ask AI" share target. -->
+        <activity android:name=".ActionActivity" android:exported="true" android:theme="@style/Translucent"
+            android:excludeFromRecents="true" android:taskAffinity=".action" android:launchMode="singleTask"
+            android:label="@string/share_label" android:windowSoftInputMode="stateVisible|adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".DockWidget" android:exported="false" android:label="@string/w_dock">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/dock_info" />
+        </receiver>
+        <receiver android:name=".ActionsWidget" android:exported="false" android:label="@string/w_actions">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/actions_info" />
+        </receiver>
+        <receiver android:name=".VoiceWidget" android:exported="false" android:label="@string/w_voice">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/voice_info" />
+        </receiver>
+
+        <service android:name=".DockService" android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <service android:name=".AskTile" android:exported="true" android:label="@string/tile_label"
+            android:icon="@drawable/ic_mic" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+        </service>
+    </application>
+</manifest>

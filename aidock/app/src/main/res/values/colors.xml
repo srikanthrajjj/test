@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0E0F13</color>
+    <color name="card">#1A1C22</color>
+    <color name="tile">#262932</color>
+    <color name="text">#F2F3F5</color>
+    <color name="muted">#9AA0AB</color>
+    <color name="accent">#8B7CFF</color>
+</resources>
